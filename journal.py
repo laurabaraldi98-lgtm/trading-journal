@@ -1,3 +1,14 @@
+import os
+from dotenv import load_dotenv
+from supabase import create_client
+
+load_dotenv()
+
+supabase_url = os.getenv("SUPABASE_URL")
+supabase_key = os.getenv("SUPABASE_KEY")
+
+supabase = create_client(supabase_url, supabase_key)
+
 trades = []
 
 last_deleted_trade = None
@@ -67,6 +78,41 @@ def save_trades():
     file.close()
 
 
+def save_trade_to_supabase(trade):
+    new_trade = {
+        "symbol": trade[0],
+        "direction": trade[1],
+        "entry": trade[2],
+        "stop": trade[3],
+        "exit_price": trade[4],
+        "result": trade[5]
+    }
+
+    response = supabase.table("trades").insert(new_trade).execute()
+
+    return response
+
+
+def load_trades_from_supabase():
+    response = supabase.table("trades").select("*").execute()
+
+    loaded_trades = []
+
+    for trade in response.data:
+        loaded_trade = [
+            trade["symbol"],
+            trade["direction"],
+            float(trade["entry"]),
+            float(trade["stop"]),
+            float(trade["exit_price"]),
+            float(trade["result"])
+        ]
+
+        loaded_trades.append(loaded_trade)
+
+    return loaded_trades
+
+
 while True:
 
     print("TRADING JOURNAL")
@@ -77,6 +123,7 @@ while True:
     print("5. Undo last deletion")
     print("6. Edit a trade")
     print("7. Exit")
+    print("8. Load trades from Supabase")
 
     choice = input("Choose an option: ")
 
@@ -96,16 +143,15 @@ while True:
         exit_price = get_number("Exit price: ")
 
         try:
-            result = calculate_r(direction, entry, stop, exit_price)
+            result = round(calculate_r(direction, entry, stop, exit_price), 2)
         except ValueError as e:
             print("Error:", e)
             continue
 
         trade = [symbol, direction, entry, stop, exit_price, result]
-
         trades.append(trade)
-
         save_trades()
+        save_trade_to_supabase(trade)
 
         print("Trade saved!")
 
@@ -167,7 +213,8 @@ while True:
             print("Result:", round(trade[5], 2), "R")
             print("-------------")
 
-        trade_number_to_delete = get_integer("Which trade do you want to delete? ")
+        trade_number_to_delete = get_integer(
+            "Which trade do you want to delete? ")
 
         index_to_delete = trade_number_to_delete - 1
 
@@ -254,7 +301,7 @@ while True:
         exit_price = get_number("New exit price: ")
 
         try:
-            result = calculate_r(direction, entry, stop, exit_price)
+            result = round(calculate_r(direction, entry, stop, exit_price), 2)
         except ValueError as e:
             print("Error:", e)
             continue
@@ -270,6 +317,10 @@ while True:
     elif choice == "7":
         print("Bye, journal closed")
         break
+
+    elif choice == "8":
+        trades = load_trades_from_supabase()
+        print("Trades loaded from Supabase!")
 
     else:
         print("Invalid choice")
