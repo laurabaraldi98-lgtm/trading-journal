@@ -21,6 +21,7 @@ def load_trades_from_supabase():
 
     for trade in response.data:
         loaded_trade = [
+            trade["id"],
             trade["symbol"],
             trade["direction"],
             float(trade["entry"]),
@@ -78,6 +79,22 @@ def save_trade_to_supabase(trade):
 
     response = supabase.table("trades").insert(new_trade).execute()
 
+    saved_trade = response.data[0]
+
+    return [
+        saved_trade["id"],
+        saved_trade["symbol"],
+        saved_trade["direction"],
+        float(saved_trade["entry"]),
+        float(saved_trade["stop"]),
+        float(saved_trade["exit_price"]),
+        float(saved_trade["result"])
+    ]
+
+
+def delete_trade_from_supabase(trade_id):
+    response = supabase.table("trades").delete().eq("id", trade_id).execute()
+
     return response
 
 
@@ -118,20 +135,19 @@ while True:
             continue
 
         trade = [symbol, direction, entry, stop, exit_price, result]
-        trades.append(trade)
-        save_trade_to_supabase(trade)
+        saved_trade = save_trade_to_supabase(trade)
+        trades.append(saved_trade)
 
         print("Trade saved!")
 
     elif choice == "2":
         for number, trade in enumerate(trades, start=1):
-            print("Trade", number)
-            print("Symbol:", trade[0])
-            print("Direction:", trade[1])
-            print("Entry:", trade[2])
-            print("Stop:", trade[3])
-            print("Exit:", trade[4])
-            print("Result:", round(trade[5], 2), "R")
+            print("Symbol:", trade[1])
+            print("Direction:", trade[2])
+            print("Entry:", trade[3])
+            print("Stop:", trade[4])
+            print("Exit:", trade[5])
+            print("Result:", round(trade[6], 2), "R")
             print("-------------")
 
     elif choice == "3":
@@ -145,15 +161,15 @@ while True:
             breakeven = 0
 
             for trade in trades:
-                total = total + trade[5]
+                total = total + trade[6]
 
-                if trade[5] > 0:
+                if trade[6] > 0:
                     winners = winners + 1
 
-                if trade[5] < 0:
+                if trade[6] < 0:
                     losers = losers + 1
 
-                if trade[5] == 0:
+                if trade[6] == 0:
                     breakeven = breakeven + 1
 
             trade_count = len(trades)
@@ -171,7 +187,49 @@ while True:
             print("Breakeven trades:", breakeven)
 
     elif choice == "4":
-        print("Delete from Supabase is not available yet.")
+        for number, trade in enumerate(trades, start=1):
+            print("Trade", number)
+            print("Symbol:", trade[1])
+            print("Direction:", trade[2])
+            print("Entry:", trade[3])
+            print("Stop:", trade[4])
+            print("Exit:", trade[5])
+            print("Result:", round(trade[6], 2), "R")
+            print("-------------")
+
+        trade_number_to_delete = get_integer(
+            "Which trade do you want to delete? "
+        )
+
+        index_to_delete = trade_number_to_delete - 1
+
+        if index_to_delete < 0 or index_to_delete >= len(trades):
+            print("Invalid trade number.")
+            continue
+
+        trade_to_delete = trades[index_to_delete]
+
+        print("You are about to delete this trade:")
+        print("Symbol:", trade_to_delete[1])
+        print("Direction:", trade_to_delete[2])
+        print("Entry:", trade_to_delete[3])
+        print("Stop:", trade_to_delete[4])
+        print("Exit:", trade_to_delete[5])
+        print("Result:", round(trade_to_delete[6], 2), "R")
+
+        confirmation = input("Are you sure you want to delete it? yes/no: ")
+
+        if confirmation == "yes":
+            trade_id = trade_to_delete[0]
+
+            delete_trade_from_supabase(trade_id)
+
+            last_deleted_trade = trades.pop(index_to_delete)
+
+            print("Trade deleted from Supabase!")
+
+        else:
+            print("Deletion cancelled.")
 
     elif choice == "5":
         print("Undo deletion is not available yet.")
