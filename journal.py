@@ -123,6 +123,27 @@ def restore_trade_to_supabase(trade):
     ]
 
 
+def update_trade_in_supabase(trade_id, updated_trade):
+    trade_data = {
+        "symbol": updated_trade[1],
+        "direction": updated_trade[2],
+        "entry": updated_trade[3],
+        "stop": updated_trade[4],
+        "exit_price": updated_trade[5],
+        "result": updated_trade[6]
+    }
+
+    response = (
+        supabase
+        .table("trades")
+        .update(trade_data)
+        .eq("id", trade_id)
+        .execute()
+    )
+
+    return response
+
+
 trades = load_trades_from_supabase()
 
 while True:
@@ -271,7 +292,69 @@ while True:
             print("Last deletion undone!")
 
     elif choice == "6":
-        print("Edit in Supabase is not available yet.")
+        for number, trade in enumerate(trades, start=1):
+            print("Trade", number)
+            print("Symbol:", trade[1])
+            print("Direction:", trade[2])
+            print("Entry:", trade[3])
+            print("Stop:", trade[4])
+            print("Exit:", trade[5])
+            print("Result:", round(trade[6], 2), "R")
+            print("-------------")
+
+        trade_number_to_edit = get_integer("Which trade do you want to edit? ")
+        index_to_edit = trade_number_to_edit - 1
+
+        if index_to_edit < 0 or index_to_edit >= len(trades):
+            print("Invalid trade number.")
+            continue
+
+        old_trade = trades[index_to_edit]
+        trade_id = old_trade[0]
+
+        print("You are editing this trade:")
+        print("Symbol:", old_trade[1])
+        print("Direction:", old_trade[2])
+        print("Entry:", old_trade[3])
+        print("Stop:", old_trade[4])
+        print("Exit:", old_trade[5])
+        print("Result:", round(old_trade[6], 2), "R")
+
+        symbol = input("New symbol: ").lower()
+
+        while True:
+            direction = input("New direction long/short: ").lower()
+
+            if direction == "long" or direction == "short":
+                break
+            else:
+                print("Invalid direction. Type long or short.")
+
+        entry = get_number("New entry price: ")
+        stop = get_number("New stop loss: ")
+        exit_price = get_number("New exit price: ")
+
+        try:
+            result = round(calculate_r(direction, entry, stop, exit_price), 2)
+        except ValueError as e:
+            print("Error:", e)
+            continue
+
+        updated_trade = [
+            trade_id,
+            symbol,
+            direction,
+            entry,
+            stop,
+            exit_price,
+            result
+        ]
+
+        update_trade_in_supabase(trade_id, updated_trade)
+
+        trades[index_to_edit] = updated_trade
+
+        print("Trade edited!")
 
     elif choice == "7":
         print("Bye, journal closed")
