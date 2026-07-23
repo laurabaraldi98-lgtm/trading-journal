@@ -98,6 +98,31 @@ def delete_trade_from_supabase(trade_id):
     return response
 
 
+def restore_trade_to_supabase(trade):
+    restored_trade = {
+        "symbol": trade[1],
+        "direction": trade[2],
+        "entry": trade[3],
+        "stop": trade[4],
+        "exit_price": trade[5],
+        "result": trade[6]
+    }
+
+    response = supabase.table("trades").insert(restored_trade).execute()
+
+    saved_trade = response.data[0]
+
+    return [
+        saved_trade["id"],
+        saved_trade["symbol"],
+        saved_trade["direction"],
+        float(saved_trade["entry"]),
+        float(saved_trade["stop"]),
+        float(saved_trade["exit_price"]),
+        float(saved_trade["result"])
+    ]
+
+
 trades = load_trades_from_supabase()
 
 while True:
@@ -232,7 +257,18 @@ while True:
             print("Deletion cancelled.")
 
     elif choice == "5":
-        print("Undo deletion is not available yet.")
+
+        if last_deleted_trade is None:
+            print("There is no trade to recover.")
+
+        else:
+            restored_trade = restore_trade_to_supabase(last_deleted_trade)
+
+            trades.append(restored_trade)
+
+            last_deleted_trade = None
+
+            print("Last deletion undone!")
 
     elif choice == "6":
         print("Edit in Supabase is not available yet.")
