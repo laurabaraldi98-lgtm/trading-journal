@@ -1,42 +1,16 @@
-import os
-
-from dotenv import load_dotenv
-from supabase import create_client
-
 from calculations import calculate_r
 from statistics import calculate_statistics
-
-load_dotenv()
-
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
-
-supabase = create_client(supabase_url, supabase_key)
+from database import (
+    load_trades_from_supabase,
+    save_trade_to_supabase,
+    delete_trade_from_supabase,
+    restore_trade_to_supabase,
+    update_trade_in_supabase,
+)
 
 trades = []
 
 last_deleted_trade = None
-
-
-def load_trades_from_supabase():
-    response = supabase.table("trades").select("*").execute()
-
-    loaded_trades = []
-
-    for trade in response.data:
-        loaded_trade = [
-            trade["id"],
-            trade["symbol"],
-            trade["direction"],
-            float(trade["entry"]),
-            float(trade["stop"]),
-            float(trade["exit_price"]),
-            float(trade["result"])
-        ]
-
-        loaded_trades.append(loaded_trade)
-
-    return loaded_trades
 
 
 def get_number(message):
@@ -55,83 +29,6 @@ def get_integer(message):
             return number
         except ValueError:
             print("Please enter a valid whole number.")
-
-
-def save_trade_to_supabase(trade):
-    new_trade = {
-        "symbol": trade[0],
-        "direction": trade[1],
-        "entry": trade[2],
-        "stop": trade[3],
-        "exit_price": trade[4],
-        "result": trade[5]
-    }
-
-    response = supabase.table("trades").insert(new_trade).execute()
-
-    saved_trade = response.data[0]
-
-    return [
-        saved_trade["id"],
-        saved_trade["symbol"],
-        saved_trade["direction"],
-        float(saved_trade["entry"]),
-        float(saved_trade["stop"]),
-        float(saved_trade["exit_price"]),
-        float(saved_trade["result"])
-    ]
-
-
-def delete_trade_from_supabase(trade_id):
-    response = supabase.table("trades").delete().eq("id", trade_id).execute()
-
-    return response
-
-
-def restore_trade_to_supabase(trade):
-    restored_trade = {
-        "symbol": trade[1],
-        "direction": trade[2],
-        "entry": trade[3],
-        "stop": trade[4],
-        "exit_price": trade[5],
-        "result": trade[6]
-    }
-
-    response = supabase.table("trades").insert(restored_trade).execute()
-
-    saved_trade = response.data[0]
-
-    return [
-        saved_trade["id"],
-        saved_trade["symbol"],
-        saved_trade["direction"],
-        float(saved_trade["entry"]),
-        float(saved_trade["stop"]),
-        float(saved_trade["exit_price"]),
-        float(saved_trade["result"])
-    ]
-
-
-def update_trade_in_supabase(trade_id, updated_trade):
-    trade_data = {
-        "symbol": updated_trade[1],
-        "direction": updated_trade[2],
-        "entry": updated_trade[3],
-        "stop": updated_trade[4],
-        "exit_price": updated_trade[5],
-        "result": updated_trade[6]
-    }
-
-    response = (
-        supabase
-        .table("trades")
-        .update(trade_data)
-        .eq("id", trade_id)
-        .execute()
-    )
-
-    return response
 
 
 trades = load_trades_from_supabase()
