@@ -89,3 +89,60 @@ def test_delete_trade_invalid_id():
     response = client.delete("/trades/banana")
 
     assert response.status_code == 422
+
+
+def test_update_trade():
+    trade_data = {
+        "symbol": "eurusd",
+        "direction": "long",
+        "entry": 1.12,
+        "stop": 1.11,
+        "exit_price": 1.14
+    }
+
+    with patch("api.update_trade_in_supabase") as mock_update:
+        response = client.patch("/trades/5", json=trade_data)
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Trade updated"}
+
+    mock_update.assert_called_once_with(
+        5,
+        [
+            5,
+            "eurusd",
+            "long",
+            1.12,
+            1.11,
+            1.14,
+            2.0
+        ]
+    )
+
+
+def test_update_trade_invalid_id():
+    trade_data = {
+        "symbol": "eurusd",
+        "direction": "long",
+        "entry": 1.12,
+        "stop": 1.11,
+        "exit_price": 1.14
+    }
+
+    response = client.patch("/trades/banana", json=trade_data)
+
+    assert response.status_code == 422
+
+
+def test_update_trade_invalid_direction():
+    trade_data = {
+        "symbol": "eurusd",
+        "direction": "banana",
+        "entry": 1.12,
+        "stop": 1.11,
+        "exit_price": 1.14
+    }
+
+    response = client.patch("/trades/5", json=trade_data)
+
+    assert response.status_code == 422
