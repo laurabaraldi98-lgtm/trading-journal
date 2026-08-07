@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from supabase import create_client
 
 from calculations import calculate_r
+from statistics import calculate_statistics
 
 load_dotenv()
 
@@ -186,40 +187,20 @@ while True:
             print("-------------")
 
     elif choice == "3":
+        stats = calculate_statistics(trades)
+
         if len(trades) == 0:
             print("You have not entered any trades yet.")
 
         else:
-            total = 0
-            winners = 0
-            losers = 0
-            breakeven = 0
-
-            for trade in trades:
-                total = total + trade[6]
-
-                if trade[6] > 0:
-                    winners = winners + 1
-
-                if trade[6] < 0:
-                    losers = losers + 1
-
-                if trade[6] == 0:
-                    breakeven = breakeven + 1
-
-            trade_count = len(trades)
-            average = total / trade_count
-            win_rate = winners / trade_count * 100
-            loss_rate = losers / trade_count * 100
-
-            print("Total R:", round(total, 2))
-            print("Number of trades:", trade_count)
-            print("Average R:", round(average, 2))
-            print("Winning trades:", winners)
-            print("Win rate:", round(win_rate, 2), "%")
-            print("Losing trades:", losers)
-            print("Loss rate:", round(loss_rate, 2), "%")
-            print("Breakeven trades:", breakeven)
+            print("Total R:", round(stats["total"], 2))
+            print("Number of trades:", stats["trade_count"])
+            print("Average R:", round(stats["average"], 2))
+            print("Winning trades:", stats["winners"])
+            print("Win rate:", round(stats["win_rate"], 2), "%")
+            print("Losing trades:", stats["losers"])
+            print("Loss rate:", round(stats["loss_rate"], 2), "%")
+            print("Breakeven trades:", stats["breakeven"])
 
     elif choice == "4":
         for number, trade in enumerate(trades, start=1):
