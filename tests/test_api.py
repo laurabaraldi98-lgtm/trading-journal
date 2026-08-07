@@ -23,3 +23,54 @@ def test_get_trades():
 
     assert response.status_code == 200
     assert response.json() == fake_trades
+
+
+def test_create_trade():
+    trade_data = {
+        "symbol": "eurusd",
+        "direction": "long",
+        "entry": 1.12,
+        "stop": 1.11,
+        "exit_price": 1.14
+    }
+
+    with patch("api.save_trade_to_supabase", return_value=trade_data):
+        response = client.post("/trades", json=trade_data)
+
+    assert response.status_code == 200
+    assert response.json() == trade_data
+
+
+def test_create_trade_missing_direction():
+    trade_data = {
+        "symbol": "eurusd",
+        "entry": 1.12,
+        "stop": 1.11,
+        "exit_price": 1.14
+    }
+
+    response = client.post("/trades", json=trade_data)
+
+    assert response.status_code == 422
+
+
+def test_create_trade_passes_correct_data_to_save():
+    trade_data = {
+        "symbol": "eurusd",
+        "direction": "long",
+        "entry": 1.12,
+        "stop": 1.11,
+        "exit_price": 1.14
+    }
+
+    with patch("api.save_trade_to_supabase") as mock_save:
+        client.post("/trades", json=trade_data)
+
+    mock_save.assert_called_once_with([
+        "eurusd",
+        "long",
+        1.12,
+        1.11,
+        1.14,
+        2.0
+    ])
