@@ -1,5 +1,9 @@
 from fastapi import FastAPI
-from database import load_trades_from_supabase, save_trade_to_supabase
+from database import (
+    load_trades_from_supabase,
+    save_trade_to_supabase,
+    delete_trade_from_supabase,
+)
 from pydantic import BaseModel
 from calculations import calculate_r
 from typing import Literal
@@ -48,3 +52,10 @@ def create_trade(trade: TradeCreate):
     ]
 
     return save_trade_to_supabase(trade_data)
+
+
+@app.delete("/trades/{trade_id}")
+def delete_trade(trade_id: int):
+    delete_trade_from_supabase(trade_id)
+
+    return {"message": "Trade deleted"}

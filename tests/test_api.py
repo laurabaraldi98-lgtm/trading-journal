@@ -74,3 +74,18 @@ def test_create_trade_passes_correct_data_to_save():
         1.14,
         2.0
     ])
+
+
+def test_delete_trade():
+    with patch("api.delete_trade_from_supabase") as mock_delete:
+        response = client.delete("/trades/5")
+
+    assert response.status_code == 200
+    assert response.json() == {"message": "Trade deleted"}
+    mock_delete.assert_called_once_with(5)
+
+
+def test_delete_trade_invalid_id():
+    response = client.delete("/trades/banana")
+
+    assert response.status_code == 422
