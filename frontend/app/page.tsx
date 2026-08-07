@@ -1,4 +1,10 @@
+"use client";
+
+import { useState } from "react";
+
 export default function Home() {
+  const [showForm, setShowForm] = useState(false);
+
   return (
     <div className="flex min-h-screen bg-zinc-100">
       <aside className="w-64 bg-white p-6 border-r border-zinc-200">
@@ -41,10 +47,56 @@ export default function Home() {
             </p>
           </div>
 
-          <button className="rounded-lg bg-black px-5 py-3 text-white">
+          <button
+            onClick={() => setShowForm(!showForm)}
+            className="rounded-lg bg-black px-5 py-3 text-white"
+          >
             + Add Trade
           </button>
+
         </div>
+
+        {showForm && (
+          <div className="mt-6 rounded-xl bg-white p-6 border border-zinc-200">
+            <h3 className="text-xl font-semibold mb-4">Add Trade</h3>
+
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <input
+                type="text"
+                placeholder="Symbol"
+                className="rounded-lg border border-zinc-300 p-3"
+              />
+
+              <select className="rounded-lg border border-zinc-300 p-3">
+                <option value="">Direction</option>
+                <option value="long">Long</option>
+                <option value="short">Short</option>
+              </select>
+
+              <input
+                type="number"
+                placeholder="Entry"
+                className="rounded-lg border border-zinc-300 p-3"
+              />
+
+              <input
+                type="number"
+                placeholder="Stop"
+                className="rounded-lg border border-zinc-300 p-3"
+              />
+
+              <input
+                type="number"
+                placeholder="Exit price"
+                className="rounded-lg border border-zinc-300 p-3"
+              />
+            </div>
+
+            <button className="mt-4 rounded-lg bg-black px-5 py-3 text-white">
+              Save Trade
+            </button>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-4 mt-8 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl bg-white p-5 border border-zinc-200">
