@@ -4,6 +4,11 @@ import { useState } from "react";
 
 export default function Home() {
   const [showForm, setShowForm] = useState(false);
+  const [symbol, setSymbol] = useState("");
+  const [direction, setDirection] = useState("");
+  const [entry, setEntry] = useState("");
+  const [stop, setStop] = useState("");
+  const [exitPrice, setExitPrice] = useState("");
 
   return (
     <div className="flex min-h-screen bg-zinc-100">
@@ -63,11 +68,17 @@ export default function Home() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <input
                 type="text"
+                value={symbol}
+                onChange={(event) => setSymbol(event.target.value)}
                 placeholder="Symbol"
                 className="rounded-lg border border-zinc-300 p-3"
               />
 
-              <select className="rounded-lg border border-zinc-300 p-3">
+              <select
+                value={direction}
+                onChange={(event) => setDirection(event.target.value)}
+                className="rounded-lg border border-zinc-300 p-3"
+              >
                 <option value="">Direction</option>
                 <option value="long">Long</option>
                 <option value="short">Short</option>
@@ -75,18 +86,24 @@ export default function Home() {
 
               <input
                 type="number"
+                value={entry}
+                onChange={(event) => setEntry(event.target.value)}
                 placeholder="Entry"
                 className="rounded-lg border border-zinc-300 p-3"
               />
 
               <input
                 type="number"
+                value={stop}
+                onChange={(event) => setStop(event.target.value)}
                 placeholder="Stop"
                 className="rounded-lg border border-zinc-300 p-3"
               />
 
               <input
                 type="number"
+                value={exitPrice}
+                onChange={(event) => setExitPrice(event.target.value)}
                 placeholder="Exit price"
                 className="rounded-lg border border-zinc-300 p-3"
               />
