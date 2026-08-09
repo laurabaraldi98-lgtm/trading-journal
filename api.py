@@ -15,7 +15,7 @@ class TradeCreate(BaseModel):
     direction: Literal["long", "short"]
     entry: float
     stop: float
-    exit_price: float
+    exit: float
 
 
 class TradeUpdate(BaseModel):
@@ -23,7 +23,7 @@ class TradeUpdate(BaseModel):
     direction: Literal["long", "short"]
     entry: float
     stop: float
-    exit_price: float
+    exit: float
 
 
 app = FastAPI()
@@ -46,7 +46,7 @@ def create_trade(trade: TradeCreate):
             trade.direction,
             trade.entry,
             trade.stop,
-            trade.exit_price
+            trade.exit
         ),
         2
     )
@@ -56,7 +56,7 @@ def create_trade(trade: TradeCreate):
         trade.direction,
         trade.entry,
         trade.stop,
-        trade.exit_price,
+        trade.exit,
         result
     ]
 
@@ -77,7 +77,7 @@ def update_trade(trade_id: int, trade: TradeUpdate):
             trade.direction,
             trade.entry,
             trade.stop,
-            trade.exit_price
+            trade.exit
         ),
         2
     )
@@ -88,7 +88,7 @@ def update_trade(trade_id: int, trade: TradeUpdate):
         trade.direction,
         trade.entry,
         trade.stop,
-        trade.exit_price,
+        trade.exit,
         result
     ]
 

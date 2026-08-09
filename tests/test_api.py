@@ -31,7 +31,7 @@ def test_create_trade():
         "direction": "long",
         "entry": 1.12,
         "stop": 1.11,
-        "exit_price": 1.14
+        "exit": 1.14
     }
 
     with patch("api.save_trade_to_supabase", return_value=trade_data):
@@ -46,7 +46,7 @@ def test_create_trade_missing_direction():
         "symbol": "eurusd",
         "entry": 1.12,
         "stop": 1.11,
-        "exit_price": 1.14
+        "exit": 1.14
     }
 
     response = client.post("/trades", json=trade_data)
@@ -60,7 +60,7 @@ def test_create_trade_passes_correct_data_to_save():
         "direction": "long",
         "entry": 1.12,
         "stop": 1.11,
-        "exit_price": 1.14
+        "exit": 1.14
     }
 
     with patch("api.save_trade_to_supabase") as mock_save:
@@ -97,7 +97,7 @@ def test_update_trade():
         "direction": "long",
         "entry": 1.12,
         "stop": 1.11,
-        "exit_price": 1.14
+        "exit": 1.14
     }
 
     with patch("api.update_trade_in_supabase") as mock_update:
@@ -126,7 +126,7 @@ def test_update_trade_invalid_id():
         "direction": "long",
         "entry": 1.12,
         "stop": 1.11,
-        "exit_price": 1.14
+        "exit": 1.14
     }
 
     response = client.patch("/trades/banana", json=trade_data)
@@ -140,7 +140,7 @@ def test_update_trade_invalid_direction():
         "direction": "banana",
         "entry": 1.12,
         "stop": 1.11,
-        "exit_price": 1.14
+        "exit": 1.14
     }
 
     response = client.patch("/trades/5", json=trade_data)

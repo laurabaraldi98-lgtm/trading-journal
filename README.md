@@ -45,7 +45,7 @@ symbol
 direction
 entry
 stop
-exit_price
+exit
 result
 created_at
 ```
@@ -141,7 +141,7 @@ symbol
 direction
 entry
 stop
-exit_price
+exit
 result
 created_at
 ```
@@ -155,7 +155,7 @@ create table trades (
   direction text not null,
   entry numeric not null,
   stop numeric not null,
-  exit_price numeric not null,
+  exit numeric not null,
   result numeric not null,
   created_at timestamp with time zone default now()
 );

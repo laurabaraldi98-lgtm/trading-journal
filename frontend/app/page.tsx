@@ -8,7 +8,19 @@ export default function Home() {
   const [direction, setDirection] = useState("");
   const [entry, setEntry] = useState("");
   const [stop, setStop] = useState("");
-  const [exitPrice, setExitPrice] = useState("");
+  const [exit, setexit] = useState("");
+
+  function handleSaveTrade() {
+    const tradeData = {
+      symbol: symbol,
+      direction: direction,
+      entry: Number(entry),
+      stop: Number(stop),
+      exit: Number(exit),
+    };
+
+    console.log(tradeData);
+  }
 
   return (
     <div className="flex min-h-screen bg-zinc-100">
@@ -102,14 +114,17 @@ export default function Home() {
 
               <input
                 type="number"
-                value={exitPrice}
-                onChange={(event) => setExitPrice(event.target.value)}
+                value={exit}
+                onChange={(event) => setexit(event.target.value)}
                 placeholder="Exit price"
                 className="rounded-lg border border-zinc-300 p-3"
               />
             </div>
 
-            <button className="mt-4 rounded-lg bg-black px-5 py-3 text-white">
+            <button
+              onClick={handleSaveTrade}
+              className="mt-4 rounded-lg bg-black px-5 py-3 text-white"
+            >
               Save Trade
             </button>
           </div>

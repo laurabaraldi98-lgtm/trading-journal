@@ -1,10 +1,10 @@
-def calculate_r(direction, entry, stop, exit_price):
+def calculate_r(direction, entry, stop, exit):
     if direction == "long":
         risk = entry - stop
-        profit = exit_price - entry
+        profit = exit - entry
     else:  # short
         risk = stop - entry
-        profit = entry - exit_price
+        profit = entry - exit
 
     if risk == 0:
         raise ValueError("Entry and stop cannot be the same")

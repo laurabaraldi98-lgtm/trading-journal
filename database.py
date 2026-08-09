@@ -23,7 +23,7 @@ def load_trades_from_supabase():
             trade["direction"],
             float(trade["entry"]),
             float(trade["stop"]),
-            float(trade["exit_price"]),
+            float(trade["exit"]),
             float(trade["result"])
         ]
 
@@ -38,7 +38,7 @@ def save_trade_to_supabase(trade):
         "direction": trade[1],
         "entry": trade[2],
         "stop": trade[3],
-        "exit_price": trade[4],
+        "exit": trade[4],
         "result": trade[5]
     }
 
@@ -52,7 +52,7 @@ def save_trade_to_supabase(trade):
         saved_trade["direction"],
         float(saved_trade["entry"]),
         float(saved_trade["stop"]),
-        float(saved_trade["exit_price"]),
+        float(saved_trade["exit"]),
         float(saved_trade["result"])
     ]
 
@@ -69,7 +69,7 @@ def restore_trade_to_supabase(trade):
         "direction": trade[2],
         "entry": trade[3],
         "stop": trade[4],
-        "exit_price": trade[5],
+        "exit": trade[5],
         "result": trade[6]
     }
 
@@ -83,7 +83,7 @@ def restore_trade_to_supabase(trade):
         saved_trade["direction"],
         float(saved_trade["entry"]),
         float(saved_trade["stop"]),
-        float(saved_trade["exit_price"]),
+        float(saved_trade["exit"]),
         float(saved_trade["result"])
     ]
 
@@ -94,7 +94,7 @@ def update_trade_in_supabase(trade_id, updated_trade):
         "direction": updated_trade[2],
         "entry": updated_trade[3],
         "stop": updated_trade[4],
-        "exit_price": updated_trade[5],
+        "exit": updated_trade[5],
         "result": updated_trade[6]
     }
 

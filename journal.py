@@ -59,15 +59,15 @@ while True:
 
         entry = get_number("Entry price: ")
         stop = get_number("Stop loss: ")
-        exit_price = get_number("Exit price: ")
+        exit = get_number("Exit price: ")
 
         try:
-            result = round(calculate_r(direction, entry, stop, exit_price), 2)
+            result = round(calculate_r(direction, entry, stop, exit), 2)
         except ValueError as e:
             print("Error:", e)
             continue
 
-        trade = [symbol, direction, entry, stop, exit_price, result]
+        trade = [symbol, direction, entry, stop, exit, result]
         saved_trade = save_trade_to_supabase(trade)
         trades.append(saved_trade)
 
@@ -199,10 +199,10 @@ while True:
 
         entry = get_number("New entry price: ")
         stop = get_number("New stop loss: ")
-        exit_price = get_number("New exit price: ")
+        exit = get_number("New exit price: ")
 
         try:
-            result = round(calculate_r(direction, entry, stop, exit_price), 2)
+            result = round(calculate_r(direction, entry, stop, exit), 2)
         except ValueError as e:
             print("Error:", e)
             continue
@@ -213,7 +213,7 @@ while True:
             direction,
             entry,
             stop,
-            exit_price,
+            exit,
             result
         ]
 
