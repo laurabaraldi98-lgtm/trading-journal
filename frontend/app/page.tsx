@@ -49,6 +49,14 @@ export default function Home() {
   }
 
   async function handleDeleteTrade(tradeId: number) {
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this trade?"
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     const response = await fetch(
       `http://127.0.0.1:8000/trades/${tradeId}`,
       {
