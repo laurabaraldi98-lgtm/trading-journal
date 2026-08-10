@@ -2,6 +2,16 @@
 
 import { useEffect, useState } from "react";
 
+type Trade = [
+  number,
+  string,
+  string,
+  number,
+  number,
+  number,
+  number
+];
+
 export default function Home() {
   const [showForm, setShowForm] = useState(false);
   const [symbol, setSymbol] = useState("");
@@ -9,7 +19,8 @@ export default function Home() {
   const [entry, setEntry] = useState("");
   const [stop, setStop] = useState("");
   const [exit, setExit] = useState("");
-  const [trades, setTrades] = useState([]);
+  const [trades, setTrades] = useState<Trade[]>([]);
+  const [editingTradeId, setEditingTradeId] = useState<number | null>(null);
 
   useEffect(() => {
     async function loadTrades() {
@@ -68,6 +79,56 @@ export default function Home() {
       setTrades((currentTrades) =>
         currentTrades.filter((trade) => trade[0] !== tradeId)
       );
+    }
+  }
+
+  function handleEditTrade(trade: Trade) {
+    setEditingTradeId(trade[0]);
+    setSymbol(trade[1]);
+    setDirection(trade[2]);
+    setEntry(String(trade[3]));
+    setStop(String(trade[4]));
+    setExit(String(trade[5]));
+  }
+
+  async function handleUpdateTrade(tradeId: number) {
+    const tradeData = {
+      symbol,
+      direction,
+      entry: Number(entry),
+      stop: Number(stop),
+      exit: Number(exit),
+    };
+
+    const response = await fetch(
+      `http://127.0.0.1:8000/trades/${tradeId}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(tradeData),
+      }
+    );
+
+    if (response.ok) {
+      setTrades((currentTrades) =>
+        currentTrades.map((trade) =>
+          trade[0] === tradeId
+            ? [
+              trade[0],
+              symbol,
+              direction,
+              Number(entry),
+              Number(stop),
+              Number(exit),
+              trade[6],
+            ]
+            : trade
+        )
+      );
+
+      setEditingTradeId(null);
     }
   }
 
@@ -216,19 +277,76 @@ export default function Home() {
               key={index}
               className="grid grid-cols-7 gap-4 border-t border-zinc-200 py-3"
             >
-              <span>{trade[1]}</span>
-              <span>{trade[2]}</span>
-              <span>{trade[3]}</span>
-              <span>{trade[4]}</span>
-              <span>{trade[5]}</span>
-              <span>{trade[6]}R</span>
+              {editingTradeId === trade[0] ? (
+                <>
+                  <input
+                    value={symbol}
+                    onChange={(event) => setSymbol(event.target.value)}
+                    className="rounded border border-zinc-300 px-2 py-1"
+                  />
 
-              <button
-                onClick={() => handleDeleteTrade(trade[0])}
-                className="cursor-pointer rounded-lg px-2 py-1 text-red-600 hover:bg-red-50 hover:text-red-800"
-              >
-                Delete
-              </button>
+                  <select
+                    value={direction}
+                    onChange={(event) => setDirection(event.target.value)}
+                    className="rounded border border-zinc-300 px-2 py-1"
+                  >
+                    <option value="long">Long</option>
+                    <option value="short">Short</option>
+                  </select>
+
+                  <input
+                    value={entry}
+                    onChange={(event) => setEntry(event.target.value)}
+                    className="rounded border border-zinc-300 px-2 py-1"
+                  />
+
+                  <input
+                    value={stop}
+                    onChange={(event) => setStop(event.target.value)}
+                    className="rounded border border-zinc-300 px-2 py-1"
+                  />
+
+                  <input
+                    value={exit}
+                    onChange={(event) => setExit(event.target.value)}
+                    className="rounded border border-zinc-300 px-2 py-1"
+                  />
+
+                  <span>{trade[6]}R</span>
+
+                  <button
+                    onClick={() => handleUpdateTrade(trade[0])}
+                    className="cursor-pointer rounded-lg px-2 py-1 text-zinc-700 hover:bg-zinc-100"
+                  >
+                    Save
+                  </button>
+                </>
+              ) : (
+                <>
+                  <span>{trade[1]}</span>
+                  <span>{trade[2]}</span>
+                  <span>{trade[3]}</span>
+                  <span>{trade[4]}</span>
+                  <span>{trade[5]}</span>
+                  <span>{trade[6]}R</span>
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleEditTrade(trade)}
+                      className="cursor-pointer rounded-lg px-2 py-1 text-zinc-700 hover:bg-zinc-100"
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleDeleteTrade(trade[0])}
+                      className="cursor-pointer rounded-lg px-2 py-1 text-red-600 hover:bg-red-50 hover:text-red-800"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           ))}
         </div>
