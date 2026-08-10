@@ -26,14 +26,16 @@ export default function Home() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [editingTradeId, setEditingTradeId] = useState<number | null>(null);
 
+  async function loadTrades() {
+    const response = await fetch("http://127.0.0.1:8000/trades", {
+      cache: "no-store",
+    });
+    const data = await response.json();
+
+    setTrades(data);
+  }
+
   useEffect(() => {
-    async function loadTrades() {
-      const response = await fetch("http://127.0.0.1:8000/trades");
-      const data = await response.json();
-
-      setTrades(data);
-    }
-
     loadTrades();
   }, []);
 
@@ -44,8 +46,8 @@ export default function Home() {
       entry: Number(entry),
       stop: Number(stop),
       exit: Number(exit),
-      entry_datetime: entryDatetime,
-      exit_datetime: exitDatetime,
+      entry_datetime: entryDatetime || null,
+      exit_datetime: exitDatetime || null,
     };
 
     const response = await fetch("http://127.0.0.1:8000/trades", {
@@ -57,12 +59,7 @@ export default function Home() {
     });
 
     if (response.ok) {
-      const newTrade = await response.json();
-
-      setTrades((currentTrades) => [
-        ...currentTrades,
-        newTrade,
-      ]);
+      await loadTrades();
 
       setSymbol("");
       setDirection("");
@@ -131,16 +128,9 @@ export default function Home() {
     );
 
     if (response.ok) {
-      const updatedTrade = await response.json();
-
-      setTrades((currentTrades) =>
-        currentTrades.map((trade) =>
-          trade[0] === tradeId
-            ? updatedTrade
-            : trade
-        )
-      );
-
+      // Reload from the server instead of patching the array in place,
+      // so the list stays correctly ordered by date after an edit.
+      await loadTrades();
       setEditingTradeId(null);
     }
   }
@@ -175,7 +165,7 @@ export default function Home() {
         </nav>
       </aside>
 
-      <main className="flex-1 p-10">
+      <main className="min-w-0 flex-1 p-10">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-3xl font-bold">
