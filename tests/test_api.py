@@ -66,14 +66,18 @@ def test_create_trade_passes_correct_data_to_save():
     with patch("api.save_trade_to_supabase") as mock_save:
         client.post("/trades", json=trade_data)
 
-    mock_save.assert_called_once_with([
-        "eurusd",
-        "long",
-        1.12,
-        1.11,
-        1.14,
-        2.0
-    ])
+    mock_save.assert_called_once_with(
+        [
+            "eurusd",
+            "long",
+            1.12,
+            1.11,
+            1.14,
+            2.0,
+            None,
+            None
+        ]
+    )
 
 
 def test_delete_trade():
@@ -104,7 +108,17 @@ def test_update_trade():
         response = client.patch("/trades/5", json=trade_data)
 
     assert response.status_code == 200
-    assert response.json() == {"message": "Trade updated"}
+    assert response.json() == [
+        5,
+        "eurusd",
+        "long",
+        1.12,
+        1.11,
+        1.14,
+        2.0,
+        None,
+        None
+    ]
 
     mock_update.assert_called_once_with(
         5,
@@ -115,7 +129,9 @@ def test_update_trade():
             1.12,
             1.11,
             1.14,
-            2.0
+            2.0,
+            None,
+            None
         ]
     )
 
