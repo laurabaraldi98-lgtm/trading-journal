@@ -12,7 +12,13 @@ supabase = create_client(supabase_url, supabase_key)
 
 
 def load_trades_from_supabase():
-    response = supabase.table("trades").select("*").execute()
+    response = (
+        supabase
+        .table("trades")
+        .select("*")
+        .order("entry_datetime", desc=True, nullsfirst=False)
+        .execute()
+    )
 
     loaded_trades = []
 
