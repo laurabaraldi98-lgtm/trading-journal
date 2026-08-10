@@ -8,6 +8,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      SUPABASE_URL: "https://example.supabase.co"
+      SUPABASE_KEY: "test-key"
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
