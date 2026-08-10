@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const [showForm, setShowForm] = useState(false);
@@ -9,6 +9,18 @@ export default function Home() {
   const [entry, setEntry] = useState("");
   const [stop, setStop] = useState("");
   const [exit, setExit] = useState("");
+  const [trades, setTrades] = useState([]);
+
+  useEffect(() => {
+    async function loadTrades() {
+      const response = await fetch("http://127.0.0.1:8000/trades");
+      const data = await response.json();
+
+      setTrades(data);
+    }
+
+    loadTrades();
+  }, []);
 
   async function handleSaveTrade() {
     const tradeData = {
@@ -171,6 +183,24 @@ export default function Home() {
           <p className="text-zinc-500 mt-2">
             Chart coming soon.
           </p>
+        </div>
+
+        <div className="mt-8 rounded-xl bg-white p-6 border border-zinc-200">
+          <h3 className="text-xl font-semibold mb-4">Recent Trades</h3>
+
+          {trades.map((trade, index) => (
+            <div
+              key={index}
+              className="grid grid-cols-6 gap-4 border-t border-zinc-200 py-3"
+            >
+              <span>{trade[1]}</span>
+              <span>{trade[2]}</span>
+              <span>{trade[3]}</span>
+              <span>{trade[4]}</span>
+              <span>{trade[5]}</span>
+              <span>{trade[6]}R</span>
+            </div>
+          ))}
         </div>
 
       </main>
