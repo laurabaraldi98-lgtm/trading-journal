@@ -48,6 +48,21 @@ export default function Home() {
     }
   }
 
+  async function handleDeleteTrade(tradeId: number) {
+    const response = await fetch(
+      `http://127.0.0.1:8000/trades/${tradeId}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    if (response.ok) {
+      setTrades((currentTrades) =>
+        currentTrades.filter((trade) => trade[0] !== tradeId)
+      );
+    }
+  }
+
   return (
     <div className="flex min-h-screen bg-zinc-100">
       <aside className="w-64 bg-white p-6 border-r border-zinc-200">
@@ -191,7 +206,7 @@ export default function Home() {
           {trades.map((trade, index) => (
             <div
               key={index}
-              className="grid grid-cols-6 gap-4 border-t border-zinc-200 py-3"
+              className="grid grid-cols-7 gap-4 border-t border-zinc-200 py-3"
             >
               <span>{trade[1]}</span>
               <span>{trade[2]}</span>
@@ -199,6 +214,13 @@ export default function Home() {
               <span>{trade[4]}</span>
               <span>{trade[5]}</span>
               <span>{trade[6]}R</span>
+
+              <button
+                onClick={() => handleDeleteTrade(trade[0])}
+                className="cursor-pointer rounded-lg px-2 py-1 text-red-600 hover:bg-red-50 hover:text-red-800"
+              >
+                Delete
+              </button>
             </div>
           ))}
         </div>
