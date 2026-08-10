@@ -24,7 +24,9 @@ def load_trades_from_supabase():
             float(trade["entry"]),
             float(trade["stop"]),
             float(trade["exit"]),
-            float(trade["result"])
+            float(trade["result"]),
+            trade["entry_datetime"],
+            trade["exit_datetime"]
         ]
 
         loaded_trades.append(loaded_trade)
@@ -39,7 +41,9 @@ def save_trade_to_supabase(trade):
         "entry": trade[2],
         "stop": trade[3],
         "exit": trade[4],
-        "result": trade[5]
+        "result": trade[5],
+        "entry_datetime": trade[6].isoformat() if trade[6] else None,
+        "exit_datetime": trade[7].isoformat() if trade[7] else None
     }
 
     response = supabase.table("trades").insert(new_trade).execute()
@@ -95,7 +99,9 @@ def update_trade_in_supabase(trade_id, updated_trade):
         "entry": updated_trade[3],
         "stop": updated_trade[4],
         "exit": updated_trade[5],
-        "result": updated_trade[6]
+        "result": updated_trade[6],
+        "entry_datetime": updated_trade[7].isoformat() if updated_trade[7] else None,
+        "exit_datetime": updated_trade[8].isoformat() if updated_trade[8] else None
     }
 
     response = (

@@ -9,6 +9,7 @@ from database import (
 from pydantic import BaseModel
 from calculations import calculate_r
 from typing import Literal
+from datetime import datetime
 
 
 class TradeCreate(BaseModel):
@@ -17,6 +18,8 @@ class TradeCreate(BaseModel):
     entry: float
     stop: float
     exit: float
+    entry_datetime: datetime | None = None
+    exit_datetime: datetime | None = None
 
 
 class TradeUpdate(BaseModel):
@@ -25,6 +28,8 @@ class TradeUpdate(BaseModel):
     entry: float
     stop: float
     exit: float
+    entry_datetime: datetime | None = None
+    exit_datetime: datetime | None = None
 
 
 app = FastAPI()
@@ -67,7 +72,9 @@ def create_trade(trade: TradeCreate):
         trade.entry,
         trade.stop,
         trade.exit,
-        result
+        result,
+        trade.entry_datetime,
+        trade.exit_datetime
     ]
 
     return save_trade_to_supabase(trade_data)
@@ -99,9 +106,11 @@ def update_trade(trade_id: int, trade: TradeUpdate):
         trade.entry,
         trade.stop,
         trade.exit,
-        result
+        result,
+        trade.entry_datetime,
+        trade.exit_datetime
     ]
 
     update_trade_in_supabase(trade_id, updated_trade)
 
-    return {"message": "Trade updated"}
+    return updated_trade

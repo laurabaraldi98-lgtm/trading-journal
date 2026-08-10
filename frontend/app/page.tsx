@@ -9,7 +9,9 @@ type Trade = [
   number,
   number,
   number,
-  number
+  number,
+  string | null,
+  string | null
 ];
 
 export default function Home() {
@@ -19,6 +21,8 @@ export default function Home() {
   const [entry, setEntry] = useState("");
   const [stop, setStop] = useState("");
   const [exit, setExit] = useState("");
+  const [entryDatetime, setEntryDatetime] = useState("");
+  const [exitDatetime, setExitDatetime] = useState("");
   const [trades, setTrades] = useState<Trade[]>([]);
   const [editingTradeId, setEditingTradeId] = useState<number | null>(null);
 
@@ -40,6 +44,8 @@ export default function Home() {
       entry: Number(entry),
       stop: Number(stop),
       exit: Number(exit),
+      entry_datetime: entryDatetime,
+      exit_datetime: exitDatetime,
     };
 
     const response = await fetch("http://127.0.0.1:8000/trades", {
@@ -51,11 +57,20 @@ export default function Home() {
     });
 
     if (response.ok) {
+      const newTrade = await response.json();
+
+      setTrades((currentTrades) => [
+        ...currentTrades,
+        newTrade,
+      ]);
+
       setSymbol("");
       setDirection("");
       setEntry("");
       setStop("");
       setExit("");
+      setEntryDatetime("");
+      setExitDatetime("");
     }
   }
 
@@ -89,6 +104,8 @@ export default function Home() {
     setEntry(String(trade[3]));
     setStop(String(trade[4]));
     setExit(String(trade[5]));
+    setEntryDatetime(trade[7] ? trade[7].slice(0, 16) : "");
+    setExitDatetime(trade[8] ? trade[8].slice(0, 16) : "");
   }
 
   async function handleUpdateTrade(tradeId: number) {
@@ -98,6 +115,8 @@ export default function Home() {
       entry: Number(entry),
       stop: Number(stop),
       exit: Number(exit),
+      entry_datetime: entryDatetime,
+      exit_datetime: exitDatetime,
     };
 
     const response = await fetch(
@@ -112,18 +131,12 @@ export default function Home() {
     );
 
     if (response.ok) {
+      const updatedTrade = await response.json();
+
       setTrades((currentTrades) =>
         currentTrades.map((trade) =>
           trade[0] === tradeId
-            ? [
-              trade[0],
-              symbol,
-              direction,
-              Number(entry),
-              Number(stop),
-              Number(exit),
-              trade[6],
-            ]
+            ? updatedTrade
             : trade
         )
       );
@@ -229,6 +242,20 @@ export default function Home() {
                 placeholder="Exit price"
                 className="rounded-lg border border-zinc-300 p-3"
               />
+
+              <input
+                type="datetime-local"
+                value={entryDatetime}
+                onChange={(event) => setEntryDatetime(event.target.value)}
+                className="rounded-lg border border-zinc-300 p-3"
+              />
+
+              <input
+                type="datetime-local"
+                value={exitDatetime}
+                onChange={(event) => setExitDatetime(event.target.value)}
+                className="rounded-lg border border-zinc-300 p-3"
+              />
             </div>
 
             <button
@@ -238,7 +265,8 @@ export default function Home() {
               Save Trade
             </button>
           </div>
-        )}
+        )
+        }
 
         <div className="grid grid-cols-1 gap-4 mt-8 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl bg-white p-5 border border-zinc-200">
@@ -275,7 +303,7 @@ export default function Home() {
           {trades.map((trade, index) => (
             <div
               key={index}
-              className="grid grid-cols-7 gap-4 border-t border-zinc-200 py-3"
+              className="grid grid-cols-9 gap-4 border-t border-zinc-200 py-3"
             >
               {editingTradeId === trade[0] ? (
                 <>
@@ -312,6 +340,20 @@ export default function Home() {
                     className="rounded border border-zinc-300 px-2 py-1"
                   />
 
+                  <input
+                    type="datetime-local"
+                    value={entryDatetime}
+                    onChange={(event) => setEntryDatetime(event.target.value)}
+                    className="rounded border border-zinc-300 px-2 py-1"
+                  />
+
+                  <input
+                    type="datetime-local"
+                    value={exitDatetime}
+                    onChange={(event) => setExitDatetime(event.target.value)}
+                    className="rounded border border-zinc-300 px-2 py-1"
+                  />
+
                   <span>{trade[6]}R</span>
 
                   <button
@@ -328,6 +370,13 @@ export default function Home() {
                   <span>{trade[3]}</span>
                   <span>{trade[4]}</span>
                   <span>{trade[5]}</span>
+                  <span>
+                    {trade[7] ? new Date(trade[7]).toLocaleString() : "-"}
+                  </span>
+
+                  <span>
+                    {trade[8] ? new Date(trade[8]).toLocaleString() : "-"}
+                  </span>
                   <span>{trade[6]}R</span>
 
                   <div className="flex gap-2">
@@ -351,7 +400,7 @@ export default function Home() {
           ))}
         </div>
 
-      </main>
-    </div>
+      </main >
+    </div >
   );
 }
