@@ -8,9 +8,9 @@ export default function Home() {
   const [direction, setDirection] = useState("");
   const [entry, setEntry] = useState("");
   const [stop, setStop] = useState("");
-  const [exit, setexit] = useState("");
+  const [exit, setExit] = useState("");
 
-  function handleSaveTrade() {
+  async function handleSaveTrade() {
     const tradeData = {
       symbol: symbol,
       direction: direction,
@@ -19,7 +19,21 @@ export default function Home() {
       exit: Number(exit),
     };
 
-    console.log(tradeData);
+    const response = await fetch("http://127.0.0.1:8000/trades", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(tradeData),
+    });
+
+    if (response.ok) {
+      setSymbol("");
+      setDirection("");
+      setEntry("");
+      setStop("");
+      setExit("");
+    }
   }
 
   return (
@@ -66,7 +80,7 @@ export default function Home() {
 
           <button
             onClick={() => setShowForm(!showForm)}
-            className="rounded-lg bg-black px-5 py-3 text-white"
+            className="cursor-pointer rounded-lg bg-black px-5 py-3 text-white"
           >
             + Add Trade
           </button>
@@ -115,7 +129,7 @@ export default function Home() {
               <input
                 type="number"
                 value={exit}
-                onChange={(event) => setexit(event.target.value)}
+                onChange={(event) => setExit(event.target.value)}
                 placeholder="Exit price"
                 className="rounded-lg border border-zinc-300 p-3"
               />
@@ -123,7 +137,7 @@ export default function Home() {
 
             <button
               onClick={handleSaveTrade}
-              className="mt-4 rounded-lg bg-black px-5 py-3 text-white"
+              className="mt-4 cursor-pointer rounded-lg bg-black px-5 py-3 text-white"
             >
               Save Trade
             </button>
