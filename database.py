@@ -82,31 +82,6 @@ def delete_trade_from_supabase(trade_id, user_id: str):
     return response
 
 
-def restore_trade_to_supabase(trade):
-    restored_trade = {
-        "symbol": trade[1],
-        "direction": trade[2],
-        "entry": trade[3],
-        "stop": trade[4],
-        "exit": trade[5],
-        "result": trade[6]
-    }
-
-    response = supabase.table("trades").insert(restored_trade).execute()
-
-    saved_trade = response.data[0]
-
-    return [
-        saved_trade["id"],
-        saved_trade["symbol"],
-        saved_trade["direction"],
-        float(saved_trade["entry"]),
-        float(saved_trade["stop"]),
-        float(saved_trade["exit"]),
-        float(saved_trade["result"])
-    ]
-
-
 def update_trade_in_supabase(trade_id, updated_trade, user_id: str):
     trade_data = {
         "symbol": updated_trade[1],
