@@ -11,11 +11,12 @@ supabase_key = os.getenv("SUPABASE_KEY")
 supabase = create_client(supabase_url, supabase_key)
 
 
-def load_trades_from_supabase():
+def load_trades_from_supabase(user_id: str):
     response = (
         supabase
         .table("trades")
         .select("*")
+        .eq("user_id", user_id)
         .order("entry_datetime", desc=True, nullsfirst=False)
         .execute()
     )
@@ -40,7 +41,7 @@ def load_trades_from_supabase():
     return loaded_trades
 
 
-def save_trade_to_supabase(trade):
+def save_trade_to_supabase(trade, user_id: str):
     new_trade = {
         "symbol": trade[0],
         "direction": trade[1],
@@ -49,7 +50,8 @@ def save_trade_to_supabase(trade):
         "exit": trade[4],
         "result": trade[5],
         "entry_datetime": trade[6].isoformat() if trade[6] else None,
-        "exit_datetime": trade[7].isoformat() if trade[7] else None
+        "exit_datetime": trade[7].isoformat() if trade[7] else None,
+        "user_id": user_id
     }
 
     response = supabase.table("trades").insert(new_trade).execute()
@@ -67,8 +69,15 @@ def save_trade_to_supabase(trade):
     ]
 
 
-def delete_trade_from_supabase(trade_id):
-    response = supabase.table("trades").delete().eq("id", trade_id).execute()
+def delete_trade_from_supabase(trade_id, user_id: str):
+    response = (
+        supabase
+        .table("trades")
+        .delete()
+        .eq("id", trade_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
 
     return response
 
@@ -98,7 +107,7 @@ def restore_trade_to_supabase(trade):
     ]
 
 
-def update_trade_in_supabase(trade_id, updated_trade):
+def update_trade_in_supabase(trade_id, updated_trade, user_id: str):
     trade_data = {
         "symbol": updated_trade[1],
         "direction": updated_trade[2],
@@ -115,6 +124,7 @@ def update_trade_in_supabase(trade_id, updated_trade):
         .table("trades")
         .update(trade_data)
         .eq("id", trade_id)
+        .eq("user_id", user_id)
         .execute()
     )
 

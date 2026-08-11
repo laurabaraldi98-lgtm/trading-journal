@@ -106,10 +106,20 @@ export default function Home() {
       exit_datetime: exitDatetime || null,
     };
 
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      window.location.href = "/login";
+      return;
+    }
+
     const response = await fetch("http://127.0.0.1:8000/trades", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
       },
       body: JSON.stringify(tradeData),
     });
@@ -136,10 +146,22 @@ export default function Home() {
       return;
     }
 
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      window.location.href = "/login";
+      return;
+    }
+
     const response = await fetch(
       `http://127.0.0.1:8000/trades/${tradeId}`,
       {
         method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
       }
     );
 
@@ -168,9 +190,18 @@ export default function Home() {
       entry: Number(entry),
       stop: Number(stop),
       exit: Number(exit),
-      entry_datetime: entryDatetime,
-      exit_datetime: exitDatetime,
+      entry_datetime: entryDatetime || null,
+      exit_datetime: exitDatetime || null,
     };
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      window.location.href = "/login";
+      return;
+    }
 
     const response = await fetch(
       `http://127.0.0.1:8000/trades/${tradeId}`,
@@ -178,6 +209,7 @@ export default function Home() {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(tradeData),
       }

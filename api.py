@@ -52,11 +52,14 @@ def root():
 
 @app.get("/trades")
 def get_trades(user=Depends(get_current_user)):
-    return load_trades_from_supabase()
+    return load_trades_from_supabase(user.id)
 
 
 @app.post("/trades")
-def create_trade(trade: TradeCreate):
+def create_trade(
+    trade: TradeCreate,
+    user=Depends(get_current_user)
+):
     result = round(
         calculate_r(
             trade.direction,
@@ -78,18 +81,23 @@ def create_trade(trade: TradeCreate):
         trade.exit_datetime
     ]
 
-    return save_trade_to_supabase(trade_data)
+    return save_trade_to_supabase(trade_data, user.id)
 
 
 @app.delete("/trades/{trade_id}")
-def delete_trade(trade_id: int):
-    delete_trade_from_supabase(trade_id)
-
-    return {"message": "Trade deleted"}
+def delete_trade(
+    trade_id: int,
+    user=Depends(get_current_user)
+):
+    return delete_trade_from_supabase(trade_id, user.id)
 
 
 @app.patch("/trades/{trade_id}")
-def update_trade(trade_id: int, trade: TradeUpdate):
+def update_trade(
+    trade_id: int,
+    trade: TradeUpdate,
+    user=Depends(get_current_user)
+):
     result = round(
         calculate_r(
             trade.direction,
@@ -112,6 +120,8 @@ def update_trade(trade_id: int, trade: TradeUpdate):
         trade.exit_datetime
     ]
 
-    update_trade_in_supabase(trade_id, updated_trade)
-
-    return updated_trade
+    return update_trade_in_supabase(
+        trade_id,
+        updated_trade,
+        user.id
+    )
