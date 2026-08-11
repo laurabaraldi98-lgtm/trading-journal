@@ -19,10 +19,21 @@ def test_get_trades():
     ]
 
     with patch("api.load_trades_from_supabase", return_value=fake_trades):
-        response = client.get("/trades")
+        response = client.get(
+            "/trades",
+            headers={
+                "Authorization": "Bearer test-token"
+            }
+        )
 
     assert response.status_code == 200
     assert response.json() == fake_trades
+
+
+def test_get_trades_without_auth_returns_401():
+    response = client.get("/trades")
+
+    assert response.status_code == 401
 
 
 def test_create_trade():

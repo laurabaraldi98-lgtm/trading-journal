@@ -27,6 +27,7 @@ export default function Home() {
   const [trades, setTrades] = useState<Trade[]>([]);
   const [editingTradeId, setEditingTradeId] = useState<number | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null);;
+  const [authLoading, setAuthLoading] = useState(true);
 
   async function loadTrades() {
     const {
@@ -65,13 +66,24 @@ export default function Home() {
         data: { session },
       } = await supabase.auth.getSession();
 
-      setUserEmail(session?.user.email ?? null);
+      if (!session) {
+        window.location.href = "/login";
+        return;
+      }
+
+      setUserEmail(session.user.email ?? null);
+      setAuthLoading(false);
     }
 
     loadUser();
 
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUserEmail(session?.user.email ?? null);
+      if (!session) {
+        window.location.href = "/login";
+        return;
+      }
+
+      setUserEmail(session.user.email ?? null);
     });
 
     return () => {
@@ -177,6 +189,10 @@ export default function Home() {
       await loadTrades();
       setEditingTradeId(null);
     }
+  }
+
+  if (authLoading) {
+    return null;
   }
 
   return (

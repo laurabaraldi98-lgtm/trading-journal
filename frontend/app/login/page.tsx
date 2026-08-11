@@ -9,7 +9,7 @@ export default function LoginPage() {
     const [message, setMessage] = useState("");
 
     async function handleLogin() {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        const { error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
@@ -19,9 +19,7 @@ export default function LoginPage() {
             return;
         }
 
-        console.log(data);
-
-        setMessage("Login successful");
+        window.location.href = "/";
     }
 
     async function handleSignUp() {
