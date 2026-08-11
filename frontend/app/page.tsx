@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "../lib/supabase";
+import Sidebar from "../components/Sidebar";
+import TradeForm from "../components/TradeForm";
+import TradesTable from "../components/TradesTable";
+
 
 type Trade = [
   number,
@@ -229,47 +233,10 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen bg-zinc-100">
-      <aside className="w-64 bg-white p-6 border-r border-zinc-200">
-        <h1 className="text-2xl font-bold mb-8">
-          Trading Journal
-        </h1>
-
-        <div className="mb-6 border-b border-zinc-200 pb-4">
-          <p className="text-sm text-zinc-600">
-            {userEmail}
-          </p>
-
-          <button
-            onClick={handleLogout}
-            className="mt-2 cursor-pointer text-sm text-zinc-500 hover:text-black"
-          >
-            Sign Out
-          </button>
-        </div>
-
-
-        <nav className="flex flex-col gap-4">
-          <a href="#" className="font-medium">
-            Dashboard
-          </a>
-
-          <a href="#" className="text-zinc-600">
-            Trades
-          </a>
-
-          <a href="#" className="text-zinc-600">
-            Statistics
-          </a>
-
-          <a href="#" className="text-zinc-600">
-            Import CSV
-          </a>
-
-          <a href="#" className="text-zinc-600">
-            Account
-          </a>
-        </nav>
-      </aside>
+      <Sidebar
+        userEmail={userEmail}
+        onLogout={handleLogout}
+      />
 
       <main className="min-w-0 flex-1 p-10">
         <div className="flex items-center justify-between">
@@ -293,76 +260,24 @@ export default function Home() {
         </div>
 
         {showForm && (
-          <div className="mt-6 rounded-xl bg-white p-6 border border-zinc-200">
-            <h3 className="text-xl font-semibold mb-4">Add Trade</h3>
-
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <input
-                type="text"
-                value={symbol}
-                onChange={(event) => setSymbol(event.target.value)}
-                placeholder="Symbol"
-                className="rounded-lg border border-zinc-300 p-3"
-              />
-
-              <select
-                value={direction}
-                onChange={(event) => setDirection(event.target.value)}
-                className="rounded-lg border border-zinc-300 p-3"
-              >
-                <option value="">Direction</option>
-                <option value="long">Long</option>
-                <option value="short">Short</option>
-              </select>
-
-              <input
-                type="number"
-                value={entry}
-                onChange={(event) => setEntry(event.target.value)}
-                placeholder="Entry"
-                className="rounded-lg border border-zinc-300 p-3"
-              />
-
-              <input
-                type="number"
-                value={stop}
-                onChange={(event) => setStop(event.target.value)}
-                placeholder="Stop"
-                className="rounded-lg border border-zinc-300 p-3"
-              />
-
-              <input
-                type="number"
-                value={exit}
-                onChange={(event) => setExit(event.target.value)}
-                placeholder="Exit price"
-                className="rounded-lg border border-zinc-300 p-3"
-              />
-
-              <input
-                type="datetime-local"
-                value={entryDatetime}
-                onChange={(event) => setEntryDatetime(event.target.value)}
-                className="rounded-lg border border-zinc-300 p-3"
-              />
-
-              <input
-                type="datetime-local"
-                value={exitDatetime}
-                onChange={(event) => setExitDatetime(event.target.value)}
-                className="rounded-lg border border-zinc-300 p-3"
-              />
-            </div>
-
-            <button
-              onClick={handleSaveTrade}
-              className="mt-4 cursor-pointer rounded-lg bg-black px-5 py-3 text-white"
-            >
-              Save Trade
-            </button>
-          </div>
-        )
-        }
+          <TradeForm
+            symbol={symbol}
+            direction={direction}
+            entry={entry}
+            stop={stop}
+            exit={exit}
+            entryDatetime={entryDatetime}
+            exitDatetime={exitDatetime}
+            setSymbol={setSymbol}
+            setDirection={setDirection}
+            setEntry={setEntry}
+            setStop={setStop}
+            setExit={setExit}
+            setEntryDatetime={setEntryDatetime}
+            setExitDatetime={setExitDatetime}
+            onSave={handleSaveTrade}
+          />
+        )}
 
         <div className="grid grid-cols-1 gap-4 mt-8 sm:grid-cols-2 xl:grid-cols-4">
           <div className="rounded-xl bg-white p-5 border border-zinc-200">
@@ -393,150 +308,31 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="mt-8 rounded-xl bg-white p-6 border border-zinc-200">
-          <h3 className="text-xl font-semibold mb-4">Recent Trades</h3>
+        <TradesTable
+          trades={trades}
+          editingTradeId={editingTradeId}
 
-          <div className="overflow-x-auto">
-            <table className="min-w-[1100px] w-full">
-              <thead>
-                <tr className="border-b border-zinc-200 text-left text-sm text-zinc-500">
-                  <th className="py-3 pr-6">Symbol</th>
-                  <th className="py-3 pr-6">Direction</th>
-                  <th className="py-3 pr-6">Entry</th>
-                  <th className="py-3 pr-6">Stop</th>
-                  <th className="py-3 pr-6">Exit</th>
-                  <th className="py-3 pr-6">Entry Time</th>
-                  <th className="py-3 pr-6">Exit Time</th>
-                  <th className="py-3 pr-6">Result</th>
-                  <th className="py-3">Actions</th>
-                </tr>
-              </thead>
+          symbol={symbol}
+          direction={direction}
+          entry={entry}
+          stop={stop}
+          exit={exit}
+          entryDatetime={entryDatetime}
+          exitDatetime={exitDatetime}
 
-              <tbody>
-                {trades.map((trade) => (
-                  <tr key={trade[0]} className="border-b border-zinc-200">
-                    {editingTradeId === trade[0] ? (
-                      <>
-                        <td className="py-3 pr-6">
-                          <input
-                            value={symbol}
-                            onChange={(event) => setSymbol(event.target.value)}
-                            className="rounded border border-zinc-300 px-2 py-1"
-                          />
-                        </td>
+          setSymbol={setSymbol}
+          setDirection={setDirection}
+          setEntry={setEntry}
+          setStop={setStop}
+          setExit={setExit}
+          setEntryDatetime={setEntryDatetime}
+          setExitDatetime={setExitDatetime}
 
-                        <td className="py-3 pr-6">
-                          <select
-                            value={direction}
-                            onChange={(event) => setDirection(event.target.value)}
-                            className="rounded border border-zinc-300 px-2 py-1"
-                          >
-                            <option value="long">Long</option>
-                            <option value="short">Short</option>
-                          </select>
-                        </td>
-
-                        <td className="py-3 pr-6">
-                          <input
-                            value={entry}
-                            onChange={(event) => setEntry(event.target.value)}
-                            className="w-24 rounded border border-zinc-300 px-2 py-1"
-                          />
-                        </td>
-
-                        <td className="py-3 pr-6">
-                          <input
-                            value={stop}
-                            onChange={(event) => setStop(event.target.value)}
-                            className="w-24 rounded border border-zinc-300 px-2 py-1"
-                          />
-                        </td>
-
-                        <td className="py-3 pr-6">
-                          <input
-                            value={exit}
-                            onChange={(event) => setExit(event.target.value)}
-                            className="w-24 rounded border border-zinc-300 px-2 py-1"
-                          />
-                        </td>
-
-                        <td className="py-3 pr-6">
-                          <input
-                            type="datetime-local"
-                            value={entryDatetime}
-                            onChange={(event) => setEntryDatetime(event.target.value)}
-                            className="rounded border border-zinc-300 px-2 py-1"
-                          />
-                        </td>
-
-                        <td className="py-3 pr-6">
-                          <input
-                            type="datetime-local"
-                            value={exitDatetime}
-                            onChange={(event) => setExitDatetime(event.target.value)}
-                            className="rounded border border-zinc-300 px-2 py-1"
-                          />
-                        </td>
-
-                        <td className="py-3 pr-6">
-                          {trade[6]}R
-                        </td>
-
-                        <td className="py-3">
-                          <button
-                            onClick={() => handleUpdateTrade(trade[0])}
-                            className="cursor-pointer rounded-lg px-2 py-1 text-zinc-700 hover:bg-zinc-100"
-                          >
-                            Save
-                          </button>
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td className="py-3 pr-6">{trade[1]}</td>
-                        <td className="py-3 pr-6">{trade[2]}</td>
-                        <td className="py-3 pr-6">{trade[3]}</td>
-                        <td className="py-3 pr-6">{trade[4]}</td>
-                        <td className="py-3 pr-6">{trade[5]}</td>
-
-                        <td className="py-3 pr-6 whitespace-nowrap">
-                          {trade[7] ? new Date(trade[7]).toLocaleString() : "-"}
-                        </td>
-
-                        <td className="py-3 pr-6 whitespace-nowrap">
-                          {trade[8] ? new Date(trade[8]).toLocaleString() : "-"}
-                        </td>
-
-                        <td className="py-3 pr-6">
-                          {trade[6]}R
-                        </td>
-
-                        <td className="py-3">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => handleEditTrade(trade)}
-                              className="cursor-pointer rounded-lg px-2 py-1 text-zinc-700 hover:bg-zinc-100"
-                            >
-                              Edit
-                            </button>
-
-                            <button
-                              onClick={() => handleDeleteTrade(trade[0])}
-                              className="cursor-pointer rounded-lg px-2 py-1 text-red-600 hover:bg-red-50 hover:text-red-800"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </main>
-    </div>
+          onEdit={handleEditTrade}
+          onUpdate={handleUpdateTrade}
+          onDelete={handleDeleteTrade}
+        />
+      </main >
+    </div >
   );
 }
