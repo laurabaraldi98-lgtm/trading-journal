@@ -9,7 +9,7 @@ export default function LoginPage() {
     const [message, setMessage] = useState("");
 
     async function handleLogin() {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
@@ -18,6 +18,8 @@ export default function LoginPage() {
             setMessage(error.message);
             return;
         }
+
+        console.log(data);
 
         setMessage("Login successful");
     }

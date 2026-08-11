@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { supabase } from "../lib/supabase";
 
 type Trade = [
   number,
@@ -24,16 +25,59 @@ export default function Home() {
   const [entryDatetime, setEntryDatetime] = useState("");
   const [exitDatetime, setExitDatetime] = useState("");
   const [trades, setTrades] = useState<Trade[]>([]);
-  const [editingTradeId, setEditingTradeId] = useState<number | null>(null);
+  const [editingTradeId, setEditingTradeId] = useState<number | null>(null)
+  const [userEmail, setUserEmail] = useState<string | null>(null);;
 
   async function loadTrades() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      return;
+    }
+
+    setUserEmail(session.user.email ?? null);
+
     const response = await fetch("http://127.0.0.1:8000/trades", {
       cache: "no-store",
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
     });
+
     const data = await response.json();
 
     setTrades(data);
   }
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+
+    setUserEmail(null);
+
+    window.location.href = "/login";
+  }
+
+  useEffect(() => {
+    async function loadUser() {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      setUserEmail(session?.user.email ?? null);
+    }
+
+    loadUser();
+
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUserEmail(session?.user.email ?? null);
+    });
+
+    return () => {
+      data.subscription.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     loadTrades();
@@ -141,6 +185,20 @@ export default function Home() {
         <h1 className="text-2xl font-bold mb-8">
           Trading Journal
         </h1>
+
+        <div className="mb-6 border-b border-zinc-200 pb-4">
+          <p className="text-sm text-zinc-600">
+            {userEmail}
+          </p>
+
+          <button
+            onClick={handleLogout}
+            className="mt-2 cursor-pointer text-sm text-zinc-500 hover:text-black"
+          >
+            Sign Out
+          </button>
+        </div>
+
 
         <nav className="flex flex-col gap-4">
           <a href="#" className="font-medium">
