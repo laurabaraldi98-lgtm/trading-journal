@@ -1,6 +1,7 @@
 from unittest.mock import patch
 from fastapi.testclient import TestClient
 from api import app
+from auth import get_current_user
 
 
 client = TestClient(app)
@@ -13,18 +14,23 @@ def test_root():
     assert response.json() == {"message": "Trading Journal API"}
 
 
+def fake_current_user():
+    return {"id": "test-user"}
+
+
 def test_get_trades():
     fake_trades = [
         [1, "eurusd", "long", 1.10, 1.09, 1.12, 2.0]
     ]
 
+    app.dependency_overrides[get_current_user] = fake_current_user
+
     with patch("api.load_trades_from_supabase", return_value=fake_trades):
         response = client.get(
             "/trades",
-            headers={
-                "Authorization": "Bearer test-token"
-            }
         )
+
+    app.dependency_overrides.clear()
 
     assert response.status_code == 200
     assert response.json() == fake_trades

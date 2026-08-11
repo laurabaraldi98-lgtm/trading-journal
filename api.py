@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from auth import get_bearer_token
+from auth import get_current_user
 from database import (
     load_trades_from_supabase,
     save_trade_to_supabase,
@@ -51,7 +51,7 @@ def root():
 
 
 @app.get("/trades")
-def get_trades(token: str = Depends(get_bearer_token)):
+def get_trades(user=Depends(get_current_user)):
     return load_trades_from_supabase()
 
 
