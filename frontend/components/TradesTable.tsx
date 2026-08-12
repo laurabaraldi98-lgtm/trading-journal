@@ -88,6 +88,7 @@ export default function TradesTable({
                                     <>
                                         <td className="py-3 pr-6">
                                             <input
+                                                aria-label="Edit symbol"
                                                 value={symbol}
                                                 onChange={(event) =>
                                                     setSymbol(event.target.value)
@@ -98,6 +99,7 @@ export default function TradesTable({
 
                                         <td className="py-3 pr-6">
                                             <select
+                                                aria-label="Edit direction"
                                                 value={direction}
                                                 onChange={(event) =>
                                                     setDirection(event.target.value)
@@ -111,6 +113,7 @@ export default function TradesTable({
 
                                         <td className="py-3 pr-6">
                                             <input
+                                                aria-label="Edit entry"
                                                 value={entry}
                                                 onChange={(event) =>
                                                     setEntry(event.target.value)
@@ -121,6 +124,7 @@ export default function TradesTable({
 
                                         <td className="py-3 pr-6">
                                             <input
+                                                aria-label="Edit stop"
                                                 value={stop}
                                                 onChange={(event) =>
                                                     setStop(event.target.value)
@@ -131,6 +135,7 @@ export default function TradesTable({
 
                                         <td className="py-3 pr-6">
                                             <input
+                                                aria-label="Edit exit"
                                                 value={exit}
                                                 onChange={(event) =>
                                                     setExit(event.target.value)
@@ -142,6 +147,7 @@ export default function TradesTable({
                                         <td className="py-3 pr-6">
                                             <input
                                                 type="datetime-local"
+                                                aria-label="Edit entry datetime"
                                                 value={entryDatetime}
                                                 onChange={(event) =>
                                                     setEntryDatetime(event.target.value)
@@ -153,6 +159,7 @@ export default function TradesTable({
                                         <td className="py-3 pr-6">
                                             <input
                                                 type="datetime-local"
+                                                aria-label="Edit exit datetime"
                                                 value={exitDatetime}
                                                 onChange={(event) =>
                                                     setExitDatetime(event.target.value)
