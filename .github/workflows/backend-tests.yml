@@ -9,8 +9,8 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      SUPABASE_URL: "https://example.supabase.co"
-      SUPABASE_KEY: "test-key"
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
 
     steps:
       - name: Checkout repository
@@ -25,4 +25,4 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run backend tests
-        run: python -m pytest tests/test_calculations.py tests/test_statistics.py tests/test_api.py
+        run: python -m pytest
