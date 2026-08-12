@@ -82,6 +82,7 @@ export default function TradeForm({
 
                 <input
                     type="datetime-local"
+                    aria-label="Entry datetime"
                     value={entryDatetime}
                     onChange={(event) => setEntryDatetime(event.target.value)}
                     className="rounded-lg border border-zinc-300 p-3"
@@ -89,6 +90,7 @@ export default function TradeForm({
 
                 <input
                     type="datetime-local"
+                    aria-label="Exit datetime"
                     value={exitDatetime}
                     onChange={(event) => setExitDatetime(event.target.value)}
                     className="rounded-lg border border-zinc-300 p-3"
