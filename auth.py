@@ -33,4 +33,9 @@ def get_user_from_token(token: str):
 
 
 def get_current_user(token: str = Depends(get_bearer_token)):
-    return get_user_from_token(token)
+    user = get_user_from_token(token)
+
+    return {
+        "user": user,
+        "token": token,
+    }

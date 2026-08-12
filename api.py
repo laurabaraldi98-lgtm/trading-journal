@@ -1,16 +1,17 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import Literal
+from datetime import datetime
+
 from auth import get_current_user
+from calculations import calculate_r
 from database import (
     load_trades_from_supabase,
     save_trade_to_supabase,
     delete_trade_from_supabase,
     update_trade_in_supabase,
 )
-from pydantic import BaseModel
-from calculations import calculate_r
-from typing import Literal
-from datetime import datetime
 
 
 class TradeCreate(BaseModel):
@@ -51,23 +52,32 @@ def root():
 
 
 @app.get("/trades")
-def get_trades(user=Depends(get_current_user)):
-    return load_trades_from_supabase(user.id)
+def get_trades(auth_data=Depends(get_current_user)):
+    user = auth_data["user"]
+    token = auth_data["token"]
+
+    return load_trades_from_supabase(
+        user.id,
+        token,
+    )
 
 
 @app.post("/trades")
 def create_trade(
     trade: TradeCreate,
-    user=Depends(get_current_user)
+    auth_data=Depends(get_current_user),
 ):
+    user = auth_data["user"]
+    token = auth_data["token"]
+
     result = round(
         calculate_r(
             trade.direction,
             trade.entry,
             trade.stop,
-            trade.exit
+            trade.exit,
         ),
-        2
+        2,
     )
 
     trade_data = [
@@ -78,34 +88,48 @@ def create_trade(
         trade.exit,
         result,
         trade.entry_datetime,
-        trade.exit_datetime
+        trade.exit_datetime,
     ]
 
-    return save_trade_to_supabase(trade_data, user.id)
+    return save_trade_to_supabase(
+        trade_data,
+        user.id,
+        token,
+    )
 
 
 @app.delete("/trades/{trade_id}")
 def delete_trade(
     trade_id: int,
-    user=Depends(get_current_user)
+    auth_data=Depends(get_current_user),
 ):
-    return delete_trade_from_supabase(trade_id, user.id)
+    user = auth_data["user"]
+    token = auth_data["token"]
+
+    return delete_trade_from_supabase(
+        trade_id,
+        user.id,
+        token,
+    )
 
 
 @app.patch("/trades/{trade_id}")
 def update_trade(
     trade_id: int,
     trade: TradeUpdate,
-    user=Depends(get_current_user)
+    auth_data=Depends(get_current_user),
 ):
+    user = auth_data["user"]
+    token = auth_data["token"]
+
     result = round(
         calculate_r(
             trade.direction,
             trade.entry,
             trade.stop,
-            trade.exit
+            trade.exit,
         ),
-        2
+        2,
     )
 
     updated_trade = [
@@ -117,11 +141,12 @@ def update_trade(
         trade.exit,
         result,
         trade.entry_datetime,
-        trade.exit_datetime
+        trade.exit_datetime,
     ]
 
     return update_trade_in_supabase(
         trade_id,
         updated_trade,
-        user.id
+        user.id,
+        token,
     )

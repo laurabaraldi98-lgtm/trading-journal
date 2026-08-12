@@ -55,13 +55,16 @@ def test_get_user_from_token_invalid_token():
     assert error.value.detail == "Invalid or expired token"
 
 
-def test_get_current_user_returns_user():
+def test_get_current_user_returns_user_and_token():
     fake_user = SimpleNamespace(id="user-123")
 
     with patch(
         "auth.get_user_from_token",
         return_value=fake_user
     ):
-        user = get_current_user("abc123")
+        auth_data = get_current_user("abc123")
 
-    assert user == fake_user
+    assert auth_data == {
+        "user": fake_user,
+        "token": "abc123",
+    }

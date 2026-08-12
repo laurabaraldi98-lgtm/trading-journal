@@ -19,6 +19,12 @@ def make_mock_query(fake_response):
     return mock_query
 
 
+def make_mock_client(mock_query):
+    mock_client = MagicMock()
+    mock_client.table.return_value = mock_query
+    return mock_client
+
+
 def test_load_trades_from_supabase():
     fake_response = SimpleNamespace(
         data=[
@@ -40,8 +46,24 @@ def test_load_trades_from_supabase():
     mock_query.select.return_value = mock_query
     mock_query.order.return_value = mock_query
 
-    with patch("database.supabase.table", return_value=mock_query):
-        trades = load_trades_from_supabase("user-123")
+    mock_client = make_mock_client(mock_query)
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ) as mock_get_client:
+        trades = load_trades_from_supabase(
+            "user-123",
+            "fake-token",
+        )
+
+    mock_get_client.assert_called_once_with(
+        "fake-token"
+    )
+
+    mock_client.table.assert_called_once_with(
+        "trades"
+    )
 
     assert trades == [
         [
@@ -98,6 +120,8 @@ def test_save_trade_to_supabase(
     mock_query = make_mock_query(fake_response)
     mock_query.insert.return_value = mock_query
 
+    mock_client = make_mock_client(mock_query)
+
     trade = [
         "EURUSD",
         "long",
@@ -109,11 +133,19 @@ def test_save_trade_to_supabase(
         exit_datetime,
     ]
 
-    with patch("database.supabase.table", return_value=mock_query):
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ) as mock_get_client:
         saved_trade = save_trade_to_supabase(
             trade,
             "user-123",
+            "fake-token",
         )
+
+    mock_get_client.assert_called_once_with(
+        "fake-token"
+    )
 
     expected_new_trade = {
         "symbol": "EURUSD",
@@ -148,11 +180,21 @@ def test_delete_trade_from_supabase():
     mock_query = make_mock_query(fake_response)
     mock_query.delete.return_value = mock_query
 
-    with patch("database.supabase.table", return_value=mock_query):
+    mock_client = make_mock_client(mock_query)
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ) as mock_get_client:
         response = delete_trade_from_supabase(
             5,
             "user-123",
+            "fake-token",
         )
+
+    mock_get_client.assert_called_once_with(
+        "fake-token"
+    )
 
     mock_query.delete.assert_called_once()
 
@@ -197,6 +239,8 @@ def test_update_trade_in_supabase(
     mock_query = make_mock_query(fake_response)
     mock_query.update.return_value = mock_query
 
+    mock_client = make_mock_client(mock_query)
+
     updated_trade = [
         5,
         "GBPUSD",
@@ -209,12 +253,20 @@ def test_update_trade_in_supabase(
         exit_datetime,
     ]
 
-    with patch("database.supabase.table", return_value=mock_query):
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ) as mock_get_client:
         response = update_trade_in_supabase(
             5,
             updated_trade,
             "user-123",
+            "fake-token",
         )
+
+    mock_get_client.assert_called_once_with(
+        "fake-token"
+    )
 
     expected_trade_data = {
         "symbol": "GBPUSD",

@@ -13,7 +13,10 @@ client = TestClient(app)
 
 
 def fake_current_user():
-    return SimpleNamespace(id="test-user")
+    return {
+        "user": SimpleNamespace(id="test-user"),
+        "token": "fake-token",
+    }
 
 
 @pytest.fixture
@@ -57,7 +60,8 @@ def test_get_trades(authenticated_user):
     assert response.json() == fake_trades
 
     mock_load.assert_called_once_with(
-        "test-user"
+        "test-user",
+        "fake-token",
     )
 
 
@@ -138,6 +142,7 @@ def test_create_trade_passes_correct_data_to_save(
             None,
         ],
         "test-user",
+        "fake-token",
     )
 
 
@@ -160,6 +165,7 @@ def test_delete_trade(authenticated_user):
     mock_delete.assert_called_once_with(
         5,
         "test-user",
+        "fake-token",
     )
 
 
@@ -210,6 +216,7 @@ def test_update_trade(authenticated_user):
         5,
         expected_trade,
         "test-user",
+        "fake-token",
     )
 
 
