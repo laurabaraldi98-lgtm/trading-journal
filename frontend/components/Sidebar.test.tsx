@@ -49,3 +49,20 @@ describe("Sidebar", () => {
         expect(mockLogout).toHaveBeenCalledOnce();
     });
 });
+
+test("renders navigation links", () => {
+    render(
+        <Sidebar
+            userEmail="test@example.com"
+            onLogout={() => { }}
+        />
+    );
+
+    expect(
+        screen.getByRole("link", { name: "Dashboard" })
+    ).toHaveAttribute("href", "/");
+
+    expect(
+        screen.getByRole("link", { name: "Settings" })
+    ).toHaveAttribute("href", "/settings");
+});

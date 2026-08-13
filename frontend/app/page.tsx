@@ -6,7 +6,8 @@ import Sidebar from "../components/Sidebar";
 import TradeForm from "../components/TradeForm";
 import TradesTable from "../components/TradesTable";
 import StatisticsCards from "../components/StatisticsCards";
-import EquityCurve from "../components/CumulativeRCurve";
+import CumulativeRCurve from "../components/CumulativeRCurve";
+import AccountSettings from "../components/AccountSettings";
 
 
 type Trade = [
@@ -34,6 +35,8 @@ export default function Home() {
   const [editingTradeId, setEditingTradeId] = useState<number | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null);;
   const [authLoading, setAuthLoading] = useState(true);
+  const [accountSize, setAccountSize] = useState("");
+  const [currency, setCurrency] = useState("");
 
   async function loadTrades() {
     const {
@@ -56,6 +59,54 @@ export default function Home() {
     const data = await response.json();
 
     setTrades(data);
+  }
+
+  async function loadSettings() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      return;
+    }
+
+    const response = await fetch("http://127.0.0.1:8000/settings", {
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (data.length > 0) {
+      setAccountSize(String(data[0].account_size));
+      setCurrency(data[0].currency);
+    }
+  }
+
+  async function handleSaveSettings() {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
+    if (!session) {
+      window.location.href = "/login";
+      return;
+    }
+
+    await fetch("http://127.0.0.1:8000/settings", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${session.access_token}`,
+      },
+      body: JSON.stringify({
+        account_size: Number(accountSize),
+        currency,
+      }),
+    });
+
+    await loadSettings();
   }
 
   async function handleLogout() {
@@ -99,6 +150,7 @@ export default function Home() {
 
   useEffect(() => {
     loadTrades();
+    loadSettings();
   }, []);
 
   async function handleSaveTrade() {
@@ -281,9 +333,12 @@ export default function Home() {
           />
         )}
 
-        <StatisticsCards trades={trades} />
-
-        <EquityCurve trades={trades} />
+        <StatisticsCards
+          trades={trades}
+          accountSize={accountSize}
+          currency={currency}
+        />
+        <CumulativeRCurve trades={trades} />
 
         <TradesTable
           trades={trades}

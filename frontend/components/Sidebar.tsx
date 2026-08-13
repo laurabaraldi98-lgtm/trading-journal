@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 type SidebarProps = {
     userEmail: string | null;
     onLogout: () => void;
@@ -27,9 +29,9 @@ export default function Sidebar({
             </div>
 
             <nav className="flex flex-col gap-4">
-                <a href="#" className="font-medium">
+                <Link href="/" className="font-medium">
                     Dashboard
-                </a>
+                </Link>
 
                 <a href="#" className="text-zinc-600">
                     Trades
@@ -46,6 +48,10 @@ export default function Sidebar({
                 <a href="#" className="text-zinc-600">
                     Account
                 </a>
+
+                <Link href="/settings" className="text-zinc-600">
+                    Settings
+                </Link>
             </nav>
         </aside>
     );

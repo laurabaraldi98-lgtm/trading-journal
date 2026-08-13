@@ -12,10 +12,14 @@ export type Trade = [
 
 type StatisticsCardsProps = {
     trades: Trade[];
+    accountSize: string;
+    currency: string;
 };
 
 export default function StatisticsCards({
     trades,
+    accountSize,
+    currency,
 }: StatisticsCardsProps) {
     const totalR = trades.reduce(
         (total, trade) => total + trade[6],
@@ -39,7 +43,7 @@ export default function StatisticsCards({
             : totalR / totalTrades;
 
     return (
-        <div className="grid grid-cols-1 gap-4 mt-8 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 mt-8 sm:grid-cols-2 xl:grid-cols-5">
             <div className="rounded-xl bg-white p-5 border border-zinc-200">
                 <p className="text-sm text-zinc-500">Total R</p>
                 <p className="text-2xl font-bold mt-2">
@@ -65,6 +69,18 @@ export default function StatisticsCards({
                 <p className="text-sm text-zinc-500">Total Trades</p>
                 <p className="text-2xl font-bold mt-2">
                     {totalTrades}
+                </p>
+            </div>
+
+            <div className="rounded-xl bg-white p-5 border border-zinc-200">
+                <p className="text-sm text-zinc-500">
+                    Account Size
+                </p>
+
+                <p className="text-2xl font-bold mt-2">
+                    {accountSize
+                        ? `${currency} ${Number(accountSize).toLocaleString("en-US")}`
+                        : "Not set"}
                 </p>
             </div>
         </div>

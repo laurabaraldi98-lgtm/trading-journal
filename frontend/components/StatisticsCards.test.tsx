@@ -12,7 +12,11 @@ afterEach(() => {
 describe("StatisticsCards", () => {
     test("shows zero statistics when there are no trades", () => {
         render(
-            <StatisticsCards trades={[]} />
+            <StatisticsCards
+                trades={[]}
+                accountSize=""
+                currency=""
+            />
         );
 
         expect(
@@ -25,6 +29,10 @@ describe("StatisticsCards", () => {
 
         expect(
             screen.getByText("0")
+        ).toBeInTheDocument();
+
+        expect(
+            screen.getByText("Not set")
         ).toBeInTheDocument();
     });
 
@@ -67,7 +75,11 @@ describe("StatisticsCards", () => {
         ];
 
         render(
-            <StatisticsCards trades={trades} />
+            <StatisticsCards
+                trades={trades}
+                accountSize="100000"
+                currency="USD"
+            />
         );
 
         expect(
@@ -84,6 +96,10 @@ describe("StatisticsCards", () => {
 
         expect(
             screen.getByText("3")
+        ).toBeInTheDocument();
+
+        expect(
+            screen.getByText("USD 100,000")
         ).toBeInTheDocument();
     });
 });
