@@ -6,6 +6,7 @@ import Sidebar from "../components/Sidebar";
 import TradeForm from "../components/TradeForm";
 import TradesTable from "../components/TradesTable";
 import StatisticsCards from "../components/StatisticsCards";
+import EquityCurve from "../components/CumulativeRCurve";
 
 
 type Trade = [
@@ -282,12 +283,7 @@ export default function Home() {
 
         <StatisticsCards trades={trades} />
 
-        <div className="mt-8 rounded-xl bg-white p-6 border border-zinc-200">
-          <h3 className="text-xl font-semibold">Equity Curve</h3>
-          <p className="text-zinc-500 mt-2">
-            Chart coming soon.
-          </p>
-        </div>
+        <EquityCurve trades={trades} />
 
         <TradesTable
           trades={trades}
