@@ -9,13 +9,19 @@ from database import (
     save_trade_to_supabase,
     delete_trade_from_supabase,
     update_trade_in_supabase,
+    load_user_settings,
+    save_user_settings,
 )
 
 
 def make_mock_query(fake_response):
     mock_query = MagicMock()
+
+    mock_query.select.return_value = mock_query
     mock_query.eq.return_value = mock_query
+    mock_query.upsert.return_value = mock_query
     mock_query.execute.return_value = fake_response
+
     return mock_query
 
 
@@ -294,3 +300,81 @@ def test_update_trade_in_supabase(
     )
 
     assert response == fake_response
+
+
+def test_load_user_settings():
+    fake_response = SimpleNamespace(
+        data=[
+            {
+                "user_id": "test-user",
+                "account_size": 100000,
+                "currency": "USD",
+            }
+        ]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_client = make_mock_client(mock_query)
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ) as mock_get_client:
+        result = load_user_settings(
+            "test-user",
+            "fake-token",
+        )
+
+    mock_get_client.assert_called_once_with("fake-token")
+
+    mock_client.table.assert_called_once_with("user_settings")
+    mock_query.select.assert_called_once_with("*")
+    mock_query.eq.assert_called_once_with(
+        "user_id",
+        "test-user",
+    )
+
+    assert result == fake_response.data
+
+
+def test_save_user_settings():
+    fake_response = SimpleNamespace(
+        data=[
+            {
+                "user_id": "test-user",
+                "account_size": 100000,
+                "currency": "USD",
+            }
+        ]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_client = make_mock_client(mock_query)
+
+    settings = {
+        "account_size": 100000,
+        "currency": "USD",
+    }
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ) as mock_get_client:
+        result = save_user_settings(
+            settings,
+            "test-user",
+            "fake-token",
+        )
+
+    mock_get_client.assert_called_once_with("fake-token")
+    mock_client.table.assert_called_once_with("user_settings")
+
+    mock_query.upsert.assert_called_once_with(
+        {
+            "user_id": "test-user",
+            "account_size": 100000,
+            "currency": "USD",
+        }
+    )
+
+    assert result == fake_response.data
