@@ -24,10 +24,10 @@ type Props = {
     trades: Trade[];
 };
 
-export default function EquityCurve({ trades }: Props) {
+export function buildCumulativeRData(trades: Trade[]) {
     let cumulativeR = 0;
 
-    const equityData = trades.map((trade, index) => {
+    return trades.map((trade, index) => {
         cumulativeR += trade[6];
 
         return {
@@ -35,6 +35,10 @@ export default function EquityCurve({ trades }: Props) {
             equity: cumulativeR,
         };
     });
+}
+
+export default function CumulativeRCurve({ trades }: Props) {
+    const equityData = buildCumulativeRData(trades);
 
     return (
         <div className="mt-6">
