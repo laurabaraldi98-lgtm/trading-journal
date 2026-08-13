@@ -5,6 +5,7 @@ import { supabase } from "../lib/supabase";
 import Sidebar from "../components/Sidebar";
 import TradeForm from "../components/TradeForm";
 import TradesTable from "../components/TradesTable";
+import StatisticsCards from "../components/StatisticsCards";
 
 
 type Trade = [
@@ -279,27 +280,7 @@ export default function Home() {
           />
         )}
 
-        <div className="grid grid-cols-1 gap-4 mt-8 sm:grid-cols-2 xl:grid-cols-4">
-          <div className="rounded-xl bg-white p-5 border border-zinc-200">
-            <p className="text-sm text-zinc-500">Total R</p>
-            <p className="text-2xl font-bold mt-2">+12.4R</p>
-          </div>
-
-          <div className="rounded-xl bg-white p-5 border border-zinc-200">
-            <p className="text-sm text-zinc-500">Win Rate</p>
-            <p className="text-2xl font-bold mt-2">58%</p>
-          </div>
-
-          <div className="rounded-xl bg-white p-5 border border-zinc-200">
-            <p className="text-sm text-zinc-500">Average R</p>
-            <p className="text-2xl font-bold mt-2">0.62R</p>
-          </div>
-
-          <div className="rounded-xl bg-white p-5 border border-zinc-200">
-            <p className="text-sm text-zinc-500">Total Trades</p>
-            <p className="text-2xl font-bold mt-2">20</p>
-          </div>
-        </div>
+        <StatisticsCards trades={trades} />
 
         <div className="mt-8 rounded-xl bg-white p-6 border border-zinc-200">
           <h3 className="text-xl font-semibold">Equity Curve</h3>
