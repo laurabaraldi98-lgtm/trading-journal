@@ -15,6 +15,7 @@ from database import (
     save_user_settings,
     load_accounts_from_supabase,
     save_account_to_supabase,
+    update_account_in_supabase,
 )
 
 
@@ -40,6 +41,14 @@ class TradeUpdate(BaseModel):
 
 
 class AccountCreate(BaseModel):
+    name: str
+    starting_balance: float
+    currency: str
+    broker: str | None = None
+    account_type: str | None = None
+
+
+class AccountUpdate(BaseModel):
     name: str
     starting_balance: float
     currency: str
@@ -194,6 +203,31 @@ def create_account(
     }
 
     return save_account_to_supabase(
+        account_data,
+        user.id,
+        token,
+    )
+
+
+@app.patch("/accounts/{account_id}")
+def update_account(
+    account_id: int,
+    account: AccountUpdate,
+    auth_data=Depends(get_current_user),
+):
+    user = auth_data["user"]
+    token = auth_data["token"]
+
+    account_data = {
+        "name": account.name,
+        "starting_balance": account.starting_balance,
+        "currency": account.currency,
+        "broker": account.broker,
+        "account_type": account.account_type,
+    }
+
+    return update_account_in_supabase(
+        account_id,
         account_data,
         user.id,
         token,

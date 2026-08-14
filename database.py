@@ -244,3 +244,31 @@ def save_account_to_supabase(
     )
 
     return response.data
+
+
+def update_account_in_supabase(
+    account_id: int,
+    account,
+    user_id: str,
+    token: str,
+):
+    client = get_authenticated_client(token)
+
+    data = {
+        "name": account["name"],
+        "starting_balance": account["starting_balance"],
+        "currency": account["currency"],
+        "broker": account.get("broker"),
+        "account_type": account.get("account_type"),
+    }
+
+    response = (
+        client
+        .table("accounts")
+        .update(data)
+        .eq("id", account_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+
+    return response.data

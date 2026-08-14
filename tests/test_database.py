@@ -13,6 +13,7 @@ from database import (
     save_user_settings,
     load_accounts_from_supabase,
     save_account_to_supabase,
+    update_account_in_supabase,
 )
 
 
@@ -490,6 +491,86 @@ def test_save_account_to_supabase():
             "broker": "FTMO",
             "account_type": "Prop Firm",
         }
+    )
+
+    assert result == fake_response.data
+
+
+@pytest.mark.parametrize(
+    "broker, account_type",
+    [
+        ("FTMO", "Prop Firm"),
+        (None, None),
+    ],
+)
+def test_update_account_in_supabase(
+    broker,
+    account_type,
+):
+    fake_response = SimpleNamespace(
+        data=[
+            {
+                "id": 2,
+                "user_id": "test-user",
+                "name": "FTMO Updated",
+                "starting_balance": 120000,
+                "currency": "EUR",
+                "broker": broker,
+                "account_type": account_type,
+            }
+        ]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.update.return_value = mock_query
+
+    mock_client = make_mock_client(mock_query)
+
+    account = {
+        "name": "FTMO Updated",
+        "starting_balance": 120000,
+        "currency": "EUR",
+        "broker": broker,
+        "account_type": account_type,
+    }
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ) as mock_get_client:
+        result = update_account_in_supabase(
+            2,
+            account,
+            "test-user",
+            "fake-token",
+        )
+
+    mock_get_client.assert_called_once_with(
+        "fake-token"
+    )
+
+    mock_client.table.assert_called_once_with(
+        "accounts"
+    )
+
+    mock_query.update.assert_called_once_with(
+        {
+            "name": "FTMO Updated",
+            "starting_balance": 120000,
+            "currency": "EUR",
+            "broker": broker,
+            "account_type": account_type,
+        }
+    )
+
+    mock_query.eq.assert_any_call(
+        "id",
+        2,
+    )
+
+    mock_query.eq.assert_any_call(
+        "user_id",
+        "test-user",
     )
 
     assert result == fake_response.data
