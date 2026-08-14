@@ -7,8 +7,6 @@ import TradeForm from "../components/TradeForm";
 import TradesTable from "../components/TradesTable";
 import StatisticsCards from "../components/StatisticsCards";
 import CumulativeRCurve from "../components/CumulativeRCurve";
-import AccountSettings from "../components/AccountSettings";
-
 
 type Trade = [
   number,
@@ -22,8 +20,20 @@ type Trade = [
   string | null
 ];
 
+type Account = {
+  id: number;
+  user_id: string;
+  name: string;
+  starting_balance: number;
+  currency: string;
+  broker: string | null;
+  account_type: string | null;
+  created_at?: string;
+};
+
 export default function Home() {
   const [showForm, setShowForm] = useState(false);
+
   const [symbol, setSymbol] = useState("");
   const [direction, setDirection] = useState("");
   const [entry, setEntry] = useState("");
@@ -31,12 +41,28 @@ export default function Home() {
   const [exit, setExit] = useState("");
   const [entryDatetime, setEntryDatetime] = useState("");
   const [exitDatetime, setExitDatetime] = useState("");
+
   const [trades, setTrades] = useState<Trade[]>([]);
-  const [editingTradeId, setEditingTradeId] = useState<number | null>(null)
-  const [userEmail, setUserEmail] = useState<string | null>(null);;
-  const [authLoading, setAuthLoading] = useState(true);
-  const [accountSize, setAccountSize] = useState("");
-  const [currency, setCurrency] = useState("");
+
+  const [editingTradeId, setEditingTradeId] =
+    useState<number | null>(null);
+
+  const [accounts, setAccounts] = useState<Account[]>([]);
+
+  const [selectedAccountId, setSelectedAccountId] =
+    useState<number | null>(null);
+
+  const [userEmail, setUserEmail] =
+    useState<string | null>(null);
+
+  const [authLoading, setAuthLoading] =
+    useState(true);
+
+  const selectedAccount =
+    accounts.find(
+      (account) =>
+        account.id === selectedAccountId
+    ) ?? null;
 
   async function loadTrades() {
     const {
@@ -49,19 +75,27 @@ export default function Home() {
 
     setUserEmail(session.user.email ?? null);
 
-    const response = await fetch("http://127.0.0.1:8000/trades", {
-      cache: "no-store",
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
-    });
+    const response = await fetch(
+      "http://127.0.0.1:8000/trades",
+      {
+        cache: "no-store",
+        headers: {
+          Authorization:
+            `Bearer ${session.access_token}`,
+        },
+      }
+    );
+
+    if (!response.ok) {
+      return;
+    }
 
     const data = await response.json();
 
     setTrades(data);
   }
 
-  async function loadSettings() {
+  async function loadAccounts() {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -70,43 +104,32 @@ export default function Home() {
       return;
     }
 
-    const response = await fetch("http://127.0.0.1:8000/settings", {
-      headers: {
-        Authorization: `Bearer ${session.access_token}`,
-      },
-    });
+    const response = await fetch(
+      "http://127.0.0.1:8000/accounts",
+      {
+        cache: "no-store",
+        headers: {
+          Authorization:
+            `Bearer ${session.access_token}`,
+        },
+      }
+    );
 
-    const data = await response.json();
-
-    if (data.length > 0) {
-      setAccountSize(String(data[0].account_size));
-      setCurrency(data[0].currency);
-    }
-  }
-
-  async function handleSaveSettings() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      window.location.href = "/login";
+    if (!response.ok) {
       return;
     }
 
-    await fetch("http://127.0.0.1:8000/settings", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify({
-        account_size: Number(accountSize),
-        currency,
-      }),
-    });
+    const data: Account[] =
+      await response.json();
 
-    await loadSettings();
+    setAccounts(data);
+
+    if (
+      data.length > 0 &&
+      selectedAccountId === null
+    ) {
+      setSelectedAccountId(data[0].id);
+    }
   }
 
   async function handleLogout() {
@@ -128,20 +151,29 @@ export default function Home() {
         return;
       }
 
-      setUserEmail(session.user.email ?? null);
+      setUserEmail(
+        session.user.email ?? null
+      );
+
       setAuthLoading(false);
     }
 
     loadUser();
 
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        window.location.href = "/login";
-        return;
-      }
+    const { data } =
+      supabase.auth.onAuthStateChange(
+        (_event, session) => {
+          if (!session) {
+            window.location.href =
+              "/login";
+            return;
+          }
 
-      setUserEmail(session.user.email ?? null);
-    });
+          setUserEmail(
+            session.user.email ?? null
+          );
+        }
+      );
 
     return () => {
       data.subscription.unsubscribe();
@@ -150,18 +182,25 @@ export default function Home() {
 
   useEffect(() => {
     loadTrades();
-    loadSettings();
+    loadAccounts();
   }, []);
 
   async function handleSaveTrade() {
+    if (selectedAccountId === null) {
+      return;
+    }
+
     const tradeData = {
-      symbol: symbol,
-      direction: direction,
+      account_id: selectedAccountId,
+      symbol,
+      direction,
       entry: Number(entry),
       stop: Number(stop),
       exit: Number(exit),
-      entry_datetime: entryDatetime || null,
-      exit_datetime: exitDatetime || null,
+      entry_datetime:
+        entryDatetime || null,
+      exit_datetime:
+        exitDatetime || null,
     };
 
     const {
@@ -173,14 +212,19 @@ export default function Home() {
       return;
     }
 
-    const response = await fetch("http://127.0.0.1:8000/trades", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${session.access_token}`,
-      },
-      body: JSON.stringify(tradeData),
-    });
+    const response = await fetch(
+      "http://127.0.0.1:8000/trades",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type":
+            "application/json",
+          Authorization:
+            `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(tradeData),
+      }
+    );
 
     if (response.ok) {
       await loadTrades();
@@ -192,10 +236,13 @@ export default function Home() {
       setExit("");
       setEntryDatetime("");
       setExitDatetime("");
+      setShowForm(false);
     }
   }
 
-  async function handleDeleteTrade(tradeId: number) {
+  async function handleDeleteTrade(
+    tradeId: number
+  ) {
     const confirmed = window.confirm(
       "Are you sure you want to delete this trade?"
     );
@@ -218,38 +265,57 @@ export default function Home() {
       {
         method: "DELETE",
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization:
+            `Bearer ${session.access_token}`,
         },
       }
     );
 
     if (response.ok) {
       setTrades((currentTrades) =>
-        currentTrades.filter((trade) => trade[0] !== tradeId)
+        currentTrades.filter(
+          (trade) =>
+            trade[0] !== tradeId
+        )
       );
     }
   }
 
   function handleEditTrade(trade: Trade) {
     setEditingTradeId(trade[0]);
+
     setSymbol(trade[1]);
     setDirection(trade[2]);
     setEntry(String(trade[3]));
     setStop(String(trade[4]));
     setExit(String(trade[5]));
-    setEntryDatetime(trade[7] ? trade[7].slice(0, 16) : "");
-    setExitDatetime(trade[8] ? trade[8].slice(0, 16) : "");
+
+    setEntryDatetime(
+      trade[7]
+        ? trade[7].slice(0, 16)
+        : ""
+    );
+
+    setExitDatetime(
+      trade[8]
+        ? trade[8].slice(0, 16)
+        : ""
+    );
   }
 
-  async function handleUpdateTrade(tradeId: number) {
+  async function handleUpdateTrade(
+    tradeId: number
+  ) {
     const tradeData = {
       symbol,
       direction,
       entry: Number(entry),
       stop: Number(stop),
       exit: Number(exit),
-      entry_datetime: entryDatetime || null,
-      exit_datetime: exitDatetime || null,
+      entry_datetime:
+        entryDatetime || null,
+      exit_datetime:
+        exitDatetime || null,
     };
 
     const {
@@ -266,17 +332,18 @@ export default function Home() {
       {
         method: "PATCH",
         headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type":
+            "application/json",
+          Authorization:
+            `Bearer ${session.access_token}`,
         },
         body: JSON.stringify(tradeData),
       }
     );
 
     if (response.ok) {
-      // Reload from the server instead of patching the array in place,
-      // so the list stays correctly ordered by date after an edit.
       await loadTrades();
+
       setEditingTradeId(null);
     }
   }
@@ -293,7 +360,7 @@ export default function Home() {
       />
 
       <main className="min-w-0 flex-1 px-8 py-8 xl:px-10">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h2 className="text-3xl font-bold tracking-tight text-slate-900">
               Dashboard
@@ -304,68 +371,155 @@ export default function Home() {
             </p>
           </div>
 
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="cursor-pointer rounded-lg bg-black px-5 py-3 text-white"
-          >
-            + Add Trade
-          </button>
+          <div className="flex items-center gap-3">
+            {accounts.length > 0 && (
+              <select
+                value={
+                  selectedAccountId ??
+                  ""
+                }
+                onChange={(event) =>
+                  setSelectedAccountId(
+                    Number(
+                      event.target
+                        .value
+                    )
+                  )
+                }
+                className="rounded-lg border border-slate-300 bg-white px-4 py-3"
+              >
+                {accounts.map(
+                  (account) => (
+                    <option
+                      key={
+                        account.id
+                      }
+                      value={
+                        account.id
+                      }
+                    >
+                      {
+                        account.name
+                      }
+                    </option>
+                  )
+                )}
+              </select>
+            )}
 
+            <button
+              onClick={() =>
+                setShowForm(
+                  !showForm
+                )
+              }
+              disabled={
+                selectedAccountId ===
+                null
+              }
+              className="cursor-pointer rounded-lg bg-black px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              + Add Trade
+            </button>
+          </div>
         </div>
 
-        {showForm && (
-          <TradeForm
-            symbol={symbol}
-            direction={direction}
-            entry={entry}
-            stop={stop}
-            exit={exit}
-            entryDatetime={entryDatetime}
-            exitDatetime={exitDatetime}
-            setSymbol={setSymbol}
-            setDirection={setDirection}
-            setEntry={setEntry}
-            setStop={setStop}
-            setExit={setExit}
-            setEntryDatetime={setEntryDatetime}
-            setExitDatetime={setExitDatetime}
-            onSave={handleSaveTrade}
-          />
+        {accounts.length === 0 && (
+          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+            Create a trading account before
+            adding trades.
+          </div>
         )}
+
+        {showForm &&
+          selectedAccountId !== null && (
+            <TradeForm
+              symbol={symbol}
+              direction={direction}
+              entry={entry}
+              stop={stop}
+              exit={exit}
+              entryDatetime={
+                entryDatetime
+              }
+              exitDatetime={
+                exitDatetime
+              }
+              setSymbol={setSymbol}
+              setDirection={
+                setDirection
+              }
+              setEntry={setEntry}
+              setStop={setStop}
+              setExit={setExit}
+              setEntryDatetime={
+                setEntryDatetime
+              }
+              setExitDatetime={
+                setExitDatetime
+              }
+              onSave={
+                handleSaveTrade
+              }
+            />
+          )}
 
         <StatisticsCards
           trades={trades}
-          accountSize={accountSize}
-          currency={currency}
+          accountSize={
+            selectedAccount
+              ? String(
+                selectedAccount.starting_balance
+              )
+              : ""
+          }
+          currency={
+            selectedAccount?.currency ??
+            ""
+          }
         />
-        <CumulativeRCurve trades={trades} />
+
+        <CumulativeRCurve
+          trades={trades}
+        />
 
         <TradesTable
           trades={trades.slice(0, 5)}
           showViewAll={true}
-          editingTradeId={editingTradeId}
-
+          editingTradeId={
+            editingTradeId
+          }
           symbol={symbol}
           direction={direction}
           entry={entry}
           stop={stop}
           exit={exit}
-          entryDatetime={entryDatetime}
-          exitDatetime={exitDatetime}
-
+          entryDatetime={
+            entryDatetime
+          }
+          exitDatetime={
+            exitDatetime
+          }
           setSymbol={setSymbol}
           setDirection={setDirection}
           setEntry={setEntry}
           setStop={setStop}
           setExit={setExit}
-          setEntryDatetime={setEntryDatetime}
-          setExitDatetime={setExitDatetime}
-
+          setEntryDatetime={
+            setEntryDatetime
+          }
+          setExitDatetime={
+            setExitDatetime
+          }
           onEdit={handleEditTrade}
-          onUpdate={handleUpdateTrade}
-          onDelete={handleDeleteTrade}
+          onUpdate={
+            handleUpdateTrade
+          }
+          onDelete={
+            handleDeleteTrade
+          }
         />
-      </main >
-    </div >
+      </main>
+    </div>
   );
 }

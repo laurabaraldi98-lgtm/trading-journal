@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
     ChartNoAxesCombined,
     LayoutDashboard,
@@ -6,7 +9,6 @@ import {
     BarChart3,
     Upload,
     Wallet,
-    Settings,
     LogOut,
 } from "lucide-react";
 
@@ -19,6 +21,22 @@ export default function Sidebar({
     userEmail,
     onLogout,
 }: SidebarProps) {
+    const pathname = usePathname();
+
+    function linkClass(href: string) {
+        const isActive =
+            href === "/"
+                ? pathname === "/"
+                : pathname.startsWith(href);
+
+        return [
+            "flex items-center gap-3 rounded-xl px-4 py-3 font-medium transition",
+            isActive
+                ? "bg-blue-50 text-blue-600"
+                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+        ].join(" ");
+    }
+
     return (
         <aside className="w-64 shrink-0 border-r border-slate-200 bg-white px-5 py-7">
             <div className="mb-8 flex items-center gap-3 px-2">
@@ -40,7 +58,7 @@ export default function Sidebar({
             <nav className="flex flex-col gap-2">
                 <Link
                     href="/"
-                    className="flex items-center gap-3 rounded-xl bg-blue-50 px-4 py-3 font-medium text-blue-600"
+                    className={linkClass("/")}
                 >
                     <LayoutDashboard size={20} />
                     Dashboard
@@ -48,7 +66,7 @@ export default function Sidebar({
 
                 <Link
                     href="/trades"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                    className={linkClass("/trades")}
                 >
                     <List size={20} />
                     Trades
@@ -56,7 +74,7 @@ export default function Sidebar({
 
                 <a
                     href="#"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
                 >
                     <BarChart3 size={20} />
                     Statistics
@@ -64,26 +82,18 @@ export default function Sidebar({
 
                 <a
                     href="#"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                    className="flex items-center gap-3 rounded-xl px-4 py-3 font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
                 >
                     <Upload size={20} />
                     Import CSV
                 </a>
 
-                <a
-                    href="#"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                <Link
+                    href="/accounts"
+                    className={linkClass("/accounts")}
                 >
                     <Wallet size={20} />
-                    Account
-                </a>
-
-                <Link
-                    href="/settings"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-                >
-                    <Settings size={20} />
-                    Settings
+                    Accounts
                 </Link>
             </nav>
 
