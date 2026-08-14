@@ -341,7 +341,8 @@ export default function Home() {
         <CumulativeRCurve trades={trades} />
 
         <TradesTable
-          trades={trades}
+          trades={trades.slice(0, 5)}
+          showViewAll={true}
           editingTradeId={editingTradeId}
 
           symbol={symbol}

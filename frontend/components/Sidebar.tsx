@@ -46,13 +46,13 @@ export default function Sidebar({
                     Dashboard
                 </Link>
 
-                <a
-                    href="#"
+                <Link
+                    href="/trades"
                     className="flex items-center gap-3 rounded-xl px-4 py-3 text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
                 >
                     <List size={20} />
                     Trades
-                </a>
+                </Link>
 
                 <a
                     href="#"

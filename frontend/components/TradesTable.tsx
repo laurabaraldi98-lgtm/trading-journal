@@ -1,3 +1,11 @@
+import {
+    Pencil,
+    Trash2,
+    Save,
+} from "lucide-react";
+
+import Link from "next/link";
+
 type Trade = [
     number,
     string,
@@ -22,6 +30,8 @@ type TradesTableProps = {
     entryDatetime: string;
     exitDatetime: string;
 
+    showViewAll?: boolean;
+
     setSymbol: (value: string) => void;
     setDirection: (value: string) => void;
     setEntry: (value: string) => void;
@@ -45,6 +55,7 @@ export default function TradesTable({
     exit,
     entryDatetime,
     exitDatetime,
+    showViewAll = false,
     setSymbol,
     setDirection,
     setEntry,
@@ -57,16 +68,18 @@ export default function TradesTable({
     onDelete,
 }: TradesTableProps) {
     return (
-        <div className="mt-8 rounded-xl bg-white p-6 border border-zinc-200">
-            <h3 className="text-xl font-semibold mb-4">
-                Recent Trades
-            </h3>
+        <div className="mt-8 rounded-2xl border border-slate-200 bg-white">
+            <div className="border-b border-slate-200 px-6 py-5">
+                <h3 className="text-lg font-semibold text-slate-900">
+                    Recent Trades
+                </h3>
+            </div>
 
-            <div className="overflow-x-auto">
-                <table className="min-w-[1100px] w-full">
+            <div className="overflow-x-auto pb-6">
+                <table className="w-full min-w-[1100px]">
                     <thead>
-                        <tr className="border-b border-zinc-200 text-left text-sm text-zinc-500">
-                            <th className="py-3 pr-6">Symbol</th>
+                        <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
+                            <th className="py-3 pl-6 pr-6">Symbol</th>
                             <th className="py-3 pr-6">Direction</th>
                             <th className="py-3 pr-6">Entry</th>
                             <th className="py-3 pr-6">Stop</th>
@@ -74,7 +87,7 @@ export default function TradesTable({
                             <th className="py-3 pr-6">Entry Time</th>
                             <th className="py-3 pr-6">Exit Time</th>
                             <th className="py-3 pr-6">Result</th>
-                            <th className="py-3">Actions</th>
+                            <th className="py-3 pr-6">Actions</th>
                         </tr>
                     </thead>
 
@@ -82,143 +95,209 @@ export default function TradesTable({
                         {trades.map((trade) => (
                             <tr
                                 key={trade[0]}
-                                className="border-b border-zinc-200"
+                                className="border-b border-slate-100 text-sm text-slate-700 transition hover:bg-slate-50"
                             >
                                 {editingTradeId === trade[0] ? (
                                     <>
-                                        <td className="py-3 pr-6">
+                                        <td className="py-4 pl-6 pr-6">
                                             <input
                                                 aria-label="Edit symbol"
                                                 value={symbol}
                                                 onChange={(event) =>
                                                     setSymbol(event.target.value)
                                                 }
-                                                className="rounded border border-zinc-300 px-2 py-1"
+                                                className="rounded-lg border border-slate-300 px-2 py-1"
                                             />
                                         </td>
 
-                                        <td className="py-3 pr-6">
+                                        <td className="py-4 pr-6">
                                             <select
                                                 aria-label="Edit direction"
                                                 value={direction}
                                                 onChange={(event) =>
                                                     setDirection(event.target.value)
                                                 }
-                                                className="rounded border border-zinc-300 px-2 py-1"
+                                                className="rounded-lg border border-slate-300 px-2 py-1"
                                             >
-                                                <option value="long">Long</option>
-                                                <option value="short">Short</option>
+                                                <option value="long">
+                                                    Long
+                                                </option>
+
+                                                <option value="short">
+                                                    Short
+                                                </option>
                                             </select>
                                         </td>
 
-                                        <td className="py-3 pr-6">
+                                        <td className="py-4 pr-6">
                                             <input
                                                 aria-label="Edit entry"
                                                 value={entry}
                                                 onChange={(event) =>
                                                     setEntry(event.target.value)
                                                 }
-                                                className="w-24 rounded border border-zinc-300 px-2 py-1"
+                                                className="w-24 rounded-lg border border-slate-300 px-2 py-1"
                                             />
                                         </td>
 
-                                        <td className="py-3 pr-6">
+                                        <td className="py-4 pr-6">
                                             <input
                                                 aria-label="Edit stop"
                                                 value={stop}
                                                 onChange={(event) =>
                                                     setStop(event.target.value)
                                                 }
-                                                className="w-24 rounded border border-zinc-300 px-2 py-1"
+                                                className="w-24 rounded-lg border border-slate-300 px-2 py-1"
                                             />
                                         </td>
 
-                                        <td className="py-3 pr-6">
+                                        <td className="py-4 pr-6">
                                             <input
                                                 aria-label="Edit exit"
                                                 value={exit}
                                                 onChange={(event) =>
                                                     setExit(event.target.value)
                                                 }
-                                                className="w-24 rounded border border-zinc-300 px-2 py-1"
+                                                className="w-24 rounded-lg border border-slate-300 px-2 py-1"
                                             />
                                         </td>
 
-                                        <td className="py-3 pr-6">
+                                        <td className="py-4 pr-6">
                                             <input
                                                 type="datetime-local"
                                                 aria-label="Edit entry datetime"
                                                 value={entryDatetime}
                                                 onChange={(event) =>
-                                                    setEntryDatetime(event.target.value)
+                                                    setEntryDatetime(
+                                                        event.target.value
+                                                    )
                                                 }
-                                                className="rounded border border-zinc-300 px-2 py-1"
+                                                className="rounded-lg border border-slate-300 px-2 py-1"
                                             />
                                         </td>
 
-                                        <td className="py-3 pr-6">
+                                        <td className="py-4 pr-6">
                                             <input
                                                 type="datetime-local"
                                                 aria-label="Edit exit datetime"
                                                 value={exitDatetime}
                                                 onChange={(event) =>
-                                                    setExitDatetime(event.target.value)
+                                                    setExitDatetime(
+                                                        event.target.value
+                                                    )
                                                 }
-                                                className="rounded border border-zinc-300 px-2 py-1"
+                                                className="rounded-lg border border-slate-300 px-2 py-1"
                                             />
                                         </td>
 
-                                        <td className="py-3 pr-6">
-                                            {trade[6]}R
+                                        <td className="py-4 pr-6">
+                                            <span
+                                                className={
+                                                    trade[6] > 0
+                                                        ? "font-medium text-emerald-600"
+                                                        : trade[6] < 0
+                                                            ? "font-medium text-rose-600"
+                                                            : "font-medium text-slate-500"
+                                                }
+                                            >
+                                                {trade[6]}R
+                                            </span>
                                         </td>
 
-                                        <td className="py-3">
+                                        <td className="py-4 pr-6">
                                             <button
-                                                onClick={() => onUpdate(trade[0])}
-                                                className="cursor-pointer rounded-lg px-2 py-1 text-zinc-700 hover:bg-zinc-100"
+                                                onClick={() =>
+                                                    onUpdate(trade[0])
+                                                }
+                                                aria-label="Save trade"
+                                                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100"
                                             >
-                                                Save
+                                                <Save size={16} />
                                             </button>
                                         </td>
                                     </>
                                 ) : (
                                     <>
-                                        <td className="py-3 pr-6">{trade[1]}</td>
-                                        <td className="py-3 pr-6">{trade[2]}</td>
-                                        <td className="py-3 pr-6">{trade[3]}</td>
-                                        <td className="py-3 pr-6">{trade[4]}</td>
-                                        <td className="py-3 pr-6">{trade[5]}</td>
+                                        <td className="py-4 pl-6 pr-6 font-medium text-slate-900">
+                                            {trade[1]}
+                                        </td>
 
-                                        <td className="py-3 pr-6 whitespace-nowrap">
+                                        <td className="py-4 pr-6">
+                                            <span
+                                                className={
+                                                    trade[2] === "long"
+                                                        ? "font-semibold text-emerald-600"
+                                                        : "font-semibold text-rose-600"
+                                                }
+                                            >
+                                                {trade[2] === "long"
+                                                    ? "Long ↑"
+                                                    : "Short ↓"}
+                                            </span>
+                                        </td>
+
+                                        <td className="py-4 pr-6">
+                                            {trade[3]}
+                                        </td>
+
+                                        <td className="py-4 pr-6">
+                                            {trade[4]}
+                                        </td>
+
+                                        <td className="py-4 pr-6">
+                                            {trade[5]}
+                                        </td>
+
+                                        <td className="whitespace-nowrap py-4 pr-6">
                                             {trade[7]
-                                                ? new Date(trade[7]).toLocaleString()
+                                                ? new Date(
+                                                    trade[7]
+                                                ).toLocaleString()
                                                 : "-"}
                                         </td>
 
-                                        <td className="py-3 pr-6 whitespace-nowrap">
+                                        <td className="whitespace-nowrap py-4 pr-6">
                                             {trade[8]
-                                                ? new Date(trade[8]).toLocaleString()
+                                                ? new Date(
+                                                    trade[8]
+                                                ).toLocaleString()
                                                 : "-"}
                                         </td>
 
-                                        <td className="py-3 pr-6">
-                                            {trade[6]}R
+                                        <td className="py-4 pr-6">
+                                            <span
+                                                className={
+                                                    trade[6] > 0
+                                                        ? "font-semibold text-emerald-600"
+                                                        : trade[6] < 0
+                                                            ? "font-semibold text-rose-600"
+                                                            : "font-semibold text-slate-500"
+                                                }
+                                            >
+                                                {trade[6]}R
+                                            </span>
                                         </td>
 
-                                        <td className="py-3">
+                                        <td className="py-4 pr-6">
                                             <div className="flex gap-2">
                                                 <button
-                                                    onClick={() => onEdit(trade)}
-                                                    className="cursor-pointer rounded-lg px-2 py-1 text-zinc-700 hover:bg-zinc-100"
+                                                    onClick={() =>
+                                                        onEdit(trade)
+                                                    }
+                                                    aria-label="Edit trade"
+                                                    className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-100"
                                                 >
-                                                    Edit
+                                                    <Pencil size={16} />
                                                 </button>
 
                                                 <button
-                                                    onClick={() => onDelete(trade[0])}
-                                                    className="cursor-pointer rounded-lg px-2 py-1 text-red-600 hover:bg-red-50 hover:text-red-800"
+                                                    onClick={() =>
+                                                        onDelete(trade[0])
+                                                    }
+                                                    aria-label="Delete trade"
+                                                    className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition hover:bg-rose-100"
                                                 >
-                                                    Delete
+                                                    <Trash2 size={16} />
                                                 </button>
                                             </div>
                                         </td>
@@ -229,6 +308,17 @@ export default function TradesTable({
                     </tbody>
                 </table>
             </div>
+
+            {showViewAll && (
+                <div className="flex justify-center border-t border-slate-100 px-6 py-4">
+                    <Link
+                        href="/trades"
+                        className="text-sm font-semibold text-blue-600 transition hover:text-blue-700"
+                    >
+                        View all trades →
+                    </Link>
+                </div>
+            )}
         </div>
     );
 }

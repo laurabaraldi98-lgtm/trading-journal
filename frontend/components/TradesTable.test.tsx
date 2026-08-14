@@ -74,7 +74,7 @@ describe("TradesTable", () => {
         ).toBeInTheDocument();
 
         expect(
-            screen.getByText("long")
+            screen.getByText("Long ↑")
         ).toBeInTheDocument();
     });
 
@@ -180,7 +180,7 @@ describe("TradesTable", () => {
         );
 
         fireEvent.click(
-            screen.getByRole("button", { name: "Edit" })
+            screen.getByRole("button", { name: "Edit trade" })
         );
 
         expect(mockEdit).toHaveBeenCalledWith(trade);
@@ -324,7 +324,7 @@ describe("TradesTable", () => {
         );
 
         fireEvent.click(
-            screen.getByRole("button", { name: "Save" })
+            screen.getByRole("button", { name: "Save trade" })
         );
 
         expect(mockUpdate).toHaveBeenCalledWith(1);
@@ -380,7 +380,7 @@ describe("TradesTable", () => {
         );
 
         fireEvent.click(
-            screen.getByRole("button", { name: "Delete" })
+            screen.getByRole("button", { name: "Delete trade" })
         );
 
         expect(mockDelete).toHaveBeenCalledWith(1);
