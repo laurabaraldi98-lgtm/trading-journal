@@ -286,20 +286,20 @@ export default function Home() {
   }
 
   return (
-    <div className="flex min-h-screen bg-zinc-100">
+    <div className="flex min-h-screen bg-slate-50">
       <Sidebar
         userEmail={userEmail}
         onLogout={handleLogout}
       />
 
-      <main className="min-w-0 flex-1 p-10">
+      <main className="min-w-0 flex-1 px-8 py-8 xl:px-10">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold">
+            <h2 className="text-3xl font-bold tracking-tight text-slate-900">
               Dashboard
             </h2>
 
-            <p className="text-zinc-600 mt-1">
+            <p className="mt-1 text-sm text-slate-500">
               Overview of your trading performance.
             </p>
           </div>

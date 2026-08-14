@@ -41,10 +41,22 @@ export default function CumulativeRCurve({ trades }: Props) {
     const equityData = buildCumulativeRData(trades);
 
     return (
-        <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-6">
-            <h3 className="mb-6 text-lg font-semibold">
-                Cumulative R
-            </h3>
+        <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-6">
+            <div className="mb-6 flex items-center justify-between">
+                <div>
+                    <h3 className="text-lg font-semibold text-slate-900">
+                        Cumulative R
+                    </h3>
+
+                    <p className="mt-1 text-sm text-slate-500">
+                        Trading performance by closed trade
+                    </p>
+                </div>
+
+                <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-600">
+                    R
+                </span>
+            </div>
 
             {trades.length === 0 ? (
                 <p className="text-zinc-500">
