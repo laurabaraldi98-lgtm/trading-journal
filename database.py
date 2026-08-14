@@ -218,3 +218,29 @@ def load_accounts_from_supabase(
     )
 
     return response.data
+
+
+def save_account_to_supabase(
+    account,
+    user_id: str,
+    token: str,
+):
+    client = get_authenticated_client(token)
+
+    data = {
+        "user_id": user_id,
+        "name": account["name"],
+        "starting_balance": account["starting_balance"],
+        "currency": account["currency"],
+        "broker": account.get("broker"),
+        "account_type": account.get("account_type"),
+    }
+
+    response = (
+        client
+        .table("accounts")
+        .insert(data)
+        .execute()
+    )
+
+    return response.data

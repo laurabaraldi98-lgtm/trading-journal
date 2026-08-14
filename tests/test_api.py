@@ -344,3 +344,39 @@ def test_get_accounts(authenticated_user):
         "test-user",
         "fake-token",
     )
+
+
+def test_create_account(authenticated_user):
+    account_data = {
+        "name": "FTMO 100K",
+        "starting_balance": 100000,
+        "currency": "USD",
+        "broker": "FTMO",
+        "account_type": "Prop Firm",
+    }
+
+    fake_response = [
+        {
+            "id": 2,
+            "user_id": "test-user",
+            **account_data,
+        }
+    ]
+
+    with patch(
+        "api.save_account_to_supabase",
+        return_value=fake_response,
+    ) as mock_save_account:
+        response = client.post(
+            "/accounts",
+            json=account_data,
+        )
+
+    assert response.status_code == 200
+    assert response.json() == fake_response
+
+    mock_save_account.assert_called_once_with(
+        account_data,
+        "test-user",
+        "fake-token",
+    )

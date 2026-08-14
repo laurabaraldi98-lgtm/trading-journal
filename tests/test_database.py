@@ -12,6 +12,7 @@ from database import (
     load_user_settings,
     save_user_settings,
     load_accounts_from_supabase,
+    save_account_to_supabase,
 )
 
 
@@ -429,6 +430,66 @@ def test_load_accounts_from_supabase():
 
     mock_query.order.assert_called_once_with(
         "created_at"
+    )
+
+    assert result == fake_response.data
+
+
+def test_save_account_to_supabase():
+    fake_response = SimpleNamespace(
+        data=[
+            {
+                "id": 2,
+                "user_id": "test-user",
+                "name": "FTMO 100K",
+                "starting_balance": 100000,
+                "currency": "USD",
+                "broker": "FTMO",
+                "account_type": "Prop Firm",
+            }
+        ]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.insert.return_value = mock_query
+
+    mock_client = make_mock_client(mock_query)
+
+    account = {
+        "name": "FTMO 100K",
+        "starting_balance": 100000,
+        "currency": "USD",
+        "broker": "FTMO",
+        "account_type": "Prop Firm",
+    }
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ) as mock_get_client:
+        result = save_account_to_supabase(
+            account,
+            "test-user",
+            "fake-token",
+        )
+
+    mock_get_client.assert_called_once_with(
+        "fake-token"
+    )
+
+    mock_client.table.assert_called_once_with(
+        "accounts"
+    )
+
+    mock_query.insert.assert_called_once_with(
+        {
+            "user_id": "test-user",
+            "name": "FTMO 100K",
+            "starting_balance": 100000,
+            "currency": "USD",
+            "broker": "FTMO",
+            "account_type": "Prop Firm",
+        }
     )
 
     assert result == fake_response.data

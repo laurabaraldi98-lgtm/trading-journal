@@ -14,6 +14,7 @@ from database import (
     load_user_settings,
     save_user_settings,
     load_accounts_from_supabase,
+    save_account_to_supabase,
 )
 
 
@@ -36,6 +37,14 @@ class TradeUpdate(BaseModel):
     exit: float
     entry_datetime: datetime | None = None
     exit_datetime: datetime | None = None
+
+
+class AccountCreate(BaseModel):
+    name: str
+    starting_balance: float
+    currency: str
+    broker: str | None = None
+    account_type: str | None = None
 
 
 app = FastAPI()
@@ -163,6 +172,29 @@ def get_accounts(auth_data=Depends(get_current_user)):
     token = auth_data["token"]
 
     return load_accounts_from_supabase(
+        user.id,
+        token,
+    )
+
+
+@app.post("/accounts")
+def create_account(
+    account: AccountCreate,
+    auth_data=Depends(get_current_user),
+):
+    user = auth_data["user"]
+    token = auth_data["token"]
+
+    account_data = {
+        "name": account.name,
+        "starting_balance": account.starting_balance,
+        "currency": account.currency,
+        "broker": account.broker,
+        "account_type": account.account_type,
+    }
+
+    return save_account_to_supabase(
+        account_data,
         user.id,
         token,
     )
