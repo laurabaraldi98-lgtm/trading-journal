@@ -11,6 +11,7 @@ from database import (
     update_trade_in_supabase,
     load_user_settings,
     save_user_settings,
+    load_accounts_from_supabase,
 )
 
 
@@ -129,6 +130,7 @@ def test_save_trade_to_supabase(
     mock_client = make_mock_client(mock_query)
 
     trade = [
+        1,
         "EURUSD",
         "long",
         1.15,
@@ -154,6 +156,7 @@ def test_save_trade_to_supabase(
     )
 
     expected_new_trade = {
+        "account_id": 1,
         "symbol": "EURUSD",
         "direction": "long",
         "entry": 1.15,
@@ -375,6 +378,57 @@ def test_save_user_settings():
             "account_size": 100000,
             "currency": "USD",
         }
+    )
+
+    assert result == fake_response.data
+
+
+def test_load_accounts_from_supabase():
+    fake_response = SimpleNamespace(
+        data=[
+            {
+                "id": 1,
+                "user_id": "test-user",
+                "name": "My Account",
+                "starting_balance": 100000,
+                "currency": "USD",
+                "broker": None,
+                "account_type": None,
+            }
+        ]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.order.return_value = mock_query
+
+    mock_client = make_mock_client(mock_query)
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ) as mock_get_client:
+        result = load_accounts_from_supabase(
+            "test-user",
+            "fake-token",
+        )
+
+    mock_get_client.assert_called_once_with(
+        "fake-token"
+    )
+
+    mock_client.table.assert_called_once_with(
+        "accounts"
+    )
+
+    mock_query.select.assert_called_once_with("*")
+
+    mock_query.eq.assert_called_once_with(
+        "user_id",
+        "test-user",
+    )
+
+    mock_query.order.assert_called_once_with(
+        "created_at"
     )
 
     assert result == fake_response.data

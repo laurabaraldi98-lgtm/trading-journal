@@ -13,10 +13,12 @@ from database import (
     update_trade_in_supabase,
     load_user_settings,
     save_user_settings,
+    load_accounts_from_supabase,
 )
 
 
 class TradeCreate(BaseModel):
+    account_id: int
     symbol: str
     direction: Literal["long", "short"]
     entry: float
@@ -83,6 +85,7 @@ def create_trade(
     )
 
     trade_data = [
+        trade.account_id,
         trade.symbol,
         trade.direction,
         trade.entry,
@@ -149,6 +152,17 @@ def update_trade(
     return update_trade_in_supabase(
         trade_id,
         updated_trade,
+        user.id,
+        token,
+    )
+
+
+@app.get("/accounts")
+def get_accounts(auth_data=Depends(get_current_user)):
+    user = auth_data["user"]
+    token = auth_data["token"]
+
+    return load_accounts_from_supabase(
         user.id,
         token,
     )

@@ -73,6 +73,7 @@ def test_get_trades_without_auth_returns_401():
 
 def test_create_trade(authenticated_user):
     trade_data = {
+        "account_id": 1,
         "symbol": "eurusd",
         "direction": "long",
         "entry": 1.12,
@@ -115,6 +116,7 @@ def test_create_trade_passes_correct_data_to_save(
     authenticated_user,
 ):
     trade_data = {
+        "account_id": 1,
         "symbol": "eurusd",
         "direction": "long",
         "entry": 1.12,
@@ -132,6 +134,7 @@ def test_create_trade_passes_correct_data_to_save(
 
     mock_save.assert_called_once_with(
         [
+            1,
             "eurusd",
             "long",
             1.12,
@@ -310,6 +313,34 @@ def test_update_settings(authenticated_user):
 
     mock_save_settings.assert_called_once_with(
         settings,
+        "test-user",
+        "fake-token",
+    )
+
+
+def test_get_accounts(authenticated_user):
+    fake_accounts = [
+        {
+            "id": 1,
+            "user_id": "test-user",
+            "name": "My Account",
+            "starting_balance": 100000,
+            "currency": "USD",
+            "broker": None,
+            "account_type": None,
+        }
+    ]
+
+    with patch(
+        "api.load_accounts_from_supabase",
+        return_value=fake_accounts,
+    ) as mock_load_accounts:
+        response = client.get("/accounts")
+
+    assert response.status_code == 200
+    assert response.json() == fake_accounts
+
+    mock_load_accounts.assert_called_once_with(
         "test-user",
         "fake-token",
     )

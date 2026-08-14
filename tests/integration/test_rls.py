@@ -50,14 +50,37 @@ def test_rls_blocks_other_users():
     )
 
     trade_id = None
+    account_id = None
 
     try:
+        # Create a temporary account for User A.
+        account_response = (
+            client_a
+            .table("accounts")
+            .insert(
+                {
+                    "user_id": user_a_id,
+                    "name": "RLS TEST ACCOUNT",
+                    "starting_balance": 100000,
+                    "currency": "USD",
+                    "broker": None,
+                    "account_type": "test",
+                }
+            )
+            .execute()
+        )
+
+        assert len(account_response.data) == 1
+
+        account_id = account_response.data[0]["id"]
+
         # User A creates a trade belonging to User A.
         insert_response = (
             client_a
             .table("trades")
             .insert(
                 {
+                    "account_id": account_id,
                     "symbol": "RLS_TEST",
                     "direction": "long",
                     "entry": 100,
@@ -124,7 +147,7 @@ def test_rls_blocks_other_users():
 
         assert delete_response.data == []
 
-        # Confirm that User A's trade still exists unchanged.
+        # Confirm User A's trade still exists unchanged.
         final_response = (
             client_a
             .table("trades")
@@ -137,12 +160,22 @@ def test_rls_blocks_other_users():
         assert final_response.data[0]["symbol"] == "RLS_TEST"
 
     finally:
-        # Clean up the test trade even if an assertion fails.
+        # Delete the trade first because the account
+        # cannot be deleted while a trade references it.
         if trade_id is not None:
             (
                 client_a
                 .table("trades")
                 .delete()
                 .eq("id", trade_id)
+                .execute()
+            )
+
+        if account_id is not None:
+            (
+                client_a
+                .table("accounts")
+                .delete()
+                .eq("id", account_id)
                 .execute()
             )

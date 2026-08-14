@@ -73,20 +73,21 @@ def save_trade_to_supabase(
     client = get_authenticated_client(token)
 
     new_trade = {
-        "symbol": trade[0],
-        "direction": trade[1],
-        "entry": trade[2],
-        "stop": trade[3],
-        "exit": trade[4],
-        "result": trade[5],
+        "account_id": trade[0],
+        "symbol": trade[1],
+        "direction": trade[2],
+        "entry": trade[3],
+        "stop": trade[4],
+        "exit": trade[5],
+        "result": trade[6],
         "entry_datetime": (
-            trade[6].isoformat()
-            if trade[6]
+            trade[7].isoformat()
+            if trade[7]
             else None
         ),
         "exit_datetime": (
-            trade[7].isoformat()
-            if trade[7]
+            trade[8].isoformat()
+            if trade[8]
             else None
         ),
         "user_id": user_id,
@@ -195,6 +196,24 @@ def save_user_settings(settings, user_id: str, token: str):
     response = (
         client.table("user_settings")
         .upsert(data)
+        .execute()
+    )
+
+    return response.data
+
+
+def load_accounts_from_supabase(
+    user_id: str,
+    token: str,
+):
+    client = get_authenticated_client(token)
+
+    response = (
+        client
+        .table("accounts")
+        .select("*")
+        .eq("user_id", user_id)
+        .order("created_at")
         .execute()
     )
 
