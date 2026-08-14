@@ -14,6 +14,7 @@ from database import (
     load_accounts_from_supabase,
     save_account_to_supabase,
     update_account_in_supabase,
+    delete_account_from_supabase
 )
 
 
@@ -562,6 +563,55 @@ def test_update_account_in_supabase(
             "account_type": account_type,
         }
     )
+
+    mock_query.eq.assert_any_call(
+        "id",
+        2,
+    )
+
+    mock_query.eq.assert_any_call(
+        "user_id",
+        "test-user",
+    )
+
+    assert result == fake_response.data
+
+
+def test_delete_account_from_supabase():
+    fake_response = SimpleNamespace(
+        data=[
+            {
+                "id": 2,
+                "user_id": "test-user",
+                "name": "FTMO 100K",
+            }
+        ]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.delete.return_value = mock_query
+
+    mock_client = make_mock_client(mock_query)
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ) as mock_get_client:
+        result = delete_account_from_supabase(
+            2,
+            "test-user",
+            "fake-token",
+        )
+
+    mock_get_client.assert_called_once_with(
+        "fake-token"
+    )
+
+    mock_client.table.assert_called_once_with(
+        "accounts"
+    )
+
+    mock_query.delete.assert_called_once_with()
 
     mock_query.eq.assert_any_call(
         "id",

@@ -417,3 +417,30 @@ def test_update_account(authenticated_user):
         "test-user",
         "fake-token",
     )
+
+
+def test_delete_account(authenticated_user):
+    fake_response = [
+        {
+            "id": 2,
+            "user_id": "test-user",
+            "name": "FTMO 100K",
+        }
+    ]
+
+    with patch(
+        "api.delete_account_from_supabase",
+        return_value=fake_response,
+    ) as mock_delete_account:
+        response = client.delete(
+            "/accounts/2"
+        )
+
+    assert response.status_code == 200
+    assert response.json() == fake_response
+
+    mock_delete_account.assert_called_once_with(
+        2,
+        "test-user",
+        "fake-token",
+    )

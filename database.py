@@ -272,3 +272,22 @@ def update_account_in_supabase(
     )
 
     return response.data
+
+
+def delete_account_from_supabase(
+    account_id: int,
+    user_id: str,
+    token: str,
+):
+    client = get_authenticated_client(token)
+
+    response = (
+        client
+        .table("accounts")
+        .delete()
+        .eq("id", account_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+
+    return response.data

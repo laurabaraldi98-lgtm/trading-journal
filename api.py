@@ -16,6 +16,7 @@ from database import (
     load_accounts_from_supabase,
     save_account_to_supabase,
     update_account_in_supabase,
+    delete_account_from_supabase,
 )
 
 
@@ -229,6 +230,21 @@ def update_account(
     return update_account_in_supabase(
         account_id,
         account_data,
+        user.id,
+        token,
+    )
+
+
+@app.delete("/accounts/{account_id}")
+def delete_account(
+    account_id: int,
+    auth_data=Depends(get_current_user),
+):
+    user = auth_data["user"]
+    token = auth_data["token"]
+
+    return delete_account_from_supabase(
+        account_id,
         user.id,
         token,
     )
