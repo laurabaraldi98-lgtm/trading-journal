@@ -386,3 +386,197 @@ describe("TradesTable", () => {
         expect(mockDelete).toHaveBeenCalledWith(1);
     });
 });
+
+test("shows a short losing trade", () => {
+    const trade: [
+        number,
+        string,
+        string,
+        number,
+        number,
+        number,
+        number,
+        string | null,
+        string | null
+    ] = [
+            1,
+            "GBPUSD",
+            "short",
+            1.25,
+            1.26,
+            1.23,
+            -1,
+            null,
+            null
+        ];
+
+    render(
+        <TradesTable
+            trades={[trade]}
+            editingTradeId={null}
+            symbol=""
+            direction=""
+            entry=""
+            stop=""
+            exit=""
+            entryDatetime=""
+            exitDatetime=""
+            setSymbol={() => { }}
+            setDirection={() => { }}
+            setEntry={() => { }}
+            setStop={() => { }}
+            setExit={() => { }}
+            setEntryDatetime={() => { }}
+            setExitDatetime={() => { }}
+            onEdit={() => { }}
+            onUpdate={() => { }}
+            onDelete={() => { }}
+        />
+    );
+
+    expect(
+        screen.getByText("Short ↓")
+    ).toBeInTheDocument();
+
+    expect(
+        screen.getByText("-1R")
+    ).toBeInTheDocument();
+});
+
+test("shows a breakeven trade", () => {
+    const trade: [
+        number,
+        string,
+        string,
+        number,
+        number,
+        number,
+        number,
+        string | null,
+        string | null
+    ] = [
+            1,
+            "EURUSD",
+            "long",
+            1.15,
+            1.14,
+            1.15,
+            0,
+            null,
+            null
+        ];
+
+    render(
+        <TradesTable
+            trades={[trade]}
+            editingTradeId={null}
+            symbol=""
+            direction=""
+            entry=""
+            stop=""
+            exit=""
+            entryDatetime=""
+            exitDatetime=""
+            setSymbol={() => { }}
+            setDirection={() => { }}
+            setEntry={() => { }}
+            setStop={() => { }}
+            setExit={() => { }}
+            setEntryDatetime={() => { }}
+            setExitDatetime={() => { }}
+            onEdit={() => { }}
+            onUpdate={() => { }}
+            onDelete={() => { }}
+        />
+    );
+
+    expect(
+        screen.getByText("0R")
+    ).toBeInTheDocument();
+});
+
+test.each([
+    [-1, "-1R"],
+    [0, "0R"],
+])("shows result %s while editing", (result, expectedText) => {
+    const trade: [
+        number,
+        string,
+        string,
+        number,
+        number,
+        number,
+        number,
+        string | null,
+        string | null
+    ] = [
+            1,
+            "EURUSD",
+            "long",
+            1.15,
+            1.14,
+            1.17,
+            result,
+            null,
+            null
+        ];
+
+    render(
+        <TradesTable
+            trades={[trade]}
+            editingTradeId={1}
+            symbol="EURUSD"
+            direction="long"
+            entry="1.15"
+            stop="1.14"
+            exit="1.17"
+            entryDatetime=""
+            exitDatetime=""
+            setSymbol={() => { }}
+            setDirection={() => { }}
+            setEntry={() => { }}
+            setStop={() => { }}
+            setExit={() => { }}
+            setEntryDatetime={() => { }}
+            setExitDatetime={() => { }}
+            onEdit={() => { }}
+            onUpdate={() => { }}
+            onDelete={() => { }}
+        />
+    );
+
+    expect(
+        screen.getByText(expectedText)
+    ).toBeInTheDocument();
+});
+
+test("shows View all trades when showViewAll is true", () => {
+    render(
+        <TradesTable
+            trades={[]}
+            editingTradeId={null}
+            symbol=""
+            direction=""
+            entry=""
+            stop=""
+            exit=""
+            entryDatetime=""
+            exitDatetime=""
+            setSymbol={() => { }}
+            setDirection={() => { }}
+            setEntry={() => { }}
+            setStop={() => { }}
+            setExit={() => { }}
+            setEntryDatetime={() => { }}
+            setExitDatetime={() => { }}
+            onEdit={() => { }}
+            onUpdate={() => { }}
+            onDelete={() => { }}
+            showViewAll={true}
+        />
+    );
+
+    expect(
+        screen.getByRole("link", { name: "View all trades →" })
+    ).toBeInTheDocument();
+});
