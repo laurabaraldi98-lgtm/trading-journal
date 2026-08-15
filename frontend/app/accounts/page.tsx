@@ -136,6 +136,7 @@ export default function AccountsPage() {
     }
 
     function handleEditAccount(account: Account) {
+        setShowAccountForm(false);
         setEditingAccountId(account.id);
 
         setName(account.name);
@@ -266,11 +267,17 @@ export default function AccountsPage() {
 
                     <button
                         type="button"
-                        onClick={() =>
-                            setShowAccountForm(
-                                !showAccountForm
-                            )
-                        }
+                        onClick={() => {
+                            setEditingAccountId(null);
+
+                            setName("");
+                            setStartingBalance("");
+                            setCurrency("USD");
+                            setBroker("");
+                            setAccountType("");
+
+                            setShowAccountForm(!showAccountForm);
+                        }}
                         className="cursor-pointer rounded-lg bg-black px-4 py-2 text-white transition hover:bg-zinc-800"
                     >
                         + Add account

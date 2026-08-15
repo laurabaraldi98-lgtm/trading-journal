@@ -291,6 +291,7 @@ export default function Home() {
   }
 
   function handleEditTrade(trade: Trade) {
+    setShowForm(false);
     setEditingTradeId(trade[0]);
 
     setSymbol(trade[1]);
@@ -420,11 +421,20 @@ export default function Home() {
             )}
 
             <button
-              onClick={() =>
-                setShowForm(
-                  !showForm
-                )
-              }
+              onClick={() => {
+                setEditingTradeId(null);
+
+                setSymbol("");
+                setDirection("");
+                setEntry("");
+                setStop("");
+                setExit("");
+                setPnl("");
+                setEntryDatetime("");
+                setExitDatetime("");
+
+                setShowForm(!showForm);
+              }}
               disabled={
                 selectedAccountId ===
                 null
@@ -480,7 +490,8 @@ export default function Home() {
 
         {dashboardLoading ? (
           <>
-            <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
               <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
               <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
               <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
