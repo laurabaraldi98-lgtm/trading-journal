@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import Sidebar from "../../components/Sidebar";
-import Accounts from "../../components/Accounts";
+import AccountForm from "./AccountForm";
 
 type Account = {
     id: number;
@@ -18,6 +18,7 @@ type Account = {
 
 export default function AccountsPage() {
     const [accounts, setAccounts] = useState<Account[]>([]);
+    const [showAccountForm, setShowAccountForm] = useState(false);
 
     const [name, setName] = useState("");
     const [startingBalance, setStartingBalance] = useState("");
@@ -118,6 +119,7 @@ export default function AccountsPage() {
 
         await loadAccounts();
         resetForm();
+        setShowAccountForm(false);
     }
 
     function handleEditAccount(account: Account) {
@@ -236,33 +238,45 @@ export default function AccountsPage() {
             />
 
             <main className="min-w-0 flex-1 p-10">
-                <div>
-                    <h2 className="text-3xl font-bold">
-                        Accounts
-                    </h2>
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 className="text-3xl font-bold">
+                            Accounts
+                        </h2>
 
-                    <p className="mt-1 text-zinc-600">
-                        Manage your trading accounts.
-                    </p>
+                        <p className="mt-1 text-zinc-600">
+                            Manage your trading accounts.
+                        </p>
+                    </div>
+
+                    <button
+                        type="button"
+                        onClick={() =>
+                            setShowAccountForm(
+                                !showAccountForm
+                            )
+                        }
+                        className="cursor-pointer rounded-lg bg-black px-4 py-2 text-white transition hover:bg-zinc-800"
+                    >
+                        + Add account
+                    </button>
                 </div>
 
-                <Accounts
-                    name={name}
-                    startingBalance={startingBalance}
-                    currency={currency}
-                    broker={broker}
-                    accountType={accountType}
-                    setName={setName}
-                    setStartingBalance={
-                        setStartingBalance
-                    }
-                    setCurrency={setCurrency}
-                    setBroker={setBroker}
-                    setAccountType={
-                        setAccountType
-                    }
-                    onSave={handleSaveAccount}
-                />
+                {showAccountForm && (
+                    <AccountForm
+                        name={name}
+                        startingBalance={startingBalance}
+                        currency={currency}
+                        broker={broker}
+                        accountType={accountType}
+                        setName={setName}
+                        setStartingBalance={setStartingBalance}
+                        setCurrency={setCurrency}
+                        setBroker={setBroker}
+                        setAccountType={setAccountType}
+                        onSave={handleSaveAccount}
+                    />
+                )}
 
                 <div className="mt-8 rounded-xl border border-zinc-200 bg-white">
                     <div className="border-b border-zinc-200 px-6 py-4">

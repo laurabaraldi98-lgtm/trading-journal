@@ -14,7 +14,7 @@ type Props = {
     onSave: () => void;
 };
 
-export default function Accounts({
+export default function AccountForm({
     name,
     startingBalance,
     currency,
@@ -45,7 +45,7 @@ export default function Accounts({
                         onChange={(event) =>
                             setName(event.target.value)
                         }
-                        placeholder="FTMO 100K"
+                        placeholder="e.g. Main account"
                         className="w-full rounded-lg border border-zinc-300 px-3 py-2"
                     />
                 </div>
@@ -61,7 +61,7 @@ export default function Accounts({
                         onChange={(event) =>
                             setStartingBalance(event.target.value)
                         }
-                        placeholder="100000"
+                        placeholder="e.g. 10000"
                         className="w-full rounded-lg border border-zinc-300 px-3 py-2"
                     />
                 </div>
@@ -95,7 +95,7 @@ export default function Accounts({
                         onChange={(event) =>
                             setBroker(event.target.value)
                         }
-                        placeholder="FTMO"
+                        placeholder="e.g. Interactive Brokers"
                         className="w-full rounded-lg border border-zinc-300 px-3 py-2"
                     />
                 </div>
@@ -111,7 +111,7 @@ export default function Accounts({
                         onChange={(event) =>
                             setAccountType(event.target.value)
                         }
-                        placeholder="Prop Firm"
+                        placeholder="e.g. Personal account"
                         className="w-full rounded-lg border border-zinc-300 px-3 py-2"
                     />
                 </div>
