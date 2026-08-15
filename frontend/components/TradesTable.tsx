@@ -14,6 +14,7 @@ type Trade = [
     number,
     number,
     number,
+    number,
     string | null,
     string | null
 ];
@@ -27,6 +28,7 @@ type TradesTableProps = {
     entry: string;
     stop: string;
     exit: string;
+    pnl: string;
     entryDatetime: string;
     exitDatetime: string;
 
@@ -37,6 +39,7 @@ type TradesTableProps = {
     setEntry: (value: string) => void;
     setStop: (value: string) => void;
     setExit: (value: string) => void;
+    setPnl: (value: string) => void;
     setEntryDatetime: (value: string) => void;
     setExitDatetime: (value: string) => void;
 
@@ -53,6 +56,7 @@ export default function TradesTable({
     entry,
     stop,
     exit,
+    pnl,
     entryDatetime,
     exitDatetime,
     showViewAll = false,
@@ -61,6 +65,7 @@ export default function TradesTable({
     setEntry,
     setStop,
     setExit,
+    setPnl,
     setEntryDatetime,
     setExitDatetime,
     onEdit,
@@ -87,6 +92,7 @@ export default function TradesTable({
                             <th className="py-3 pr-6">Entry Time</th>
                             <th className="py-3 pr-6">Exit Time</th>
                             <th className="py-3 pr-6">Result</th>
+                            <th className="py-3 pr-6">P/L</th>
                             <th className="py-3 pr-6">Actions</th>
                         </tr>
                     </thead>
@@ -205,6 +211,16 @@ export default function TradesTable({
                                         </td>
 
                                         <td className="py-4 pr-6">
+                                            <input
+                                                type="number"
+                                                aria-label="Edit P/L"
+                                                value={pnl}
+                                                onChange={(event) => setPnl(event.target.value)}
+                                                className="w-24 rounded-lg border border-slate-300 px-2 py-1"
+                                            />
+                                        </td>
+
+                                        <td className="py-4 pr-6">
                                             <button
                                                 onClick={() =>
                                                     onUpdate(trade[0])
@@ -249,17 +265,17 @@ export default function TradesTable({
                                         </td>
 
                                         <td className="whitespace-nowrap py-4 pr-6">
-                                            {trade[7]
+                                            {trade[8]
                                                 ? new Date(
-                                                    trade[7]
+                                                    trade[8]
                                                 ).toLocaleString()
                                                 : "-"}
                                         </td>
 
                                         <td className="whitespace-nowrap py-4 pr-6">
-                                            {trade[8]
+                                            {trade[9]
                                                 ? new Date(
-                                                    trade[8]
+                                                    trade[9]
                                                 ).toLocaleString()
                                                 : "-"}
                                         </td>
@@ -275,6 +291,20 @@ export default function TradesTable({
                                                 }
                                             >
                                                 {trade[6]}R
+                                            </span>
+                                        </td>
+
+                                        <td className="py-4 pr-6">
+                                            <span
+                                                className={
+                                                    trade[7] > 0
+                                                        ? "font-semibold text-emerald-600"
+                                                        : trade[7] < 0
+                                                            ? "font-semibold text-rose-600"
+                                                            : "font-semibold text-slate-500"
+                                                }
+                                            >
+                                                {trade[7]}
                                             </span>
                                         </td>
 

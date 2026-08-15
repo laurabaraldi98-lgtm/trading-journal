@@ -17,6 +17,7 @@ type Trade = [
   number,
   number,
   number,
+  number,
   string | null,
   string | null
 ];
@@ -40,6 +41,7 @@ export default function Home() {
   const [entry, setEntry] = useState("");
   const [stop, setStop] = useState("");
   const [exit, setExit] = useState("");
+  const [pnl, setPnl] = useState("");
   const [entryDatetime, setEntryDatetime] = useState("");
   const [exitDatetime, setExitDatetime] = useState("");
 
@@ -202,6 +204,7 @@ export default function Home() {
       entry: Number(entry),
       stop: Number(stop),
       exit: Number(exit),
+      pnl: Number(pnl),
       entry_datetime:
         entryDatetime || null,
       exit_datetime:
@@ -239,6 +242,7 @@ export default function Home() {
       setEntry("");
       setStop("");
       setExit("");
+      setPnl("");
       setEntryDatetime("");
       setExitDatetime("");
       setShowForm(false);
@@ -295,15 +299,17 @@ export default function Home() {
     setStop(String(trade[4]));
     setExit(String(trade[5]));
 
+    setPnl(String(trade[7]));
+
     setEntryDatetime(
-      trade[7]
-        ? trade[7].slice(0, 16)
+      trade[8]
+        ? trade[8].slice(0, 16)
         : ""
     );
 
     setExitDatetime(
-      trade[8]
-        ? trade[8].slice(0, 16)
+      trade[9]
+        ? trade[9].slice(0, 16)
         : ""
     );
   }
@@ -317,6 +323,7 @@ export default function Home() {
       entry: Number(entry),
       stop: Number(stop),
       exit: Number(exit),
+      pnl: Number(pnl),
       entry_datetime:
         entryDatetime || null,
       exit_datetime:
@@ -444,6 +451,7 @@ export default function Home() {
               entry={entry}
               stop={stop}
               exit={exit}
+              pnl={pnl}
               entryDatetime={
                 entryDatetime
               }
@@ -457,6 +465,7 @@ export default function Home() {
               setEntry={setEntry}
               setStop={setStop}
               setExit={setExit}
+              setPnl={setPnl}
               setEntryDatetime={
                 setEntryDatetime
               }
@@ -510,6 +519,7 @@ export default function Home() {
               entry={entry}
               stop={stop}
               exit={exit}
+              pnl={pnl}
               entryDatetime={entryDatetime}
               exitDatetime={exitDatetime}
               setSymbol={setSymbol}
@@ -517,6 +527,7 @@ export default function Home() {
               setEntry={setEntry}
               setStop={setStop}
               setExit={setExit}
+              setPnl={setPnl}
               setEntryDatetime={setEntryDatetime}
               setExitDatetime={setExitDatetime}
               onEdit={handleEditTrade}

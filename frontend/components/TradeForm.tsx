@@ -4,15 +4,19 @@ type TradeFormProps = {
     entry: string;
     stop: string;
     exit: string;
+    pnl: string;
     entryDatetime: string;
     exitDatetime: string;
+
     setSymbol: (value: string) => void;
     setDirection: (value: string) => void;
     setEntry: (value: string) => void;
     setStop: (value: string) => void;
     setExit: (value: string) => void;
+    setPnl: (value: string) => void;
     setEntryDatetime: (value: string) => void;
     setExitDatetime: (value: string) => void;
+
     onSave: () => void;
 };
 
@@ -22,6 +26,7 @@ export default function TradeForm({
     entry,
     stop,
     exit,
+    pnl,
     entryDatetime,
     exitDatetime,
     setSymbol,
@@ -29,6 +34,7 @@ export default function TradeForm({
     setEntry,
     setStop,
     setExit,
+    setPnl,
     setEntryDatetime,
     setExitDatetime,
     onSave,
@@ -77,6 +83,14 @@ export default function TradeForm({
                     value={exit}
                     onChange={(event) => setExit(event.target.value)}
                     placeholder="Exit price"
+                    className="rounded-lg border border-zinc-300 p-3"
+                />
+
+                <input
+                    type="number"
+                    value={pnl}
+                    onChange={(event) => setPnl(event.target.value)}
+                    placeholder="P/L"
                     className="rounded-lg border border-zinc-300 p-3"
                 />
 

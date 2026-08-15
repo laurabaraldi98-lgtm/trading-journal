@@ -26,6 +26,7 @@ type Trade = [
     number,
     number,
     number,
+    number,
     string | null,
     string | null
 ];
@@ -202,6 +203,7 @@ function makeTrade({
         1.14,
         1.17,
         2,
+        250,
         entryDatetime,
         exitDatetime,
     ];

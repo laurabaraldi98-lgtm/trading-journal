@@ -13,6 +13,7 @@ type Trade = [
     number,
     number,
     number,
+    number,
     string | null,
     string | null
 ];
@@ -27,6 +28,7 @@ export default function TradesPage() {
     const [entry, setEntry] = useState("");
     const [stop, setStop] = useState("");
     const [exit, setExit] = useState("");
+    const [pnl, setPnl] = useState("");
     const [entryDatetime, setEntryDatetime] = useState("");
     const [exitDatetime, setExitDatetime] = useState("");
 
@@ -70,8 +72,9 @@ export default function TradesPage() {
         setEntry(String(trade[3]));
         setStop(String(trade[4]));
         setExit(String(trade[5]));
-        setEntryDatetime(trade[7] ? trade[7].slice(0, 16) : "");
-        setExitDatetime(trade[8] ? trade[8].slice(0, 16) : "");
+        setPnl(String(trade[7]));
+        setEntryDatetime(trade[8] ? trade[8].slice(0, 16) : "");
+        setExitDatetime(trade[9] ? trade[9].slice(0, 16) : "");
     }
 
     async function handleUpdateTrade(tradeId: number) {
@@ -98,6 +101,7 @@ export default function TradesPage() {
                     entry: Number(entry),
                     stop: Number(stop),
                     exit: Number(exit),
+                    pnl: Number(pnl),
                     entry_datetime: entryDatetime || null,
                     exit_datetime: exitDatetime || null,
                 }),
@@ -186,6 +190,7 @@ export default function TradesPage() {
                     entry={entry}
                     stop={stop}
                     exit={exit}
+                    pnl={pnl}
                     entryDatetime={entryDatetime}
                     exitDatetime={exitDatetime}
                     setSymbol={setSymbol}
@@ -193,6 +198,7 @@ export default function TradesPage() {
                     setEntry={setEntry}
                     setStop={setStop}
                     setExit={setExit}
+                    setPnl={setPnl}
                     setEntryDatetime={setEntryDatetime}
                     setExitDatetime={setExitDatetime}
                     onEdit={handleEditTrade}

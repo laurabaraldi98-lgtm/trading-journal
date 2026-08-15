@@ -14,6 +14,7 @@ export type Trade = [
     number,
     number,
     number,
+    number,
     string | null,
     string | null
 ];
