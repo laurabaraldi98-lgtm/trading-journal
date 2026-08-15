@@ -37,17 +37,23 @@ def test_get_user_from_token_returns_user():
 
     fake_response = SimpleNamespace(user=fake_user)
 
-    with patch("auth.supabase.auth.get_user", return_value=fake_response):
+    with patch("auth.create_client") as mock_create_client:
+        mock_client = mock_create_client.return_value
+        mock_client.auth.get_user.return_value = fake_response
+
         user = get_user_from_token("abc123")
 
     assert user == fake_user
 
 
 def test_get_user_from_token_invalid_token():
-    with patch(
-        "auth.supabase.auth.get_user",
-        side_effect=Exception("Invalid token")
-    ):
+    with patch("auth.create_client") as mock_create_client:
+        mock_client = mock_create_client.return_value
+
+        mock_client.auth.get_user.side_effect = Exception(
+            "Invalid token"
+        )
+
         with pytest.raises(HTTPException) as error:
             get_user_from_token("bad-token")
 
