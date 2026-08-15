@@ -632,3 +632,47 @@ def test_delete_account_from_supabase():
     )
 
     assert result == fake_response.data
+
+
+def test_load_trades_from_supabase_filters_by_account():
+    fake_response = SimpleNamespace(
+        data=[
+            {
+                "id": 1,
+                "symbol": "EURUSD",
+                "direction": "long",
+                "entry": "1.15",
+                "stop": "1.14",
+                "exit": "1.17",
+                "result": "2",
+                "pnl": "400",
+                "entry_datetime": "2026-08-12T10:00:00",
+                "exit_datetime": "2026-08-12T11:00:00",
+            }
+        ]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.order.return_value = mock_query
+
+    mock_client = make_mock_client(mock_query)
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        load_trades_from_supabase(
+            "user-123",
+            "fake-token",
+            7,
+        )
+
+    mock_query.eq.assert_any_call(
+        "user_id",
+        "user-123",
+    )
+
+    mock_query.eq.assert_any_call(
+        "account_id",
+        7,
+    )

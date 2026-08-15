@@ -63,6 +63,7 @@ def test_get_trades(authenticated_user):
     mock_load.assert_called_once_with(
         "test-user",
         "fake-token",
+        None,
     )
 
 

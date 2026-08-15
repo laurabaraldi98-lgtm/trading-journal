@@ -72,9 +72,12 @@ export default function Home() {
         account.id === selectedAccountId
     ) ?? null;
 
-  async function loadTrades(accessToken: string) {
+  async function loadTrades(
+    accessToken: string,
+    accountId: number
+  ) {
     const response = await fetch(
-      "http://127.0.0.1:8000/trades",
+      `http://127.0.0.1:8000/trades?account_id=${accountId}`,
       {
         cache: "no-store",
         headers: {
@@ -181,16 +184,24 @@ export default function Home() {
     async function loadDashboard() {
       setDashboardLoading(true);
 
-      await Promise.all([
-        loadTrades(accessToken),
-        loadAccounts(accessToken),
-      ]);
+      await loadAccounts(accessToken);
 
       setDashboardLoading(false);
     }
 
     loadDashboard();
   }, [session]);
+
+  useEffect(() => {
+    if (!session || selectedAccountId === null) {
+      return;
+    }
+
+    loadTrades(
+      session.access_token,
+      selectedAccountId
+    );
+  }, [session, selectedAccountId]);
 
   async function handleSaveTrade() {
     if (selectedAccountId === null) {
@@ -235,7 +246,10 @@ export default function Home() {
     );
 
     if (response.ok) {
-      await loadTrades(session.access_token);
+      await loadTrades(
+        session.access_token,
+        selectedAccountId
+      );
 
       setSymbol("");
       setDirection("");
@@ -355,7 +369,12 @@ export default function Home() {
     );
 
     if (response.ok) {
-      await loadTrades(session.access_token);
+      if (selectedAccountId !== null) {
+        await loadTrades(
+          session.access_token,
+          selectedAccountId
+        );
+      }
 
       setEditingTradeId(null);
     }

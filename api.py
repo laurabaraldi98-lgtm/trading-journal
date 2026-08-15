@@ -77,13 +77,17 @@ def root():
 
 
 @app.get("/trades")
-def get_trades(auth_data=Depends(get_current_user)):
+def get_trades(
+    account_id: int | None = None,
+    auth_data=Depends(get_current_user),
+):
     user = auth_data["user"]
     token = auth_data["token"]
 
     return load_trades_from_supabase(
         user.id,
         token,
+        account_id,
     )
 
 

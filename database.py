@@ -29,14 +29,22 @@ def get_authenticated_client(token: str):
 def load_trades_from_supabase(
     user_id: str,
     token: str,
+    account_id: int | None = None,
 ):
     client = get_authenticated_client(token)
 
-    response = (
+    query = (
         client
         .table("trades")
         .select("*")
         .eq("user_id", user_id)
+    )
+
+    if account_id is not None:
+        query = query.eq("account_id", account_id)
+
+    response = (
+        query
         .order(
             "entry_datetime",
             desc=True,
