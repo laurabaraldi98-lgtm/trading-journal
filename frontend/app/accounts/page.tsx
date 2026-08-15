@@ -4,6 +4,11 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabase";
 import Sidebar from "../../components/Sidebar";
 import AccountForm from "./AccountForm";
+import {
+    Pencil,
+    Trash2,
+    Save,
+} from "lucide-react";
 
 type Account = {
     id: number;
@@ -18,6 +23,7 @@ type Account = {
 
 export default function AccountsPage() {
     const [accounts, setAccounts] = useState<Account[]>([]);
+    const [accountsLoading, setAccountsLoading] = useState(true);
     const [showAccountForm, setShowAccountForm] = useState(false);
 
     const [name, setName] = useState("");
@@ -35,6 +41,8 @@ export default function AccountsPage() {
     const [authLoading, setAuthLoading] = useState(true);
 
     async function loadAccounts() {
+        setAccountsLoading(true);
+
         const {
             data: { session },
         } = await supabase.auth.getSession();
@@ -58,12 +66,17 @@ export default function AccountsPage() {
         );
 
         if (!response.ok) {
+            console.log("ACCOUNTS ERROR:", response.status);
+            setAccountsLoading(false);
             return;
         }
 
         const data = await response.json();
 
+        console.log("ACCOUNTS DATA:", data);
+
         setAccounts(data);
+        setAccountsLoading(false);
     }
 
     function resetForm() {
@@ -223,8 +236,10 @@ export default function AccountsPage() {
     }, []);
 
     useEffect(() => {
-        loadAccounts();
-    }, []);
+        if (!authLoading) {
+            loadAccounts();
+        }
+    }, [authLoading]);
 
     if (authLoading) {
         return null;
@@ -285,7 +300,11 @@ export default function AccountsPage() {
                         </h3>
                     </div>
 
-                    {accounts.length === 0 ? (
+                    {accountsLoading ? (
+                        <p className="p-6 text-zinc-500">
+                            Loading accounts...
+                        </p>
+                    ) : accounts.length === 0 ? (
                         <p className="p-6 text-zinc-500">
                             No accounts yet.
                         </p>
@@ -322,77 +341,138 @@ export default function AccountsPage() {
 
                                 <tbody>
                                     {accounts.map(
-                                        (account) => (
-                                            <tr
-                                                key={
-                                                    account.id
-                                                }
-                                                className="border-b border-zinc-100"
-                                            >
-                                                <td className="px-6 py-4 font-medium">
-                                                    {
-                                                        account.name
-                                                    }
-                                                </td>
+                                        (account) =>
+                                            editingAccountId === account.id ? (
+                                                <tr
+                                                    key={account.id}
+                                                    className="border-b border-zinc-100"
+                                                >
+                                                    <td className="px-6 py-4">
+                                                        <input
+                                                            value={name}
+                                                            onChange={(event) =>
+                                                                setName(event.target.value)
+                                                            }
+                                                            className="w-full rounded-lg border border-zinc-300 px-2 py-1"
+                                                        />
+                                                    </td>
 
-                                                <td className="px-6 py-4">
-                                                    {
-                                                        account.starting_balance
-                                                    }
-                                                </td>
+                                                    <td className="px-6 py-4">
+                                                        <input
+                                                            type="number"
+                                                            value={startingBalance}
+                                                            onChange={(event) =>
+                                                                setStartingBalance(event.target.value)
+                                                            }
+                                                            className="w-full rounded-lg border border-zinc-300 px-2 py-1"
+                                                        />
+                                                    </td>
 
-                                                <td className="px-6 py-4">
-                                                    {
-                                                        account.currency
-                                                    }
-                                                </td>
+                                                    <td className="px-6 py-4">
+                                                        <select
+                                                            value={currency}
+                                                            onChange={(event) =>
+                                                                setCurrency(event.target.value)
+                                                            }
+                                                            className="rounded-lg border border-zinc-300 px-2 py-1"
+                                                        >
+                                                            <option value="USD">USD</option>
+                                                            <option value="EUR">EUR</option>
+                                                            <option value="GBP">GBP</option>
+                                                        </select>
+                                                    </td>
 
-                                                <td className="px-6 py-4">
-                                                    {account.broker ??
-                                                        "—"}
-                                                </td>
+                                                    <td className="px-6 py-4">
+                                                        <input
+                                                            value={broker}
+                                                            onChange={(event) =>
+                                                                setBroker(event.target.value)
+                                                            }
+                                                            className="w-full rounded-lg border border-zinc-300 px-2 py-1"
+                                                        />
+                                                    </td>
 
-                                                <td className="px-6 py-4">
-                                                    {account.account_type ??
-                                                        "—"}
-                                                </td>
+                                                    <td className="px-6 py-4">
+                                                        <input
+                                                            value={accountType}
+                                                            onChange={(event) =>
+                                                                setAccountType(event.target.value)
+                                                            }
+                                                            className="w-full rounded-lg border border-zinc-300 px-2 py-1"
+                                                        />
+                                                    </td>
 
-                                                <td className="px-6 py-4">
-                                                    <div className="flex gap-2">
+                                                    <td className="px-6 py-4">
                                                         <button
                                                             type="button"
-                                                            onClick={() =>
-                                                                handleEditAccount(
-                                                                    account
-                                                                )
-                                                            }
-                                                            className="cursor-pointer rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                                                            onClick={handleSaveAccount}
+                                                            aria-label="Save account"
+                                                            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100"
                                                         >
-                                                            Edit
+                                                            <Save size={16} />
                                                         </button>
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                <tr
+                                                    key={account.id}
+                                                    className="border-b border-zinc-100"
+                                                >
+                                                    <td className="px-6 py-4 font-medium">
+                                                        {account.name}
+                                                    </td>
 
-                                                        <button
-                                                            type="button"
-                                                            onClick={() =>
-                                                                handleDeleteAccount(
-                                                                    account.id
-                                                                )
-                                                            }
-                                                            className="cursor-pointer rounded-lg bg-red-600 px-3 py-2 text-sm text-white"
-                                                        >
-                                                            Delete
-                                                        </button>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        )
+                                                    <td className="px-6 py-4">
+                                                        {account.starting_balance}
+                                                    </td>
+
+                                                    <td className="px-6 py-4">
+                                                        {account.currency}
+                                                    </td>
+
+                                                    <td className="px-6 py-4">
+                                                        {account.broker ?? "—"}
+                                                    </td>
+
+                                                    <td className="px-6 py-4">
+                                                        {account.account_type ?? "—"}
+                                                    </td>
+
+                                                    <td className="px-6 py-4">
+                                                        <div className="flex gap-2">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleEditAccount(account)
+                                                                }
+                                                                aria-label="Edit account"
+                                                                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-100"
+                                                            >
+                                                                <Pencil size={16} />
+                                                            </button>
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    handleDeleteAccount(account.id)
+                                                                }
+                                                                aria-label="Delete account"
+                                                                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition hover:bg-rose-100"
+                                                            >
+                                                                <Trash2 size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+
+                                            )
                                     )}
                                 </tbody>
                             </table>
                         </div>
                     )}
                 </div>
-            </main>
-        </div>
+            </main >
+        </div >
     );
 }
