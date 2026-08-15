@@ -27,6 +27,7 @@ class TradeCreate(BaseModel):
     entry: float
     stop: float
     exit: float
+    pnl: float
     entry_datetime: datetime | None = None
     exit_datetime: datetime | None = None
 
@@ -37,6 +38,7 @@ class TradeUpdate(BaseModel):
     entry: float
     stop: float
     exit: float
+    pnl: float
     entry_datetime: datetime | None = None
     exit_datetime: datetime | None = None
 
@@ -111,6 +113,7 @@ def create_trade(
         trade.stop,
         trade.exit,
         result,
+        trade.pnl,
         trade.entry_datetime,
         trade.exit_datetime,
     ]
@@ -164,6 +167,7 @@ def update_trade(
         trade.stop,
         trade.exit,
         result,
+        trade.pnl,
         trade.entry_datetime,
         trade.exit_datetime,
     ]

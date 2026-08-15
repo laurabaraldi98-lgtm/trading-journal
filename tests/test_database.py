@@ -46,6 +46,7 @@ def test_load_trades_from_supabase():
                 "stop": "1.14",
                 "exit": "1.17",
                 "result": "2",
+                "pnl": "400",
                 "entry_datetime": "2026-08-12T10:00:00",
                 "exit_datetime": "2026-08-12T11:00:00",
             }
@@ -84,6 +85,7 @@ def test_load_trades_from_supabase():
             1.14,
             1.17,
             2.0,
+            400.0,
             "2026-08-12T10:00:00",
             "2026-08-12T11:00:00",
         ]
@@ -123,6 +125,7 @@ def test_save_trade_to_supabase(
                 "stop": "1.14",
                 "exit": "1.17",
                 "result": "2",
+                "pnl": "400",
             }
         ]
     )
@@ -140,6 +143,7 @@ def test_save_trade_to_supabase(
         1.14,
         1.17,
         2,
+        400,
         entry_datetime,
         exit_datetime,
     ]
@@ -166,6 +170,7 @@ def test_save_trade_to_supabase(
         "stop": 1.14,
         "exit": 1.17,
         "result": 2,
+        "pnl": 400,
         "entry_datetime": expected_entry_datetime,
         "exit_datetime": expected_exit_datetime,
         "user_id": "user-123",
@@ -183,6 +188,7 @@ def test_save_trade_to_supabase(
         1.14,
         1.17,
         2.0,
+        400.0,
     ]
 
 
@@ -261,6 +267,7 @@ def test_update_trade_in_supabase(
         1.31,
         1.28,
         2,
+        400,
         entry_datetime,
         exit_datetime,
     ]
@@ -287,6 +294,7 @@ def test_update_trade_in_supabase(
         "stop": 1.31,
         "exit": 1.28,
         "result": 2,
+        "pnl": 400,
         "entry_datetime": expected_entry_datetime,
         "exit_datetime": expected_exit_datetime,
     }

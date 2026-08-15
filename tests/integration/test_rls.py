@@ -87,6 +87,7 @@ def test_rls_blocks_other_users():
                     "stop": 90,
                     "exit": 120,
                     "result": 2,
+                    "pnl": 400,
                     "entry_datetime": None,
                     "exit_datetime": None,
                     "user_id": user_a_id,

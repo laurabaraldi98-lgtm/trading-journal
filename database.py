@@ -56,6 +56,7 @@ def load_trades_from_supabase(
             float(trade["stop"]),
             float(trade["exit"]),
             float(trade["result"]),
+            float(trade["pnl"]),
             trade["entry_datetime"],
             trade["exit_datetime"],
         ]
@@ -80,14 +81,15 @@ def save_trade_to_supabase(
         "stop": trade[4],
         "exit": trade[5],
         "result": trade[6],
+        "pnl": trade[7],
         "entry_datetime": (
-            trade[7].isoformat()
-            if trade[7]
+            trade[8].isoformat()
+            if trade[8]
             else None
         ),
         "exit_datetime": (
-            trade[8].isoformat()
-            if trade[8]
+            trade[9].isoformat()
+            if trade[9]
             else None
         ),
         "user_id": user_id,
@@ -110,6 +112,7 @@ def save_trade_to_supabase(
         float(saved_trade["stop"]),
         float(saved_trade["exit"]),
         float(saved_trade["result"]),
+        float(saved_trade["pnl"]),
     ]
 
 
@@ -147,14 +150,15 @@ def update_trade_in_supabase(
         "stop": updated_trade[4],
         "exit": updated_trade[5],
         "result": updated_trade[6],
+        "pnl": updated_trade[7],
         "entry_datetime": (
-            updated_trade[7].isoformat()
-            if updated_trade[7]
+            updated_trade[8].isoformat()
+            if updated_trade[8]
             else None
         ),
         "exit_datetime": (
-            updated_trade[8].isoformat()
-            if updated_trade[8]
+            updated_trade[9].isoformat()
+            if updated_trade[9]
             else None
         ),
     }

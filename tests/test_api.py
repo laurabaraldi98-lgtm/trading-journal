@@ -47,6 +47,7 @@ def test_get_trades(authenticated_user):
             1.09,
             1.12,
             2.0,
+            400.0,
         ]
     ]
 
@@ -79,6 +80,7 @@ def test_create_trade(authenticated_user):
         "entry": 1.12,
         "stop": 1.11,
         "exit": 1.14,
+        "pnl": 400,
     }
 
     with patch(
@@ -98,10 +100,12 @@ def test_create_trade_missing_direction(
     authenticated_user,
 ):
     trade_data = {
+        "account_id": 1,
         "symbol": "eurusd",
         "entry": 1.12,
         "stop": 1.11,
         "exit": 1.14,
+        "pnl": 400,
     }
 
     response = client.post(
@@ -122,6 +126,7 @@ def test_create_trade_passes_correct_data_to_save(
         "entry": 1.12,
         "stop": 1.11,
         "exit": 1.14,
+        "pnl": 400,
     }
 
     with patch(
@@ -141,6 +146,7 @@ def test_create_trade_passes_correct_data_to_save(
             1.11,
             1.14,
             2.0,
+            400.0,
             None,
             None,
         ],
@@ -189,6 +195,7 @@ def test_update_trade(authenticated_user):
         "entry": 1.12,
         "stop": 1.11,
         "exit": 1.14,
+        "pnl": 400,
     }
 
     expected_trade = [
@@ -199,6 +206,7 @@ def test_update_trade(authenticated_user):
         1.11,
         1.14,
         2.0,
+        400.0,
         None,
         None,
     ]
@@ -232,6 +240,7 @@ def test_update_trade_invalid_id(
         "entry": 1.12,
         "stop": 1.11,
         "exit": 1.14,
+        "pnl": 400,
     }
 
     response = client.patch(
@@ -251,6 +260,7 @@ def test_update_trade_invalid_direction(
         "entry": 1.12,
         "stop": 1.11,
         "exit": 1.14,
+        "pnl": 400,
     }
 
     response = client.patch(
