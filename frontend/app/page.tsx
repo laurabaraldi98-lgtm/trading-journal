@@ -7,6 +7,7 @@ import TradeForm from "../components/TradeForm";
 import TradesTable from "../components/TradesTable";
 import StatisticsCards from "../components/StatisticsCards";
 import CumulativeRCurve from "../components/CumulativeRCurve";
+import type { Session } from "@supabase/supabase-js";
 
 type Trade = [
   number,
@@ -58,30 +59,24 @@ export default function Home() {
   const [authLoading, setAuthLoading] =
     useState(true);
 
+  const [session, setSession] =
+    useState<Session | null>(null);
+
+  const [dashboardLoading, setDashboardLoading] = useState(true);
+
   const selectedAccount =
     accounts.find(
       (account) =>
         account.id === selectedAccountId
     ) ?? null;
 
-  async function loadTrades() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      return;
-    }
-
-    setUserEmail(session.user.email ?? null);
-
+  async function loadTrades(accessToken: string) {
     const response = await fetch(
       "http://127.0.0.1:8000/trades",
       {
         cache: "no-store",
         headers: {
-          Authorization:
-            `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       }
     );
@@ -95,22 +90,13 @@ export default function Home() {
     setTrades(data);
   }
 
-  async function loadAccounts() {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    if (!session) {
-      return;
-    }
-
+  async function loadAccounts(accessToken: string) {
     const response = await fetch(
       "http://127.0.0.1:8000/accounts",
       {
         cache: "no-store",
         headers: {
-          Authorization:
-            `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${accessToken}`,
         },
       }
     );
@@ -155,6 +141,7 @@ export default function Home() {
         session.user.email ?? null
       );
 
+      setSession(session);
       setAuthLoading(false);
     }
 
@@ -169,6 +156,8 @@ export default function Home() {
             return;
           }
 
+          setSession(session);
+
           setUserEmail(
             session.user.email ?? null
           );
@@ -181,9 +170,25 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    loadTrades();
-    loadAccounts();
-  }, []);
+    if (!session) {
+      return;
+    }
+
+    const accessToken = session.access_token;
+
+    async function loadDashboard() {
+      setDashboardLoading(true);
+
+      await Promise.all([
+        loadTrades(accessToken),
+        loadAccounts(accessToken),
+      ]);
+
+      setDashboardLoading(false);
+    }
+
+    loadDashboard();
+  }, [session]);
 
   async function handleSaveTrade() {
     if (selectedAccountId === null) {
@@ -227,7 +232,7 @@ export default function Home() {
     );
 
     if (response.ok) {
-      await loadTrades();
+      await loadTrades(session.access_token);
 
       setSymbol("");
       setDirection("");
@@ -342,7 +347,7 @@ export default function Home() {
     );
 
     if (response.ok) {
-      await loadTrades();
+      await loadTrades(session.access_token);
 
       setEditingTradeId(null);
     }
@@ -424,7 +429,7 @@ export default function Home() {
           </div>
         </div>
 
-        {accounts.length === 0 && (
+        {!dashboardLoading && accounts.length === 0 && (
           <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
             Create a trading account before
             adding trades.
@@ -464,62 +469,63 @@ export default function Home() {
             />
           )}
 
-        <StatisticsCards
-          trades={trades}
-          accountSize={
-            selectedAccount
-              ? String(
-                selectedAccount.starting_balance
-              )
-              : ""
-          }
-          currency={
-            selectedAccount?.currency ??
-            ""
-          }
-        />
+        {dashboardLoading ? (
+          <>
+            <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+              <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
+              <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
+              <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
+              <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
+              <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
+            </div>
 
-        <CumulativeRCurve
-          trades={trades}
-        />
+            <div className="mt-8 h-40 animate-pulse rounded-2xl bg-slate-200" />
 
-        <TradesTable
-          trades={trades.slice(0, 5)}
-          showViewAll={true}
-          editingTradeId={
-            editingTradeId
-          }
-          symbol={symbol}
-          direction={direction}
-          entry={entry}
-          stop={stop}
-          exit={exit}
-          entryDatetime={
-            entryDatetime
-          }
-          exitDatetime={
-            exitDatetime
-          }
-          setSymbol={setSymbol}
-          setDirection={setDirection}
-          setEntry={setEntry}
-          setStop={setStop}
-          setExit={setExit}
-          setEntryDatetime={
-            setEntryDatetime
-          }
-          setExitDatetime={
-            setExitDatetime
-          }
-          onEdit={handleEditTrade}
-          onUpdate={
-            handleUpdateTrade
-          }
-          onDelete={
-            handleDeleteTrade
-          }
-        />
+            <div className="mt-8 h-64 animate-pulse rounded-2xl bg-slate-200" />
+          </>
+        ) : (
+          <>
+            <StatisticsCards
+              trades={trades}
+              accountSize={
+                selectedAccount
+                  ? String(selectedAccount.starting_balance)
+                  : ""
+              }
+              currency={
+                selectedAccount?.currency ?? ""
+              }
+            />
+
+            <CumulativeRCurve
+              trades={trades}
+            />
+
+            <TradesTable
+              trades={trades.slice(0, 5)}
+              showViewAll={true}
+              editingTradeId={editingTradeId}
+              symbol={symbol}
+              direction={direction}
+              entry={entry}
+              stop={stop}
+              exit={exit}
+              entryDatetime={entryDatetime}
+              exitDatetime={exitDatetime}
+              setSymbol={setSymbol}
+              setDirection={setDirection}
+              setEntry={setEntry}
+              setStop={setStop}
+              setExit={setExit}
+              setEntryDatetime={setEntryDatetime}
+              setExitDatetime={setExitDatetime}
+              onEdit={handleEditTrade}
+              onUpdate={handleUpdateTrade}
+              onDelete={handleDeleteTrade}
+            />
+          </>
+        )}
       </main>
-    </div>
+    </div >
   );
 }

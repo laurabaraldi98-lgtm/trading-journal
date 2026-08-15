@@ -1,5 +1,6 @@
 from fastapi import Header, HTTPException, Depends
-from database import supabase
+from supabase import create_client
+from database import supabase_url, supabase_key
 
 
 def get_bearer_token(authorization: str | None = Header(default=None)):
@@ -22,8 +23,15 @@ def get_bearer_token(authorization: str | None = Header(default=None)):
 
 def get_user_from_token(token: str):
     try:
-        response = supabase.auth.get_user(token)
-    except Exception:
+        client = create_client(
+            supabase_url,
+            supabase_key,
+        )
+
+        response = client.auth.get_user(token)
+
+    except Exception as error:
+
         raise HTTPException(
             status_code=401,
             detail="Invalid or expired token"
