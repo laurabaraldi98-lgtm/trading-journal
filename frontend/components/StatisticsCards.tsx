@@ -21,13 +21,13 @@ export type Trade = [
 
 type StatisticsCardsProps = {
     trades: Trade[];
-    accountSize: string;
+    startingBalance: number;
     currency: string;
 };
 
 export default function StatisticsCards({
     trades,
-    accountSize,
+    startingBalance,
     currency,
 }: StatisticsCardsProps) {
     const totalR = trades.reduce(
@@ -51,8 +51,15 @@ export default function StatisticsCards({
             ? 0
             : totalR / totalTrades;
 
+    const totalPnl = trades.reduce(
+        (total, trade) => total + trade[7],
+        0
+    );
+
+    const balance = startingBalance + totalPnl;
+
     return (
-        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center gap-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
@@ -127,19 +134,35 @@ export default function StatisticsCards({
 
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-rose-50 text-rose-600">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+                        <ChartNoAxesCombined size={23} />
+                    </div>
+
+                    <div>
+                        <p className="text-sm text-slate-500">
+                            P/L
+                        </p>
+
+                        <p className="mt-1 text-2xl font-bold text-slate-900">
+                            {`${currency} ${totalPnl.toLocaleString("en-US")}`}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                <div className="flex items-center gap-4">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
                         <Wallet size={23} />
                     </div>
 
                     <div>
                         <p className="text-sm text-slate-500">
-                            Account Size
+                            Balance
                         </p>
 
                         <p className="mt-1 text-2xl font-bold text-slate-900">
-                            {accountSize
-                                ? `${currency} ${Number(accountSize).toLocaleString("en-US")}`
-                                : "Not set"}
+                            {`${currency} ${balance.toLocaleString("en-US")}`}
                         </p>
                     </div>
                 </div>

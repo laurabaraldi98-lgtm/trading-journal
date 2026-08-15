@@ -14,7 +14,7 @@ describe("StatisticsCards", () => {
         render(
             <StatisticsCards
                 trades={[]}
-                accountSize=""
+                startingBalance={0}
                 currency=""
             />
         );
@@ -28,11 +28,15 @@ describe("StatisticsCards", () => {
         ).toBeInTheDocument();
 
         expect(
-            screen.getByText("0")
+            screen.getAllByText("0")
+        ).toHaveLength(3);
+
+        expect(
+            screen.getByText("P/L")
         ).toBeInTheDocument();
 
         expect(
-            screen.getByText("Not set")
+            screen.getByText("Balance")
         ).toBeInTheDocument();
     });
 
@@ -47,6 +51,7 @@ describe("StatisticsCards", () => {
                 90,
                 120,
                 2,
+                500,
                 null,
                 null,
             ],
@@ -58,6 +63,7 @@ describe("StatisticsCards", () => {
                 90,
                 90,
                 -1,
+                -200,
                 null,
                 null,
             ],
@@ -69,15 +75,15 @@ describe("StatisticsCards", () => {
                 90,
                 100,
                 0,
+                100,
                 null,
                 null,
             ],
         ];
-
         render(
             <StatisticsCards
                 trades={trades}
-                accountSize="100000"
+                startingBalance={100000}
                 currency="USD"
             />
         );
@@ -99,7 +105,11 @@ describe("StatisticsCards", () => {
         ).toBeInTheDocument();
 
         expect(
-            screen.getByText("USD 100,000")
+            screen.getByText("USD 400")
+        ).toBeInTheDocument();
+
+        expect(
+            screen.getByText("USD 100,400")
         ).toBeInTheDocument();
     });
 });

@@ -496,10 +496,8 @@ export default function Home() {
           <>
             <StatisticsCards
               trades={trades}
-              accountSize={
-                selectedAccount
-                  ? String(selectedAccount.starting_balance)
-                  : ""
+              startingBalance={
+                selectedAccount?.starting_balance ?? 0
               }
               currency={
                 selectedAccount?.currency ?? ""
