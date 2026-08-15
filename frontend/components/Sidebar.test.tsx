@@ -12,6 +12,10 @@ import {
     afterEach
 } from "vitest";
 
+vi.mock("next/navigation", () => ({
+    usePathname: () => "/",
+}));
+
 import Sidebar from "./Sidebar";
 
 afterEach(() => {
@@ -63,6 +67,10 @@ test("renders navigation links", () => {
     ).toHaveAttribute("href", "/");
 
     expect(
-        screen.getByRole("link", { name: "Settings" })
-    ).toHaveAttribute("href", "/settings");
+        screen.getByRole("link", { name: "Trades" })
+    ).toHaveAttribute("href", "/trades");
+
+    expect(
+        screen.getByRole("link", { name: "Accounts" })
+    ).toHaveAttribute("href", "/accounts");
 });
