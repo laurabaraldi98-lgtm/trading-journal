@@ -317,7 +317,15 @@ export default function AccountsPage() {
                         </p>
                     ) : (
                         <div className="overflow-x-auto">
-                            <table className="w-full text-left">
+                            <table className="w-full min-w-[900px] table-fixed text-left">
+                                <colgroup>
+                                    <col className="w-[180px]" />
+                                    <col className="w-[180px]" />
+                                    <col className="w-[120px]" />
+                                    <col className="w-[180px]" />
+                                    <col className="w-[180px]" />
+                                    <col className="w-[120px]" />
+                                </colgroup>
                                 <thead className="border-b border-zinc-200 bg-zinc-50 text-sm text-zinc-600">
                                     <tr>
                                         <th className="px-6 py-3">
@@ -360,7 +368,7 @@ export default function AccountsPage() {
                                                             onChange={(event) =>
                                                                 setName(event.target.value)
                                                             }
-                                                            className="w-full rounded-lg border border-zinc-300 px-2 py-1"
+                                                            className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
                                                         />
                                                     </td>
 
@@ -371,7 +379,7 @@ export default function AccountsPage() {
                                                             onChange={(event) =>
                                                                 setStartingBalance(event.target.value)
                                                             }
-                                                            className="w-full rounded-lg border border-zinc-300 px-2 py-1"
+                                                            className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
                                                         />
                                                     </td>
 
@@ -381,7 +389,7 @@ export default function AccountsPage() {
                                                             onChange={(event) =>
                                                                 setCurrency(event.target.value)
                                                             }
-                                                            className="rounded-lg border border-zinc-300 px-2 py-1"
+                                                            className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
                                                         >
                                                             <option value="USD">USD</option>
                                                             <option value="EUR">EUR</option>
@@ -395,7 +403,7 @@ export default function AccountsPage() {
                                                             onChange={(event) =>
                                                                 setBroker(event.target.value)
                                                             }
-                                                            className="w-full rounded-lg border border-zinc-300 px-2 py-1"
+                                                            className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
                                                         />
                                                     </td>
 
@@ -405,7 +413,7 @@ export default function AccountsPage() {
                                                             onChange={(event) =>
                                                                 setAccountType(event.target.value)
                                                             }
-                                                            className="w-full rounded-lg border border-zinc-300 px-2 py-1"
+                                                            className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
                                                         />
                                                     </td>
 
