@@ -35,6 +35,9 @@ export default function AccountsPage() {
     const [editingAccountId, setEditingAccountId] =
         useState<number | null>(null);
 
+    const [accountToDelete, setAccountToDelete] =
+        useState<Account | null>(null);
+
     const [userEmail, setUserEmail] =
         useState<string | null>(null);
 
@@ -151,14 +154,6 @@ export default function AccountsPage() {
     async function handleDeleteAccount(
         accountId: number
     ) {
-        const confirmed = window.confirm(
-            "Are you sure you want to delete this account?"
-        );
-
-        if (!confirmed) {
-            return;
-        }
-
         const {
             data: { session },
         } = await supabase.auth.getSession();
@@ -184,6 +179,8 @@ export default function AccountsPage() {
         }
 
         await loadAccounts();
+
+        setAccountToDelete(null);
 
         if (editingAccountId === accountId) {
             resetForm();
@@ -469,7 +466,7 @@ export default function AccountsPage() {
                                                             <button
                                                                 type="button"
                                                                 onClick={() =>
-                                                                    handleDeleteAccount(account.id)
+                                                                    setAccountToDelete(account)
                                                                 }
                                                                 aria-label="Delete account"
                                                                 className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition hover:bg-rose-100"
@@ -487,6 +484,56 @@ export default function AccountsPage() {
                         </div>
                     )}
                 </div>
+
+                {accountToDelete && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+                        <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                            <div className="mb-4">
+                                <h3 className="text-xl font-bold text-rose-600">
+                                    Delete account
+                                </h3>
+
+                                <p className="mt-3 text-sm leading-6 text-zinc-700">
+                                    Are you sure you want to permanently delete{" "}
+                                    <span className="font-semibold">
+                                        {accountToDelete.name}
+                                    </span>
+                                    ?
+                                </p>
+
+                                <p className="mt-3 text-sm leading-6 text-zinc-700">
+                                    All trades linked to this account will also be
+                                    permanently deleted, including the related
+                                    statistics and performance history.
+                                </p>
+
+                                <p className="mt-3 font-semibold text-rose-600">
+                                    This action cannot be undone.
+                                </p>
+                            </div>
+
+                            <div className="flex justify-end gap-3">
+                                <button
+                                    type="button"
+                                    onClick={() => setAccountToDelete(null)}
+                                    className="cursor-pointer rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        handleDeleteAccount(accountToDelete.id)
+                                    }
+                                    className="cursor-pointer rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700"
+                                >
+                                    Delete permanently
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </main >
         </div >
     );
