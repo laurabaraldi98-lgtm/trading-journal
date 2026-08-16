@@ -272,63 +272,6 @@ def test_update_trade_invalid_direction(
     assert response.status_code == 422
 
 
-def test_get_settings(authenticated_user):
-    fake_settings = [
-        {
-            "user_id": "test-user",
-            "account_size": 100000,
-            "currency": "USD",
-        }
-    ]
-
-    with patch(
-        "api.load_user_settings",
-        return_value=fake_settings,
-    ) as mock_load_settings:
-        response = client.get("/settings")
-
-    assert response.status_code == 200
-    assert response.json() == fake_settings
-
-    mock_load_settings.assert_called_once_with(
-        "test-user",
-        "fake-token",
-    )
-
-
-def test_update_settings(authenticated_user):
-    settings = {
-        "account_size": 100000,
-        "currency": "USD",
-    }
-
-    fake_response = [
-        {
-            "user_id": "test-user",
-            "account_size": 100000,
-            "currency": "USD",
-        }
-    ]
-
-    with patch(
-        "api.save_user_settings",
-        return_value=fake_response,
-    ) as mock_save_settings:
-        response = client.put(
-            "/settings",
-            json=settings,
-        )
-
-    assert response.status_code == 200
-    assert response.json() == fake_response
-
-    mock_save_settings.assert_called_once_with(
-        settings,
-        "test-user",
-        "fake-token",
-    )
-
-
 def test_get_accounts(authenticated_user):
     fake_accounts = [
         {

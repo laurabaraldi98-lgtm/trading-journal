@@ -183,37 +183,6 @@ def update_trade_in_supabase(
     return response
 
 
-def load_user_settings(user_id: str, token: str):
-    client = get_authenticated_client(token)
-
-    response = (
-        client.table("user_settings")
-        .select("*")
-        .eq("user_id", user_id)
-        .execute()
-    )
-
-    return response.data
-
-
-def save_user_settings(settings, user_id: str, token: str):
-    client = get_authenticated_client(token)
-
-    data = {
-        "user_id": user_id,
-        "account_size": settings["account_size"],
-        "currency": settings["currency"],
-    }
-
-    response = (
-        client.table("user_settings")
-        .upsert(data)
-        .execute()
-    )
-
-    return response.data
-
-
 def load_accounts_from_supabase(
     user_id: str,
     token: str,

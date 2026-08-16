@@ -11,8 +11,6 @@ from database import (
     save_trade_to_supabase,
     delete_trade_from_supabase,
     update_trade_in_supabase,
-    load_user_settings,
-    save_user_settings,
     load_accounts_from_supabase,
     save_account_to_supabase,
     update_account_in_supabase,
@@ -256,22 +254,3 @@ def delete_account(
         user.id,
         token,
     )
-
-
-@app.get("/settings")
-def get_settings(auth_data=Depends(get_current_user)):
-    user = auth_data["user"]
-    token = auth_data["token"]
-
-    return load_user_settings(user.id, token)
-
-
-@app.put("/settings")
-def update_settings(
-    settings: dict,
-    auth_data=Depends(get_current_user),
-):
-    user = auth_data["user"]
-    token = auth_data["token"]
-
-    return save_user_settings(settings, user.id, token)
