@@ -6,7 +6,7 @@ import Sidebar from "../components/Sidebar";
 import TradeForm from "../components/TradeForm";
 import TradesTable from "../components/TradesTable";
 import StatisticsCards from "../components/StatisticsCards";
-import CumulativeRCurve from "../components/CumulativeRCurve";
+import PerformanceChart from "../components/PerformanceChart";
 import type { Session } from "@supabase/supabase-js";
 
 type Trade = [
@@ -534,8 +534,9 @@ export default function Home() {
               }
             />
 
-            <CumulativeRCurve
+            <PerformanceChart
               trades={trades}
+              currency={selectedAccount?.currency ?? ""}
             />
 
             <TradesTable
