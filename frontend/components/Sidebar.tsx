@@ -6,7 +6,6 @@ import {
     ChartNoAxesCombined,
     LayoutDashboard,
     List,
-    BarChart3,
     Upload,
     Wallet,
     LogOut,
@@ -71,14 +70,6 @@ export default function Sidebar({
                     <List size={20} />
                     Trades
                 </Link>
-
-                <a
-                    href="#"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
-                >
-                    <BarChart3 size={20} />
-                    Statistics
-                </a>
 
                 <a
                     href="#"
