@@ -83,7 +83,19 @@ export default function TradesTable({
             </div>
 
             <div className="overflow-x-auto pb-6">
-                <table className="w-full min-w-[1100px]">
+                <table className="w-full min-w-[1100px] table-fixed">
+                    <colgroup>
+                        <col className="w-[170px]" />
+                        <col className="w-[110px]" />
+                        <col className="w-[95px]" />
+                        <col className="w-[95px]" />
+                        <col className="w-[95px]" />
+                        <col className="w-[190px]" />
+                        <col className="w-[190px]" />
+                        <col className="w-[90px]" />
+                        <col className="w-[100px]" />
+                        <col className="w-[110px]" />
+                    </colgroup>
                     <thead>
                         <tr className="border-b border-slate-200 bg-slate-50 text-left text-xs font-medium uppercase tracking-wide text-slate-500">
                             <th className="py-3 pl-6 pr-6">Symbol</th>
@@ -114,7 +126,7 @@ export default function TradesTable({
                                                 onChange={(event) =>
                                                     setSymbol(event.target.value)
                                                 }
-                                                className="rounded-lg border border-slate-300 px-2 py-1"
+                                                className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
                                             />
                                         </td>
 
@@ -125,7 +137,7 @@ export default function TradesTable({
                                                 onChange={(event) =>
                                                     setDirection(event.target.value)
                                                 }
-                                                className="rounded-lg border border-slate-300 px-2 py-1"
+                                                className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
                                             >
                                                 <option value="long">
                                                     Long
@@ -144,7 +156,7 @@ export default function TradesTable({
                                                 onChange={(event) =>
                                                     setEntry(event.target.value)
                                                 }
-                                                className="w-24 rounded-lg border border-slate-300 px-2 py-1"
+                                                className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
                                             />
                                         </td>
 
@@ -155,7 +167,7 @@ export default function TradesTable({
                                                 onChange={(event) =>
                                                     setStop(event.target.value)
                                                 }
-                                                className="w-24 rounded-lg border border-slate-300 px-2 py-1"
+                                                className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
                                             />
                                         </td>
 
@@ -166,7 +178,7 @@ export default function TradesTable({
                                                 onChange={(event) =>
                                                     setExit(event.target.value)
                                                 }
-                                                className="w-24 rounded-lg border border-slate-300 px-2 py-1"
+                                                className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
                                             />
                                         </td>
 
@@ -180,7 +192,7 @@ export default function TradesTable({
                                                         event.target.value
                                                     )
                                                 }
-                                                className="rounded-lg border border-slate-300 px-2 py-1"
+                                                className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
                                             />
                                         </td>
 
@@ -194,7 +206,7 @@ export default function TradesTable({
                                                         event.target.value
                                                     )
                                                 }
-                                                className="rounded-lg border border-slate-300 px-2 py-1"
+                                                className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
                                             />
                                         </td>
 
@@ -218,7 +230,7 @@ export default function TradesTable({
                                                 aria-label="Edit P/L"
                                                 value={pnl}
                                                 onChange={(event) => setPnl(event.target.value)}
-                                                className="w-24 rounded-lg border border-slate-300 px-2 py-1"
+                                                className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
                                             />
                                         </td>
 
