@@ -44,8 +44,6 @@ export default function AccountsPage() {
     const [authLoading, setAuthLoading] = useState(true);
 
     async function loadAccounts() {
-        setAccountsLoading(true);
-
         const {
             data: { session },
         } = await supabase.auth.getSession();
@@ -54,6 +52,8 @@ export default function AccountsPage() {
             window.location.href = "/login";
             return;
         }
+
+        setAccountsLoading(true);
 
         setUserEmail(session.user.email ?? null);
 
@@ -234,9 +234,15 @@ export default function AccountsPage() {
     }, []);
 
     useEffect(() => {
-        if (!authLoading) {
-            loadAccounts();
+        if (authLoading) {
+            return;
         }
+
+        async function fetchAccounts() {
+            await loadAccounts();
+        }
+
+        fetchAccounts();
     }, [authLoading]);
 
     if (authLoading) {

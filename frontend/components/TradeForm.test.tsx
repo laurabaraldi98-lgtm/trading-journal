@@ -32,6 +32,7 @@ describe("TradeForm", () => {
                 entry=""
                 stop=""
                 exit=""
+                pnl=""
                 entryDatetime=""
                 exitDatetime=""
                 setSymbol={() => { }}
@@ -39,6 +40,7 @@ describe("TradeForm", () => {
                 setEntry={() => { }}
                 setStop={() => { }}
                 setExit={() => { }}
+                setPnl={() => { }}
                 setEntryDatetime={() => { }}
                 setExitDatetime={() => { }}
                 onSave={mockSave}
@@ -75,6 +77,7 @@ textFieldCases.forEach(([caseName, placeholder, value]) => {
                 entry=""
                 stop=""
                 exit=""
+                pnl=""
                 entryDatetime=""
                 exitDatetime=""
                 setSymbol={mockSetSymbol}
@@ -82,6 +85,7 @@ textFieldCases.forEach(([caseName, placeholder, value]) => {
                 setEntry={mockSetEntry}
                 setStop={mockSetStop}
                 setExit={mockSetExit}
+                setPnl={() => { }}
                 setEntryDatetime={() => { }}
                 setExitDatetime={() => { }}
                 onSave={() => { }}
@@ -106,6 +110,7 @@ textFieldCases.forEach(([caseName, placeholder, value]) => {
     });
 });
 
+
 const specialFieldCases = [
     ["Direction", "long"],
     ["Entry datetime", "2026-08-12T10:00"],
@@ -125,6 +130,7 @@ specialFieldCases.forEach(([caseName, value]) => {
                 entry=""
                 stop=""
                 exit=""
+                pnl=""
                 entryDatetime=""
                 exitDatetime=""
                 setSymbol={() => { }}
@@ -132,6 +138,7 @@ specialFieldCases.forEach(([caseName, value]) => {
                 setEntry={() => { }}
                 setStop={() => { }}
                 setExit={() => { }}
+                setPnl={() => { }}
                 setEntryDatetime={mockSetEntryDatetime}
                 setExitDatetime={mockSetExitDatetime}
                 onSave={() => { }}

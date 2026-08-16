@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import Sidebar from "../../components/Sidebar";
@@ -30,7 +30,7 @@ type Account = {
     created_at?: string;
 };
 
-export default function TradesPage() {
+function TradesPageContent() {
     const searchParams = useSearchParams();
 
     const accountIdParam =
@@ -103,7 +103,6 @@ export default function TradesPage() {
             );
         }
     }
-
 
     async function loadTrades(accountId: number) {
         const {
@@ -232,7 +231,11 @@ export default function TradesPage() {
     }
 
     useEffect(() => {
-        loadAccounts();
+        async function fetchAccounts() {
+            await loadAccounts();
+        }
+
+        fetchAccounts();
     }, []);
 
 
@@ -241,7 +244,11 @@ export default function TradesPage() {
             return;
         }
 
-        loadTrades(selectedAccountId);
+        async function fetchTrades() {
+            await loadTrades(selectedAccountId!);
+        }
+
+        fetchTrades();
     }, [selectedAccountId]);
 
     const tradesPerPage = 20;
@@ -371,5 +378,13 @@ export default function TradesPage() {
                 )}
             </main>
         </div>
+    );
+}
+
+export default function TradesPage() {
+    return (
+        <Suspense fallback={null}>
+            <TradesPageContent />
+        </Suspense>
     );
 }

@@ -95,34 +95,6 @@ export default function Home() {
     setTrades(data);
   }
 
-  async function loadAccounts(accessToken: string) {
-    const response = await fetch(
-      "http://127.0.0.1:8000/accounts",
-      {
-        cache: "no-store",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    if (!response.ok) {
-      return;
-    }
-
-    const data: Account[] =
-      await response.json();
-
-    setAccounts(data);
-
-    if (
-      data.length > 0 &&
-      selectedAccountId === null
-    ) {
-      setSelectedAccountId(data[0].id);
-    }
-  }
-
   async function handleLogout() {
     await supabase.auth.signOut();
 
@@ -184,7 +156,27 @@ export default function Home() {
     async function loadDashboard() {
       setDashboardLoading(true);
 
-      await loadAccounts(accessToken);
+      const response = await fetch(
+        "http://127.0.0.1:8000/accounts",
+        {
+          cache: "no-store",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data: Account[] = await response.json();
+
+        setAccounts(data);
+
+        if (data.length > 0) {
+          setSelectedAccountId((current) =>
+            current === null ? data[0].id : current
+          );
+        }
+      }
 
       setDashboardLoading(false);
     }
@@ -197,10 +189,14 @@ export default function Home() {
       return;
     }
 
-    loadTrades(
-      session.access_token,
-      selectedAccountId
-    );
+    async function fetchTrades() {
+      await loadTrades(
+        session!.access_token,
+        selectedAccountId!
+      );
+    }
+
+    fetchTrades();
   }, [session, selectedAccountId]);
 
   async function handleSaveTrade() {

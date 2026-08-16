@@ -31,6 +31,7 @@ describe("TradesTable", () => {
             number,
             number,
             number,
+            number,
             string | null,
             string | null
         ] = [
@@ -41,6 +42,7 @@ describe("TradesTable", () => {
                 1.14,
                 1.17,
                 2,
+                150,
                 "2026-08-12T10:00",
                 "2026-08-12T11:00"
             ];
@@ -54,6 +56,7 @@ describe("TradesTable", () => {
                 entry=""
                 stop=""
                 exit=""
+                pnl=""
                 entryDatetime=""
                 exitDatetime=""
                 setSymbol={() => { }}
@@ -61,6 +64,7 @@ describe("TradesTable", () => {
                 setEntry={() => { }}
                 setStop={() => { }}
                 setExit={() => { }}
+                setPnl={() => { }}
                 setEntryDatetime={() => { }}
                 setExitDatetime={() => { }}
                 onEdit={() => { }}
@@ -87,6 +91,7 @@ describe("TradesTable", () => {
             number,
             number,
             number,
+            number,
             string | null,
             string | null
         ] = [
@@ -97,6 +102,7 @@ describe("TradesTable", () => {
                 1.14,
                 1.17,
                 2,
+                150,
                 null,
                 null
             ];
@@ -110,6 +116,7 @@ describe("TradesTable", () => {
                 entry=""
                 stop=""
                 exit=""
+                pnl=""
                 entryDatetime=""
                 exitDatetime=""
                 setSymbol={() => { }}
@@ -117,6 +124,7 @@ describe("TradesTable", () => {
                 setEntry={() => { }}
                 setStop={() => { }}
                 setExit={() => { }}
+                setPnl={() => { }}
                 setEntryDatetime={() => { }}
                 setExitDatetime={() => { }}
                 onEdit={() => { }}
@@ -141,6 +149,7 @@ describe("TradesTable", () => {
             number,
             number,
             number,
+            number,
             string | null,
             string | null
         ] = [
@@ -151,6 +160,7 @@ describe("TradesTable", () => {
                 1.14,
                 1.17,
                 2,
+                150,
                 "2026-08-12T10:00",
                 "2026-08-12T11:00"
             ];
@@ -164,6 +174,7 @@ describe("TradesTable", () => {
                 entry=""
                 stop=""
                 exit=""
+                pnl=""
                 entryDatetime=""
                 exitDatetime=""
                 setSymbol={() => { }}
@@ -171,6 +182,7 @@ describe("TradesTable", () => {
                 setEntry={() => { }}
                 setStop={() => { }}
                 setExit={() => { }}
+                setPnl={() => { }}
                 setEntryDatetime={() => { }}
                 setExitDatetime={() => { }}
                 onEdit={mockEdit}
@@ -192,6 +204,7 @@ describe("TradesTable", () => {
         ["Edit entry", "1.20"],
         ["Edit stop", "1.18"],
         ["Edit exit", "1.25"],
+        ["Edit P/L", "200"],
         ["Edit entry datetime", "2026-08-12T12:00"],
         ["Edit exit datetime", "2026-08-12T13:00"],
     ] as const;
@@ -203,6 +216,7 @@ describe("TradesTable", () => {
             const mockSetEntry = vi.fn();
             const mockSetStop = vi.fn();
             const mockSetExit = vi.fn();
+            const mockSetPnl = vi.fn();
             const mockSetEntryDatetime = vi.fn();
             const mockSetExitDatetime = vi.fn();
 
@@ -210,6 +224,7 @@ describe("TradesTable", () => {
                 number,
                 string,
                 string,
+                number,
                 number,
                 number,
                 number,
@@ -224,6 +239,7 @@ describe("TradesTable", () => {
                     1.14,
                     1.17,
                     2,
+                    150,
                     "2026-08-12T10:00",
                     "2026-08-12T11:00"
                 ];
@@ -237,6 +253,7 @@ describe("TradesTable", () => {
                     entry="1.15"
                     stop="1.14"
                     exit="1.17"
+                    pnl="150"
                     entryDatetime="2026-08-12T10:00"
                     exitDatetime="2026-08-12T11:00"
                     setSymbol={mockSetSymbol}
@@ -244,6 +261,7 @@ describe("TradesTable", () => {
                     setEntry={mockSetEntry}
                     setStop={mockSetStop}
                     setExit={mockSetExit}
+                    setPnl={mockSetPnl}
                     setEntryDatetime={mockSetEntryDatetime}
                     setExitDatetime={mockSetExitDatetime}
                     onEdit={() => { }}
@@ -258,6 +276,7 @@ describe("TradesTable", () => {
                 "Edit entry": mockSetEntry,
                 "Edit stop": mockSetStop,
                 "Edit exit": mockSetExit,
+                "Edit P/L": mockSetPnl,
                 "Edit entry datetime": mockSetEntryDatetime,
                 "Edit exit datetime": mockSetExitDatetime,
             };
@@ -285,6 +304,7 @@ describe("TradesTable", () => {
             number,
             number,
             number,
+            number,
             string | null,
             string | null
         ] = [
@@ -295,6 +315,7 @@ describe("TradesTable", () => {
                 1.14,
                 1.17,
                 2,
+                150,
                 "2026-08-12T10:00",
                 "2026-08-12T11:00"
             ];
@@ -308,6 +329,7 @@ describe("TradesTable", () => {
                 entry="1.15"
                 stop="1.14"
                 exit="1.17"
+                pnl="150"
                 entryDatetime="2026-08-12T10:00"
                 exitDatetime="2026-08-12T11:00"
                 setSymbol={() => { }}
@@ -315,6 +337,7 @@ describe("TradesTable", () => {
                 setEntry={() => { }}
                 setStop={() => { }}
                 setExit={() => { }}
+                setPnl={() => { }}
                 setEntryDatetime={() => { }}
                 setExitDatetime={() => { }}
                 onEdit={() => { }}
@@ -341,6 +364,7 @@ describe("TradesTable", () => {
             number,
             number,
             number,
+            number,
             string | null,
             string | null
         ] = [
@@ -351,6 +375,7 @@ describe("TradesTable", () => {
                 1.14,
                 1.17,
                 2,
+                150,
                 "2026-08-12T10:00",
                 "2026-08-12T11:00"
             ];
@@ -364,6 +389,7 @@ describe("TradesTable", () => {
                 entry=""
                 stop=""
                 exit=""
+                pnl=""
                 entryDatetime=""
                 exitDatetime=""
                 setSymbol={() => { }}
@@ -371,6 +397,7 @@ describe("TradesTable", () => {
                 setEntry={() => { }}
                 setStop={() => { }}
                 setExit={() => { }}
+                setPnl={() => { }}
                 setEntryDatetime={() => { }}
                 setExitDatetime={() => { }}
                 onEdit={() => { }}
@@ -387,11 +414,13 @@ describe("TradesTable", () => {
     });
 });
 
+
 test("shows a short losing trade", () => {
     const trade: [
         number,
         string,
         string,
+        number,
         number,
         number,
         number,
@@ -406,6 +435,7 @@ test("shows a short losing trade", () => {
             1.26,
             1.23,
             -1,
+            -100,
             null,
             null
         ];
@@ -419,6 +449,7 @@ test("shows a short losing trade", () => {
             entry=""
             stop=""
             exit=""
+            pnl=""
             entryDatetime=""
             exitDatetime=""
             setSymbol={() => { }}
@@ -426,6 +457,7 @@ test("shows a short losing trade", () => {
             setEntry={() => { }}
             setStop={() => { }}
             setExit={() => { }}
+            setPnl={() => { }}
             setEntryDatetime={() => { }}
             setExitDatetime={() => { }}
             onEdit={() => { }}
@@ -443,11 +475,13 @@ test("shows a short losing trade", () => {
     ).toBeInTheDocument();
 });
 
+
 test("shows a breakeven trade", () => {
     const trade: [
         number,
         string,
         string,
+        number,
         number,
         number,
         number,
@@ -462,6 +496,7 @@ test("shows a breakeven trade", () => {
             1.14,
             1.15,
             0,
+            0,
             null,
             null
         ];
@@ -475,6 +510,7 @@ test("shows a breakeven trade", () => {
             entry=""
             stop=""
             exit=""
+            pnl=""
             entryDatetime=""
             exitDatetime=""
             setSymbol={() => { }}
@@ -482,6 +518,7 @@ test("shows a breakeven trade", () => {
             setEntry={() => { }}
             setStop={() => { }}
             setExit={() => { }}
+            setPnl={() => { }}
             setEntryDatetime={() => { }}
             setExitDatetime={() => { }}
             onEdit={() => { }}
@@ -495,6 +532,7 @@ test("shows a breakeven trade", () => {
     ).toBeInTheDocument();
 });
 
+
 test.each([
     [-1, "-1R"],
     [0, "0R"],
@@ -503,6 +541,7 @@ test.each([
         number,
         string,
         string,
+        number,
         number,
         number,
         number,
@@ -517,8 +556,9 @@ test.each([
             1.14,
             1.17,
             result,
-            null,
-            null
+            150,
+            "2026-08-12T10:00",
+            "2026-08-12T11:00"
         ];
 
     render(
@@ -530,6 +570,7 @@ test.each([
             entry="1.15"
             stop="1.14"
             exit="1.17"
+            pnl="150"
             entryDatetime=""
             exitDatetime=""
             setSymbol={() => { }}
@@ -537,6 +578,7 @@ test.each([
             setEntry={() => { }}
             setStop={() => { }}
             setExit={() => { }}
+            setPnl={() => { }}
             setEntryDatetime={() => { }}
             setExitDatetime={() => { }}
             onEdit={() => { }}
@@ -550,6 +592,7 @@ test.each([
     ).toBeInTheDocument();
 });
 
+
 test("shows View all trades when showViewAll is true", () => {
     render(
         <TradesTable
@@ -560,6 +603,7 @@ test("shows View all trades when showViewAll is true", () => {
             entry=""
             stop=""
             exit=""
+            pnl=""
             entryDatetime=""
             exitDatetime=""
             setSymbol={() => { }}
@@ -567,6 +611,7 @@ test("shows View all trades when showViewAll is true", () => {
             setEntry={() => { }}
             setStop={() => { }}
             setExit={() => { }}
+            setPnl={() => { }}
             setEntryDatetime={() => { }}
             setExitDatetime={() => { }}
             onEdit={() => { }}
