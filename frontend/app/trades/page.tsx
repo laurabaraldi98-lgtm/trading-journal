@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import Sidebar from "../../components/Sidebar";
 import TradesTable from "../../components/TradesTable";
@@ -30,6 +31,15 @@ type Account = {
 };
 
 export default function TradesPage() {
+    const searchParams = useSearchParams();
+
+    const accountIdParam =
+        searchParams.get("account_id");
+
+    const accountIdFromUrl =
+        accountIdParam !== null
+            ? Number(accountIdParam)
+            : null;
     const [trades, setTrades] = useState<Trade[]>([]);
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [selectedAccountId, setSelectedAccountId] =
@@ -81,7 +91,16 @@ export default function TradesPage() {
         setAccounts(data);
 
         if (data.length > 0) {
-            setSelectedAccountId(data[0].id);
+            const accountFromUrl = data.find(
+                (account) =>
+                    account.id === accountIdFromUrl
+            );
+
+            setSelectedAccountId(
+                accountFromUrl
+                    ? accountFromUrl.id
+                    : data[0].id
+            );
         }
     }
 
@@ -246,14 +265,45 @@ export default function TradesPage() {
             />
 
             <main className="min-w-0 flex-1 px-8 py-8 xl:px-10">
-                <div>
-                    <h2 className="text-3xl font-bold tracking-tight text-slate-900">
-                        Trades
-                    </h2>
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
+                            Trades
+                        </h2>
 
-                    <p className="mt-1 text-sm text-slate-500">
-                        Review and manage your trading history.
-                    </p>
+                        <p className="mt-1 text-sm text-slate-500">
+                            Review and manage your trading history.
+                        </p>
+                    </div>
+
+                    <div className="w-full sm:w-64">
+                        <label
+                            htmlFor="account-select"
+                            className="mb-1 block text-sm font-medium text-slate-700"
+                        >
+                            Account
+                        </label>
+
+                        <select
+                            id="account-select"
+                            value={selectedAccountId ?? ""}
+                            onChange={(event) =>
+                                setSelectedAccountId(
+                                    Number(event.target.value)
+                                )
+                            }
+                            className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                        >
+                            {accounts.map((account) => (
+                                <option
+                                    key={account.id}
+                                    value={account.id}
+                                >
+                                    {account.name}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 <TradesTable

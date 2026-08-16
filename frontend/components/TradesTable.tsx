@@ -33,6 +33,7 @@ type TradesTableProps = {
     exitDatetime: string;
 
     showViewAll?: boolean;
+    selectedAccountId?: number | null;
 
     setSymbol: (value: string) => void;
     setDirection: (value: string) => void;
@@ -60,6 +61,7 @@ export default function TradesTable({
     entryDatetime,
     exitDatetime,
     showViewAll = false,
+    selectedAccountId = null,
     setSymbol,
     setDirection,
     setEntry,
@@ -342,7 +344,11 @@ export default function TradesTable({
             {showViewAll && (
                 <div className="flex justify-center border-t border-slate-100 px-6 py-4">
                     <Link
-                        href="/trades"
+                        href={
+                            selectedAccountId !== null
+                                ? `/trades?account_id=${selectedAccountId}`
+                                : "/trades"
+                        }
                         className="text-sm font-semibold text-blue-600 transition hover:text-blue-700"
                     >
                         View all trades →

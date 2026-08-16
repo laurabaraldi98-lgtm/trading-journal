@@ -35,9 +35,11 @@ type Trade = [
 const {
     mockGetSession,
     mockSignOut,
+    mockUseSearchParams,
 } = vi.hoisted(() => ({
     mockGetSession: vi.fn(),
     mockSignOut: vi.fn(),
+    mockUseSearchParams: vi.fn(),
 }));
 
 
@@ -48,6 +50,10 @@ vi.mock("../../lib/supabase", () => ({
             signOut: mockSignOut,
         },
     },
+}));
+
+vi.mock("next/navigation", () => ({
+    useSearchParams: mockUseSearchParams,
 }));
 
 
@@ -289,6 +295,12 @@ describe("TradesPage", () => {
 
         mockGetSession.mockReset();
         mockSignOut.mockReset();
+
+        mockUseSearchParams.mockReset();
+
+        mockUseSearchParams.mockReturnValue(
+            new URLSearchParams()
+        );
 
         mockGetSession.mockResolvedValue(
             sessionResponse()

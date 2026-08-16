@@ -541,6 +541,7 @@ export default function Home() {
             <TradesTable
               trades={trades.slice(0, 5)}
               showViewAll={true}
+              selectedAccountId={selectedAccountId}
               editingTradeId={editingTradeId}
               symbol={symbol}
               direction={direction}
