@@ -88,8 +88,8 @@ def test_rls_blocks_other_users():
                     "exit": 120,
                     "result": 2,
                     "pnl": 400,
-                    "entry_datetime": None,
-                    "exit_datetime": None,
+                    "entry_datetime": "2026-08-12T10:00:00",
+                    "exit_datetime": "2026-08-12T11:00:00",
                     "user_id": user_a_id,
                 }
             )

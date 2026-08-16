@@ -26,8 +26,8 @@ class TradeCreate(BaseModel):
     stop: float
     exit: float
     pnl: float
-    entry_datetime: datetime | None = None
-    exit_datetime: datetime | None = None
+    entry_datetime: datetime
+    exit_datetime: datetime
 
 
 class TradeUpdate(BaseModel):
@@ -37,8 +37,8 @@ class TradeUpdate(BaseModel):
     stop: float
     exit: float
     pnl: float
-    entry_datetime: datetime | None = None
-    exit_datetime: datetime | None = None
+    entry_datetime: datetime
+    exit_datetime: datetime
 
 
 class AccountCreate(BaseModel):

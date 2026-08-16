@@ -1,5 +1,6 @@
 import pytest
 
+from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -82,6 +83,8 @@ def test_create_trade(authenticated_user):
         "stop": 1.11,
         "exit": 1.14,
         "pnl": 400,
+        "entry_datetime": "2026-08-12T10:00:00",
+        "exit_datetime": "2026-08-12T11:00:00",
     }
 
     with patch(
@@ -107,6 +110,8 @@ def test_create_trade_missing_direction(
         "stop": 1.11,
         "exit": 1.14,
         "pnl": 400,
+        "entry_datetime": "2026-08-12T10:00:00",
+        "exit_datetime": "2026-08-12T11:00:00",
     }
 
     response = client.post(
@@ -128,6 +133,8 @@ def test_create_trade_passes_correct_data_to_save(
         "stop": 1.11,
         "exit": 1.14,
         "pnl": 400,
+        "entry_datetime": "2026-08-12T10:00:00",
+        "exit_datetime": "2026-08-12T11:00:00",
     }
 
     with patch(
@@ -148,8 +155,8 @@ def test_create_trade_passes_correct_data_to_save(
             1.14,
             2.0,
             400.0,
-            None,
-            None,
+            datetime(2026, 8, 12, 10, 0),
+            datetime(2026, 8, 12, 11, 0),
         ],
         "test-user",
         "fake-token",
@@ -197,9 +204,11 @@ def test_update_trade(authenticated_user):
         "stop": 1.11,
         "exit": 1.14,
         "pnl": 400,
+        "entry_datetime": "2026-08-12T10:00:00",
+        "exit_datetime": "2026-08-12T11:00:00",
     }
 
-    expected_trade = [
+    expected_trade_for_database = [
         5,
         "eurusd",
         "long",
@@ -208,13 +217,26 @@ def test_update_trade(authenticated_user):
         1.14,
         2.0,
         400.0,
-        None,
-        None,
+        datetime(2026, 8, 12, 10, 0),
+        datetime(2026, 8, 12, 11, 0),
+    ]
+
+    fake_response = [
+        5,
+        "eurusd",
+        "long",
+        1.12,
+        1.11,
+        1.14,
+        2.0,
+        400.0,
+        "2026-08-12T10:00:00",
+        "2026-08-12T11:00:00",
     ]
 
     with patch(
         "api.update_trade_in_supabase",
-        return_value=expected_trade,
+        return_value=fake_response,
     ) as mock_update:
         response = client.patch(
             "/trades/5",
@@ -222,11 +244,11 @@ def test_update_trade(authenticated_user):
         )
 
     assert response.status_code == 200
-    assert response.json() == expected_trade
+    assert response.json() == fake_response
 
     mock_update.assert_called_once_with(
         5,
-        expected_trade,
+        expected_trade_for_database,
         "test-user",
         "fake-token",
     )
@@ -242,6 +264,8 @@ def test_update_trade_invalid_id(
         "stop": 1.11,
         "exit": 1.14,
         "pnl": 400,
+        "entry_datetime": "2026-08-12T10:00:00",
+        "exit_datetime": "2026-08-12T11:00:00",
     }
 
     response = client.patch(
@@ -262,6 +286,8 @@ def test_update_trade_invalid_direction(
         "stop": 1.11,
         "exit": 1.14,
         "pnl": 400,
+        "entry_datetime": "2026-08-12T10:00:00",
+        "exit_datetime": "2026-08-12T11:00:00",
     }
 
     response = client.patch(
