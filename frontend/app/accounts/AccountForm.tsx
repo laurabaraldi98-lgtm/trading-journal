@@ -33,8 +33,8 @@ export default function AccountForm({
                 Account
             </h3>
 
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                <div>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
+                <div className="lg:col-span-3">
                     <label className="mb-1 block text-sm font-medium">
                         Account name
                     </label>
@@ -50,7 +50,7 @@ export default function AccountForm({
                     />
                 </div>
 
-                <div>
+                <div className="lg:col-span-2">
                     <label className="mb-1 block text-sm font-medium">
                         Starting balance
                     </label>
@@ -66,7 +66,7 @@ export default function AccountForm({
                     />
                 </div>
 
-                <div>
+                <div className="lg:col-span-1">
                     <label className="mb-1 block text-sm font-medium">
                         Currency
                     </label>
@@ -84,7 +84,7 @@ export default function AccountForm({
                     </select>
                 </div>
 
-                <div>
+                <div className="lg:col-span-3">
                     <label className="mb-1 block text-sm font-medium">
                         Broker
                     </label>
@@ -100,7 +100,7 @@ export default function AccountForm({
                     />
                 </div>
 
-                <div>
+                <div className="lg:col-span-3">
                     <label className="mb-1 block text-sm font-medium">
                         Account type
                     </label>
