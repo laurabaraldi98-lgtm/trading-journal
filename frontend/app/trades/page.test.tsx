@@ -923,4 +923,34 @@ describe("TradesPage", () => {
                 .toHaveBeenCalledTimes(1);
         });
     });
+    test("shows the trades page when the user has no accounts", async () => {
+        fetchMock.mockResolvedValueOnce({
+            ok: true,
+            json: async () => [],
+        } as Response);
+
+        render(<TradesPage />);
+
+        expect(
+            await screen.findByRole("heading", {
+                name: "Trades",
+            })
+        ).toBeInTheDocument();
+
+        expect(fetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    test("shows the trades page when loading accounts fails", async () => {
+        fetchMock.mockResolvedValueOnce({
+            ok: false,
+        } as Response);
+
+        render(<TradesPage />);
+
+        expect(
+            await screen.findByRole("heading", {
+                name: "Trades",
+            })
+        ).toBeInTheDocument();
+    });
 });
