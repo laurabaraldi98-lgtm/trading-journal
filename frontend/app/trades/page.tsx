@@ -18,8 +18,22 @@ type Trade = [
     string | null
 ];
 
+type Account = {
+    id: number;
+    user_id: string;
+    name: string;
+    starting_balance: number;
+    currency: string;
+    broker: string | null;
+    account_type: string | null;
+    created_at?: string;
+};
+
 export default function TradesPage() {
     const [trades, setTrades] = useState<Trade[]>([]);
+    const [accounts, setAccounts] = useState<Account[]>([]);
+    const [selectedAccountId, setSelectedAccountId] =
+        useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
     const [editingTradeId, setEditingTradeId] = useState<number | null>(null);
 
@@ -35,7 +49,8 @@ export default function TradesPage() {
     const [userEmail, setUserEmail] = useState<string | null>(null);
     const [authLoading, setAuthLoading] = useState(true);
 
-    async function loadTrades() {
+
+    async function loadAccounts() {
         const {
             data: { session },
         } = await supabase.auth.getSession();
@@ -47,19 +62,60 @@ export default function TradesPage() {
 
         setUserEmail(session.user.email ?? null);
 
-        const response = await fetch("http://127.0.0.1:8000/trades", {
-            cache: "no-store",
-            headers: {
-                Authorization: `Bearer ${session.access_token}`,
-            },
-        });
+        const response = await fetch(
+            "http://127.0.0.1:8000/accounts",
+            {
+                cache: "no-store",
+                headers: {
+                    Authorization: `Bearer ${session.access_token}`,
+                },
+            }
+        );
+
+        if (!response.ok) {
+            return;
+        }
+
+        const data: Account[] = await response.json();
+
+        setAccounts(data);
+
+        if (data.length > 0) {
+            setSelectedAccountId(data[0].id);
+        }
+    }
+
+
+    async function loadTrades(accountId: number) {
+        const {
+            data: { session },
+        } = await supabase.auth.getSession();
+
+        if (!session) {
+            window.location.href = "/login";
+            return;
+        }
+
+        const response = await fetch(
+            `http://127.0.0.1:8000/trades?account_id=${accountId}`,
+            {
+                cache: "no-store",
+                headers: {
+                    Authorization: `Bearer ${session.access_token}`,
+                },
+            }
+        );
+
+        if (!response.ok) {
+            return;
+        }
 
         const data = await response.json();
 
         setTrades(data);
+        setCurrentPage(1);
         setAuthLoading(false);
     }
-
     async function handleLogout() {
         await supabase.auth.signOut();
         window.location.href = "/login";
@@ -73,8 +129,12 @@ export default function TradesPage() {
         setStop(String(trade[4]));
         setExit(String(trade[5]));
         setPnl(String(trade[7]));
-        setEntryDatetime(trade[8] ? trade[8].slice(0, 16) : "");
-        setExitDatetime(trade[9] ? trade[9].slice(0, 16) : "");
+        setEntryDatetime(
+            trade[8] ? trade[8].slice(0, 16) : ""
+        );
+        setExitDatetime(
+            trade[9] ? trade[9].slice(0, 16) : ""
+        );
     }
 
     async function handleUpdateTrade(tradeId: number) {
@@ -109,7 +169,10 @@ export default function TradesPage() {
         );
 
         if (response.ok) {
-            await loadTrades();
+            if (selectedAccountId !== null) {
+                await loadTrades(selectedAccountId);
+            }
+
             setEditingTradeId(null);
         }
     }
@@ -143,13 +206,24 @@ export default function TradesPage() {
         );
 
         if (response.ok) {
-            await loadTrades();
+            if (selectedAccountId !== null) {
+                await loadTrades(selectedAccountId);
+            }
         }
     }
 
     useEffect(() => {
-        loadTrades();
+        loadAccounts();
     }, []);
+
+
+    useEffect(() => {
+        if (selectedAccountId === null) {
+            return;
+        }
+
+        loadTrades(selectedAccountId);
+    }, [selectedAccountId]);
 
     const tradesPerPage = 20;
 

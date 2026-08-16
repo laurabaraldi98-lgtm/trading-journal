@@ -164,6 +164,18 @@ const fakeSession = {
     },
 };
 
+const fakeAccounts = [
+    {
+        id: 7,
+        user_id: "test-user",
+        name: "FTMO 100K",
+        starting_balance: 100000,
+        currency: "USD",
+        broker: "FTMO",
+        account_type: "Prop Firm",
+    },
+];
+
 
 let fetchMock: ReturnType<typeof vi.fn>;
 
@@ -237,6 +249,12 @@ function makeResponse({
     } as Response;
 }
 
+function makeAccountsResponse() {
+    return {
+        ok: true,
+        json: async () => fakeAccounts,
+    } as Response;
+}
 
 function mockLoadTrades(trades: Trade[]) {
     fetchMock.mockResolvedValue(
@@ -286,6 +304,44 @@ describe("TradesPage", () => {
         cleanup();
         vi.restoreAllMocks();
         vi.unstubAllGlobals();
+    });
+
+    test("loads trades for the selected account", async () => {
+        const accounts = [
+            {
+                id: 7,
+                user_id: "test-user",
+                name: "FTMO 100K",
+                starting_balance: 100000,
+                currency: "USD",
+                broker: "FTMO",
+                account_type: "Prop Firm",
+            },
+        ];
+
+        fetchMock
+            .mockResolvedValueOnce({
+                ok: true,
+                json: async () => accounts,
+            } as Response)
+            .mockResolvedValueOnce(
+                makeResponse({
+                    data: [makeTrade()],
+                })
+            );
+
+        render(<TradesPage />);
+
+        await waitFor(() => {
+            expect(fetchMock).toHaveBeenCalledWith(
+                "http://127.0.0.1:8000/trades?account_id=7",
+                expect.objectContaining({
+                    headers: expect.objectContaining({
+                        Authorization: "Bearer fake-token",
+                    }),
+                })
+            );
+        });
     });
 
 
@@ -436,6 +492,9 @@ describe("TradesPage", () => {
 
         fetchMock
             .mockResolvedValueOnce(
+                makeAccountsResponse()
+            )
+            .mockResolvedValueOnce(
                 makeResponse({
                     data: [trade],
                 })
@@ -450,7 +509,6 @@ describe("TradesPage", () => {
                     data: [trade],
                 })
             );
-
         render(<TradesPage />);
 
         await screen.findByText(
@@ -482,7 +540,7 @@ describe("TradesPage", () => {
         });
 
         expect(fetchMock)
-            .toHaveBeenCalledTimes(3);
+            .toHaveBeenCalledTimes(4);
     });
 
 
@@ -493,6 +551,9 @@ describe("TradesPage", () => {
         });
 
         fetchMock
+            .mockResolvedValueOnce(
+                makeAccountsResponse()
+            )
             .mockResolvedValueOnce(
                 makeResponse({
                     data: [trade],
@@ -526,11 +587,11 @@ describe("TradesPage", () => {
 
         await waitFor(() => {
             expect(fetchMock)
-                .toHaveBeenCalledTimes(2);
+                .toHaveBeenCalledTimes(3);
         });
 
         const patchCall =
-            fetchMock.mock.calls[1];
+            fetchMock.mock.calls[2];
 
         const options =
             patchCall[1] as RequestInit;
@@ -555,6 +616,9 @@ describe("TradesPage", () => {
 
         fetchMock
             .mockResolvedValueOnce(
+                makeAccountsResponse()
+            )
+            .mockResolvedValueOnce(
                 makeResponse({
                     data: [trade],
                 })
@@ -587,7 +651,7 @@ describe("TradesPage", () => {
 
         await waitFor(() => {
             expect(fetchMock)
-                .toHaveBeenCalledTimes(2);
+                .toHaveBeenCalledTimes(3);
         });
     });
 
@@ -596,6 +660,9 @@ describe("TradesPage", () => {
         const trade = makeTrade();
 
         mockGetSession
+            .mockResolvedValueOnce(
+                sessionResponse()
+            )
             .mockResolvedValueOnce(
                 sessionResponse()
             )
@@ -629,11 +696,11 @@ describe("TradesPage", () => {
 
         await waitFor(() => {
             expect(mockGetSession)
-                .toHaveBeenCalledTimes(2);
+                .toHaveBeenCalledTimes(3);
         });
 
         expect(fetchMock)
-            .toHaveBeenCalledTimes(1);
+            .toHaveBeenCalledTimes(2);
     });
 
 
@@ -646,6 +713,9 @@ describe("TradesPage", () => {
         ).mockReturnValue(true);
 
         fetchMock
+            .mockResolvedValueOnce(
+                makeAccountsResponse()
+            )
             .mockResolvedValueOnce(
                 makeResponse({
                     data: [trade],
@@ -686,7 +756,7 @@ describe("TradesPage", () => {
         });
 
         expect(fetchMock)
-            .toHaveBeenCalledTimes(3);
+            .toHaveBeenCalledTimes(4);
     });
 
 
@@ -708,7 +778,7 @@ describe("TradesPage", () => {
         );
 
         expect(fetchMock)
-            .toHaveBeenCalledTimes(1);
+            .toHaveBeenCalledTimes(2);
     });
 
 
@@ -719,6 +789,9 @@ describe("TradesPage", () => {
         ).mockReturnValue(true);
 
         fetchMock
+            .mockResolvedValueOnce(
+                makeAccountsResponse()
+            )
             .mockResolvedValueOnce(
                 makeResponse({
                     data: [makeTrade()],
@@ -745,7 +818,7 @@ describe("TradesPage", () => {
 
         await waitFor(() => {
             expect(fetchMock)
-                .toHaveBeenCalledTimes(2);
+                .toHaveBeenCalledTimes(3);
         });
     });
 
@@ -757,6 +830,9 @@ describe("TradesPage", () => {
         ).mockReturnValue(true);
 
         mockGetSession
+            .mockResolvedValueOnce(
+                sessionResponse()
+            )
             .mockResolvedValueOnce(
                 sessionResponse()
             )
@@ -783,11 +859,11 @@ describe("TradesPage", () => {
 
         await waitFor(() => {
             expect(mockGetSession)
-                .toHaveBeenCalledTimes(2);
+                .toHaveBeenCalledTimes(3);
         });
 
         expect(fetchMock)
-            .toHaveBeenCalledTimes(1);
+            .toHaveBeenCalledTimes(2);
     });
 
 
