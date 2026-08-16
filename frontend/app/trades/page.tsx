@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import Sidebar from "../../components/Sidebar";
 import TradesTable from "../../components/TradesTable";
@@ -32,6 +32,7 @@ type Account = {
 
 function TradesPageContent() {
     const searchParams = useSearchParams();
+    const router = useRouter();
 
     const accountIdParam =
         searchParams.get("account_id");
@@ -59,58 +60,13 @@ function TradesPageContent() {
     const [userEmail, setUserEmail] = useState<string | null>(null);
     const [authLoading, setAuthLoading] = useState(true);
 
-
-    async function loadAccounts() {
+    const loadTrades = useCallback(async (accountId: number) => {
         const {
             data: { session },
         } = await supabase.auth.getSession();
 
         if (!session) {
-            window.location.href = "/login";
-            return;
-        }
-
-        setUserEmail(session.user.email ?? null);
-
-        const response = await fetch(
-            "http://127.0.0.1:8000/accounts",
-            {
-                cache: "no-store",
-                headers: {
-                    Authorization: `Bearer ${session.access_token}`,
-                },
-            }
-        );
-
-        if (!response.ok) {
-            return;
-        }
-
-        const data: Account[] = await response.json();
-
-        setAccounts(data);
-
-        if (data.length > 0) {
-            const accountFromUrl = data.find(
-                (account) =>
-                    account.id === accountIdFromUrl
-            );
-
-            setSelectedAccountId(
-                accountFromUrl
-                    ? accountFromUrl.id
-                    : data[0].id
-            );
-        }
-    }
-
-    async function loadTrades(accountId: number) {
-        const {
-            data: { session },
-        } = await supabase.auth.getSession();
-
-        if (!session) {
-            window.location.href = "/login";
+            router.push("/login");
             return;
         }
 
@@ -133,10 +89,11 @@ function TradesPageContent() {
         setTrades(data);
         setCurrentPage(1);
         setAuthLoading(false);
-    }
+    }, [router]);
+
     async function handleLogout() {
         await supabase.auth.signOut();
-        window.location.href = "/login";
+        router.push("/login");
     }
 
     function handleEditTrade(trade: Trade) {
@@ -161,7 +118,7 @@ function TradesPageContent() {
         } = await supabase.auth.getSession();
 
         if (!session) {
-            window.location.href = "/login";
+            router.push("/login");
             return;
         }
 
@@ -209,7 +166,7 @@ function TradesPageContent() {
         } = await supabase.auth.getSession();
 
         if (!session) {
-            window.location.href = "/login";
+            router.push("/login");
             return;
         }
 
@@ -232,12 +189,51 @@ function TradesPageContent() {
 
     useEffect(() => {
         async function fetchAccounts() {
-            await loadAccounts();
+            const {
+                data: { session },
+            } = await supabase.auth.getSession();
+
+            if (!session) {
+                router.push("/login");
+                return;
+            }
+
+            setUserEmail(session.user.email ?? null);
+
+            const response = await fetch(
+                "http://127.0.0.1:8000/accounts",
+                {
+                    cache: "no-store",
+                    headers: {
+                        Authorization: `Bearer ${session.access_token}`,
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                return;
+            }
+
+            const data: Account[] = await response.json();
+
+            setAccounts(data);
+
+            if (data.length > 0) {
+                const accountFromUrl = data.find(
+                    (account) =>
+                        account.id === accountIdFromUrl
+                );
+
+                setSelectedAccountId(
+                    accountFromUrl
+                        ? accountFromUrl.id
+                        : data[0].id
+                );
+            }
         }
 
         fetchAccounts();
-    }, []);
-
+    }, [accountIdFromUrl, router]);
 
     useEffect(() => {
         if (selectedAccountId === null) {
@@ -249,7 +245,7 @@ function TradesPageContent() {
         }
 
         fetchTrades();
-    }, [selectedAccountId]);
+    }, [selectedAccountId, loadTrades]);
 
     const tradesPerPage = 20;
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 
 export default function LoginPage() {
@@ -8,44 +9,56 @@ export default function LoginPage() {
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
 
+    const router = useRouter();
+
     async function handleLogin() {
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
+        const { error } =
+            await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
 
         if (error) {
             setMessage(error.message);
             return;
         }
 
-        window.location.href = "/";
+        router.push("/");
     }
 
     async function handleSignUp() {
-        const { error } = await supabase.auth.signUp({
-            email,
-            password,
-        });
+        const { error } =
+            await supabase.auth.signUp({
+                email,
+                password,
+            });
 
         if (error) {
             setMessage(error.message);
             return;
         }
 
-        setMessage("Check your email to confirm your account.");
+        setMessage(
+            "Check your email to confirm your account."
+        );
     }
 
     return (
         <main className="flex min-h-screen items-center justify-center bg-zinc-100 p-6">
             <div className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-6">
-                <h1 className="text-2xl font-bold">Trading Journal</h1>
+                <h1 className="text-2xl font-bold">
+                    Trading Journal
+                </h1>
 
                 <div className="mt-6 flex flex-col gap-4">
                     <input
                         type="email"
                         value={email}
-                        onChange={(event) => setEmail(event.target.value)}
+                        onChange={(event) =>
+                            setEmail(
+                                event.target.value
+                            )
+                        }
                         placeholder="Email"
                         className="rounded-lg border border-zinc-300 p-3"
                     />
@@ -53,7 +66,11 @@ export default function LoginPage() {
                     <input
                         type="password"
                         value={password}
-                        onChange={(event) => setPassword(event.target.value)}
+                        onChange={(event) =>
+                            setPassword(
+                                event.target.value
+                            )
+                        }
                         placeholder="Password"
                         className="rounded-lg border border-zinc-300 p-3"
                     />
@@ -73,7 +90,9 @@ export default function LoginPage() {
                     </button>
 
                     {message && (
-                        <p className="text-sm text-zinc-600">{message}</p>
+                        <p className="text-sm text-zinc-600">
+                            {message}
+                        </p>
                     )}
                 </div>
             </div>

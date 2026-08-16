@@ -21,9 +21,11 @@ import LoginPage from "./page";
 const {
     mockSignInWithPassword,
     mockSignUp,
+    mockPush,
 } = vi.hoisted(() => ({
     mockSignInWithPassword: vi.fn(),
     mockSignUp: vi.fn(),
+    mockPush: vi.fn(),
 }));
 
 
@@ -37,6 +39,13 @@ vi.mock("../../lib/supabase", () => ({
                 mockSignUp,
         },
     },
+}));
+
+
+vi.mock("next/navigation", () => ({
+    useRouter: () => ({
+        push: mockPush,
+    }),
 }));
 
 
@@ -69,6 +78,7 @@ describe("LoginPage", () => {
     beforeEach(() => {
         mockSignInWithPassword.mockReset();
         mockSignUp.mockReset();
+        mockPush.mockReset();
     });
 
 
@@ -148,6 +158,10 @@ describe("LoginPage", () => {
                 password: "secret123",
             });
         });
+
+        expect(
+            mockPush
+        ).toHaveBeenCalledWith("/");
     });
 
 
@@ -177,6 +191,10 @@ describe("LoginPage", () => {
                 "Invalid login credentials"
             )
         ).toBeInTheDocument();
+
+        expect(
+            mockPush
+        ).not.toHaveBeenCalled();
     });
 
 

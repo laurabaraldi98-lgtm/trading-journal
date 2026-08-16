@@ -31,16 +31,25 @@ type Trade = [
     string | null
 ];
 
-
 const {
     mockGetSession,
     mockSignOut,
     mockUseSearchParams,
-} = vi.hoisted(() => ({
-    mockGetSession: vi.fn(),
-    mockSignOut: vi.fn(),
-    mockUseSearchParams: vi.fn(),
-}));
+    mockPush,
+    mockRouter,
+} = vi.hoisted(() => {
+    const mockPush = vi.fn();
+
+    return {
+        mockGetSession: vi.fn(),
+        mockSignOut: vi.fn(),
+        mockUseSearchParams: vi.fn(),
+        mockPush,
+        mockRouter: {
+            push: mockPush,
+        },
+    };
+});
 
 
 vi.mock("../../lib/supabase", () => ({
@@ -54,6 +63,7 @@ vi.mock("../../lib/supabase", () => ({
 
 vi.mock("next/navigation", () => ({
     useSearchParams: mockUseSearchParams,
+    useRouter: () => mockRouter,
 }));
 
 
@@ -295,8 +305,8 @@ describe("TradesPage", () => {
 
         mockGetSession.mockReset();
         mockSignOut.mockReset();
-
         mockUseSearchParams.mockReset();
+        mockPush.mockReset();
 
         mockUseSearchParams.mockReturnValue(
             new URLSearchParams()

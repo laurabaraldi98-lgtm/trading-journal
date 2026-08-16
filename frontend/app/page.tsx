@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "../lib/supabase";
 import Sidebar from "../components/Sidebar";
 import TradeForm from "../components/TradeForm";
@@ -34,6 +35,7 @@ type Account = {
 };
 
 export default function Home() {
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
 
   const [symbol, setSymbol] = useState("");
@@ -100,7 +102,7 @@ export default function Home() {
 
     setUserEmail(null);
 
-    window.location.href = "/login";
+    router.push("/login");
   }
 
   useEffect(() => {
@@ -110,7 +112,7 @@ export default function Home() {
       } = await supabase.auth.getSession();
 
       if (!session) {
-        window.location.href = "/login";
+        router.push("/login");
         return;
       }
 
@@ -128,8 +130,7 @@ export default function Home() {
       supabase.auth.onAuthStateChange(
         (_event, session) => {
           if (!session) {
-            window.location.href =
-              "/login";
+            router.push("/login");
             return;
           }
 
@@ -144,7 +145,7 @@ export default function Home() {
     return () => {
       data.subscription.unsubscribe();
     };
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!session) {
@@ -223,7 +224,7 @@ export default function Home() {
     } = await supabase.auth.getSession();
 
     if (!session) {
-      window.location.href = "/login";
+      router.push("/login");
       return;
     }
 
@@ -275,7 +276,7 @@ export default function Home() {
     } = await supabase.auth.getSession();
 
     if (!session) {
-      window.location.href = "/login";
+      router.push("/login");
       return;
     }
 
@@ -346,7 +347,7 @@ export default function Home() {
     } = await supabase.auth.getSession();
 
     if (!session) {
-      window.location.href = "/login";
+      router.push("/login");
       return;
     }
 
