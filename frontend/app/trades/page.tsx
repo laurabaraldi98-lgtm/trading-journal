@@ -211,6 +211,7 @@ function TradesPageContent() {
             );
 
             if (!response.ok) {
+                setAuthLoading(false);
                 return;
             }
 
@@ -218,18 +219,23 @@ function TradesPageContent() {
 
             setAccounts(data);
 
-            if (data.length > 0) {
-                const accountFromUrl = data.find(
-                    (account) =>
-                        account.id === accountIdFromUrl
-                );
-
-                setSelectedAccountId(
-                    accountFromUrl
-                        ? accountFromUrl.id
-                        : data[0].id
-                );
+            if (data.length === 0) {
+                setTrades([]);
+                setSelectedAccountId(null);
+                setAuthLoading(false);
+                return;
             }
+
+            const accountFromUrl = data.find(
+                (account) =>
+                    account.id === accountIdFromUrl
+            );
+
+            setSelectedAccountId(
+                accountFromUrl
+                    ? accountFromUrl.id
+                    : data[0].id
+            );
         }
 
         fetchAccounts();
