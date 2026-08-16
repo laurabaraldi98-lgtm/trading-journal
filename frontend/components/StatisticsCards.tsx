@@ -1,8 +1,9 @@
 import {
-    ChartNoAxesCombined,
+    TrendingUp,
     Target,
     Activity,
-    BriefcaseBusiness,
+    ListChecks,
+    BadgeDollarSign,
     Wallet,
 } from "lucide-react";
 
@@ -62,8 +63,13 @@ export default function StatisticsCards({
         <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                        <ChartNoAxesCombined size={23} />
+                    <div
+                        className={`flex h-12 w-12 items-center justify-center rounded-xl ${totalR >= 0
+                            ? "bg-emerald-50 text-emerald-600"
+                            : "bg-rose-50 text-rose-600"
+                            }`}
+                    >
+                        <TrendingUp size={23} />
                     </div>
 
                     <div>
@@ -116,8 +122,8 @@ export default function StatisticsCards({
 
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
-                        <BriefcaseBusiness size={23} />
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                        <ListChecks size={23} />
                     </div>
 
                     <div>
@@ -134,8 +140,13 @@ export default function StatisticsCards({
 
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
-                        <ChartNoAxesCombined size={23} />
+                    <div
+                        className={`flex h-12 w-12 items-center justify-center rounded-xl ${totalPnl >= 0
+                            ? "bg-emerald-50 text-emerald-600"
+                            : "bg-rose-50 text-rose-600"
+                            }`}
+                    >
+                        <BadgeDollarSign size={23} />
                     </div>
 
                     <div>
@@ -152,7 +163,7 @@ export default function StatisticsCards({
 
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600">
                         <Wallet size={23} />
                     </div>
 
