@@ -1,5 +1,6 @@
 import os
 
+import pytest
 from dotenv import load_dotenv
 from supabase import create_client
 
@@ -44,7 +45,7 @@ def test_rls_blocks_other_users():
         USER_A_PASSWORD,
     )
 
-    client_b, _ = login_test_user(
+    client_b, user_b_id = login_test_user(
         USER_B_EMAIL,
         USER_B_PASSWORD,
     )
@@ -73,6 +74,30 @@ def test_rls_blocks_other_users():
         assert len(account_response.data) == 1
 
         account_id = account_response.data[0]["id"]
+
+        # User B must NOT be able to create a trade
+        # inside User A's account.
+        with pytest.raises(Exception):
+            (
+                client_b
+                .table("trades")
+                .insert(
+                    {
+                        "account_id": account_id,
+                        "symbol": "RLS_CROSS_ACCOUNT",
+                        "direction": "long",
+                        "entry": 100,
+                        "stop": 90,
+                        "exit": 120,
+                        "result": 2,
+                        "pnl": 400,
+                        "entry_datetime": "2026-08-12T10:00:00",
+                        "exit_datetime": "2026-08-12T11:00:00",
+                        "user_id": user_b_id,
+                    }
+                )
+                .execute()
+            )
 
         # User A creates a trade belonging to User A.
         insert_response = (
