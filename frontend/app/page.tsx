@@ -12,6 +12,7 @@ import {
 import {
   supabase,
 } from "../lib/supabase";
+import { API_URL } from "../lib/api";
 
 import Sidebar from "../components/Sidebar";
 import TradeForm from "../components/TradeForm";
@@ -172,7 +173,7 @@ export default function Home() {
   ) {
     const response =
       await fetch(
-        `http://127.0.0.1:8000/trades?account_id=${accountId}`,
+        `${API_URL}/trades?account_id=${accountId}`,
         {
           cache:
             "no-store",
@@ -293,7 +294,7 @@ export default function Home() {
 
       const response =
         await fetch(
-          "http://127.0.0.1:8000/accounts",
+          `${API_URL}/accounts`,
           {
             cache:
               "no-store",
@@ -425,7 +426,7 @@ export default function Home() {
 
     const response =
       await fetch(
-        "http://127.0.0.1:8000/trades",
+        `${API_URL}/trades`,
         {
           method:
             "POST",
@@ -508,7 +509,7 @@ export default function Home() {
 
     const response =
       await fetch(
-        `http://127.0.0.1:8000/trades/${tradeId}`,
+        `${API_URL}/trades/${tradeId}`,
         {
           method:
             "DELETE",
@@ -651,7 +652,7 @@ export default function Home() {
 
     const response =
       await fetch(
-        `http://127.0.0.1:8000/trades/${tradeId}`,
+        `${API_URL}/trades/${tradeId}`,
         {
           method:
             "PATCH",

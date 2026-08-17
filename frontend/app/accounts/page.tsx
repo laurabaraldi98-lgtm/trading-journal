@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import { API_URL } from "../../lib/api";
 import Sidebar from "../../components/Sidebar";
 import AccountForm from "./AccountForm";
 import {
@@ -61,7 +62,7 @@ export default function AccountsPage() {
         setUserEmail(session.user.email ?? null);
 
         const response = await fetch(
-            "http://127.0.0.1:8000/accounts",
+            `${API_URL}/accounts`,
             {
                 cache: "no-store",
                 headers: {
@@ -114,8 +115,8 @@ export default function AccountsPage() {
 
         const url =
             editingAccountId === null
-                ? "http://127.0.0.1:8000/accounts"
-                : `http://127.0.0.1:8000/accounts/${editingAccountId}`;
+                ? `${API_URL}/accounts`
+                : `${API_URL}/accounts/${editingAccountId}`;
 
         const method =
             editingAccountId === null
@@ -168,7 +169,7 @@ export default function AccountsPage() {
         }
 
         const response = await fetch(
-            `http://127.0.0.1:8000/accounts/${accountId}`,
+            `${API_URL}/accounts/${accountId}`,
             {
                 method: "DELETE",
                 headers: {

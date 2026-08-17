@@ -2,6 +2,7 @@ from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Literal
+import os
 from datetime import datetime
 
 from auth import get_current_user
@@ -60,9 +61,14 @@ class AccountUpdate(BaseModel):
 app = FastAPI()
 
 
+cors_origins = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:3000",
+).split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

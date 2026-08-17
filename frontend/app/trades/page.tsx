@@ -3,6 +3,7 @@
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import { API_URL } from "../../lib/api";
 import Sidebar from "../../components/Sidebar";
 import TradesTable from "../../components/TradesTable";
 
@@ -80,7 +81,7 @@ function TradesPageContent() {
             }
 
             const response = await fetch(
-                `http://127.0.0.1:8000/trades?account_id=${accountId}`,
+                `${API_URL}/trades?account_id=${accountId}`,
                 {
                     cache: "no-store",
                     headers: {
@@ -144,7 +145,7 @@ function TradesPageContent() {
         }
 
         const response = await fetch(
-            `http://127.0.0.1:8000/trades/${tradeId}`,
+            `${API_URL}/trades/${tradeId}`,
             {
                 method: "PATCH",
                 headers: {
@@ -200,7 +201,7 @@ function TradesPageContent() {
         }
 
         const response = await fetch(
-            `http://127.0.0.1:8000/trades/${tradeId}`,
+            `${API_URL}/trades/${tradeId}`,
             {
                 method: "DELETE",
                 headers: {
@@ -235,7 +236,7 @@ function TradesPageContent() {
             );
 
             const response = await fetch(
-                "http://127.0.0.1:8000/accounts",
+                `${API_URL}/accounts`,
                 {
                     cache: "no-store",
                     headers: {
