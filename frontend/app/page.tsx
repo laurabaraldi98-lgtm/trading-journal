@@ -1,14 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { supabase } from "../lib/supabase";
+import {
+  useEffect,
+  useState,
+} from "react";
+
+import {
+  useRouter,
+} from "next/navigation";
+
+import {
+  supabase,
+} from "../lib/supabase";
+
 import Sidebar from "../components/Sidebar";
 import TradeForm from "../components/TradeForm";
 import TradesTable from "../components/TradesTable";
 import StatisticsCards from "../components/StatisticsCards";
 import PerformanceChart from "../components/PerformanceChart";
-import type { Session } from "@supabase/supabase-js";
+
+import type {
+  Session,
+} from "@supabase/supabase-js";
+
 
 type Trade = [
   number,
@@ -23,6 +37,7 @@ type Trade = [
   string
 ];
 
+
 type Account = {
   id: number;
   user_id: string;
@@ -34,165 +49,307 @@ type Account = {
   created_at?: string;
 };
 
+
 export default function Home() {
-  const router = useRouter();
-  const [showForm, setShowForm] = useState(false);
+  const router =
+    useRouter();
 
-  const [symbol, setSymbol] = useState("");
-  const [direction, setDirection] = useState("");
-  const [entry, setEntry] = useState("");
-  const [stop, setStop] = useState("");
-  const [exit, setExit] = useState("");
-  const [pnl, setPnl] = useState("");
-  const [entryDatetime, setEntryDatetime] = useState("");
-  const [exitDatetime, setExitDatetime] = useState("");
 
-  const [trades, setTrades] = useState<Trade[]>([]);
+  const [
+    showForm,
+    setShowForm,
+  ] = useState(false);
 
-  const [editingTradeId, setEditingTradeId] =
-    useState<number | null>(null);
 
-  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [
+    symbol,
+    setSymbol,
+  ] = useState("");
 
-  const [selectedAccountId, setSelectedAccountId] =
-    useState<number | null>(null);
+  const [
+    direction,
+    setDirection,
+  ] = useState("");
 
-  const [userEmail, setUserEmail] =
-    useState<string | null>(null);
+  const [
+    entry,
+    setEntry,
+  ] = useState("");
 
-  const [authLoading, setAuthLoading] =
-    useState(true);
+  const [
+    stop,
+    setStop,
+  ] = useState("");
 
-  const [session, setSession] =
-    useState<Session | null>(null);
+  const [
+    exit,
+    setExit,
+  ] = useState("");
 
-  const [dashboardLoading, setDashboardLoading] =
-    useState(true);
+  const [
+    pnl,
+    setPnl,
+  ] = useState("");
+
+  const [
+    entryDatetime,
+    setEntryDatetime,
+  ] = useState("");
+
+  const [
+    exitDatetime,
+    setExitDatetime,
+  ] = useState("");
+
+
+  const [
+    trades,
+    setTrades,
+  ] = useState<Trade[]>([]);
+
+
+  const [
+    editingTradeId,
+    setEditingTradeId,
+  ] = useState<number | null>(
+    null
+  );
+
+
+  const [
+    accounts,
+    setAccounts,
+  ] = useState<Account[]>([]);
+
+
+  const [
+    selectedAccountId,
+    setSelectedAccountId,
+  ] = useState<number | null>(
+    null
+  );
+
+
+  const [
+    userEmail,
+    setUserEmail,
+  ] = useState<string | null>(
+    null
+  );
+
+
+  const [
+    authLoading,
+    setAuthLoading,
+  ] = useState(true);
+
+
+  const [
+    session,
+    setSession,
+  ] = useState<Session | null>(
+    null
+  );
+
+
+  const [
+    dashboardLoading,
+    setDashboardLoading,
+  ] = useState(true);
+
 
   const selectedAccount =
     accounts.find(
       (account) =>
-        account.id === selectedAccountId
+        account.id ===
+        selectedAccountId
     ) ?? null;
+
 
   async function loadTrades(
     accessToken: string,
     accountId: number
   ) {
-    const response = await fetch(
-      `http://127.0.0.1:8000/trades?account_id=${accountId}`,
-      {
-        cache: "no-store",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
+    const response =
+      await fetch(
+        `http://127.0.0.1:8000/trades?account_id=${accountId}`,
+        {
+          cache:
+            "no-store",
+
+          headers: {
+            Authorization:
+              `Bearer ${accessToken}`,
+          },
+        }
+      );
 
     if (!response.ok) {
       return;
     }
 
-    const data: Trade[] = await response.json();
+    const data: Trade[] =
+      await response.json();
 
     setTrades(data);
   }
+
 
   async function handleLogout() {
     await supabase.auth.signOut();
 
     setUserEmail(null);
 
-    router.push("/login");
+    router.push(
+      "/login"
+    );
   }
+
 
   useEffect(() => {
     async function loadUser() {
       const {
-        data: { session },
-      } = await supabase.auth.getSession();
+        data: {
+          session,
+        },
+      } =
+        await supabase.auth.getSession();
 
       if (!session) {
-        router.push("/login");
+        router.push(
+          "/login"
+        );
+
         return;
       }
 
       setUserEmail(
-        session.user.email ?? null
+        session.user.email ??
+        null
       );
 
-      setSession(session);
-      setAuthLoading(false);
+      setSession(
+        session
+      );
+
+      setAuthLoading(
+        false
+      );
     }
+
 
     loadUser();
 
-    const { data } =
+
+    const {
+      data,
+    } =
       supabase.auth.onAuthStateChange(
-        (_event, session) => {
+        (
+          _event,
+          session
+        ) => {
           if (!session) {
-            router.push("/login");
+            router.push(
+              "/login"
+            );
+
             return;
           }
 
-          setSession(session);
+          setSession(
+            session
+          );
 
           setUserEmail(
-            session.user.email ?? null
+            session.user.email ??
+            null
           );
         }
       );
 
+
     return () => {
       data.subscription.unsubscribe();
     };
-  }, [router]);
+  }, [
+    router,
+  ]);
+
 
   useEffect(() => {
     if (!session) {
       return;
     }
 
-    const accessToken = session.access_token;
+    const accessToken =
+      session.access_token;
+
 
     async function loadDashboard() {
-      setDashboardLoading(true);
-
-      const response = await fetch(
-        "http://127.0.0.1:8000/accounts",
-        {
-          cache: "no-store",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-          },
-        }
+      setDashboardLoading(
+        true
       );
+
+      const response =
+        await fetch(
+          "http://127.0.0.1:8000/accounts",
+          {
+            cache:
+              "no-store",
+
+            headers: {
+              Authorization:
+                `Bearer ${accessToken}`,
+            },
+          }
+        );
+
 
       if (response.ok) {
         const data: Account[] =
           await response.json();
 
-        setAccounts(data);
+        setAccounts(
+          data
+        );
 
-        if (data.length > 0) {
-          setSelectedAccountId((current) =>
-            current === null
-              ? data[0].id
-              : current
+
+        if (
+          data.length >
+          0
+        ) {
+          setSelectedAccountId(
+            (current) =>
+              current === null
+                ? data[0].id
+                : current
           );
         }
       }
 
-      setDashboardLoading(false);
+
+      setDashboardLoading(
+        false
+      );
     }
+
 
     loadDashboard();
-  }, [session]);
+  }, [
+    session,
+  ]);
+
 
   useEffect(() => {
-    if (!session || selectedAccountId === null) {
+    if (
+      !session ||
+      selectedAccountId ===
+      null
+    ) {
       return;
     }
+
 
     async function fetchTrades() {
       await loadTrades(
@@ -201,58 +358,100 @@ export default function Home() {
       );
     }
 
+
     fetchTrades();
-  }, [session, selectedAccountId]);
+  }, [
+    session,
+    selectedAccountId,
+  ]);
+
 
   async function handleSaveTrade() {
-    if (!entryDatetime || !exitDatetime) {
+    if (
+      !entryDatetime ||
+      !exitDatetime
+    ) {
       return;
     }
 
-    if (selectedAccountId === null) {
-      return;
-    }
+
+    const accountId =
+      selectedAccountId!;
+
 
     const tradeData = {
-      account_id: selectedAccountId,
+      account_id:
+        accountId,
+
       symbol,
       direction,
-      entry: Number(entry),
-      stop: Number(stop),
-      exit: Number(exit),
-      pnl: Number(pnl),
-      entry_datetime: entryDatetime,
-      exit_datetime: exitDatetime,
+
+      entry:
+        Number(entry),
+
+      stop:
+        Number(stop),
+
+      exit:
+        Number(exit),
+
+      pnl:
+        Number(pnl),
+
+      entry_datetime:
+        entryDatetime,
+
+      exit_datetime:
+        exitDatetime,
     };
 
+
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: {
+        session,
+      },
+    } =
+      await supabase.auth.getSession();
+
 
     if (!session) {
-      router.push("/login");
+      router.push(
+        "/login"
+      );
+
       return;
     }
 
-    const response = await fetch(
-      "http://127.0.0.1:8000/trades",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type":
-            "application/json",
-          Authorization:
-            `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(tradeData),
-      }
-    );
+
+    const response =
+      await fetch(
+        "http://127.0.0.1:8000/trades",
+        {
+          method:
+            "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${session.access_token}`,
+          },
+
+          body:
+            JSON.stringify(
+              tradeData
+            ),
+        }
+      );
+
 
     if (response.ok) {
       await loadTrades(
         session.access_token,
-        selectedAccountId
+        accountId
       );
+
 
       setSymbol("");
       setDirection("");
@@ -260,136 +459,248 @@ export default function Home() {
       setStop("");
       setExit("");
       setPnl("");
-      setEntryDatetime("");
-      setExitDatetime("");
-      setShowForm(false);
+
+      setEntryDatetime(
+        ""
+      );
+
+      setExitDatetime(
+        ""
+      );
+
+      setShowForm(
+        false
+      );
     }
   }
+
 
   async function handleDeleteTrade(
     tradeId: number
   ) {
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this trade?"
-    );
+    const confirmed =
+      window.confirm(
+        "Are you sure you want to delete this trade?"
+      );
+
 
     if (!confirmed) {
       return;
     }
 
+
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: {
+        session,
+      },
+    } =
+      await supabase.auth.getSession();
+
 
     if (!session) {
-      router.push("/login");
+      router.push(
+        "/login"
+      );
+
       return;
     }
 
-    const response = await fetch(
-      `http://127.0.0.1:8000/trades/${tradeId}`,
-      {
-        method: "DELETE",
-        headers: {
-          Authorization:
-            `Bearer ${session.access_token}`,
-        },
-      }
-    );
+
+    const response =
+      await fetch(
+        `http://127.0.0.1:8000/trades/${tradeId}`,
+        {
+          method:
+            "DELETE",
+
+          headers: {
+            Authorization:
+              `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
 
     if (response.ok) {
-      setTrades((currentTrades) =>
-        currentTrades.filter(
-          (trade) =>
-            trade[0] !== tradeId
-        )
+      setTrades(
+        (
+          currentTrades
+        ) =>
+          currentTrades.filter(
+            (trade) =>
+              trade[0] !==
+              tradeId
+          )
       );
     }
   }
 
-  function handleEditTrade(trade: Trade) {
-    setShowForm(false);
-    setEditingTradeId(trade[0]);
 
-    setSymbol(trade[1]);
-    setDirection(trade[2]);
-    setEntry(String(trade[3]));
-    setStop(String(trade[4]));
-    setExit(String(trade[5]));
-    setPnl(String(trade[7]));
+  function handleEditTrade(
+    trade: Trade
+  ) {
+    setShowForm(
+      false
+    );
+
+    setEditingTradeId(
+      trade[0]
+    );
+
+
+    setSymbol(
+      trade[1]
+    );
+
+    setDirection(
+      trade[2]
+    );
+
+    setEntry(
+      String(
+        trade[3]
+      )
+    );
+
+    setStop(
+      String(
+        trade[4]
+      )
+    );
+
+    setExit(
+      String(
+        trade[5]
+      )
+    );
+
+    setPnl(
+      String(
+        trade[7]
+      )
+    );
+
 
     setEntryDatetime(
-      trade[8].slice(0, 16)
+      trade[8].slice(
+        0,
+        16
+      )
     );
 
     setExitDatetime(
-      trade[9].slice(0, 16)
+      trade[9].slice(
+        0,
+        16
+      )
     );
   }
+
 
   async function handleUpdateTrade(
     tradeId: number
   ) {
-    if (!entryDatetime || !exitDatetime) {
+    if (
+      !entryDatetime ||
+      !exitDatetime
+    ) {
       return;
     }
+
 
     const tradeData = {
       symbol,
       direction,
-      entry: Number(entry),
-      stop: Number(stop),
-      exit: Number(exit),
-      pnl: Number(pnl),
-      entry_datetime: entryDatetime,
-      exit_datetime: exitDatetime,
+
+      entry:
+        Number(entry),
+
+      stop:
+        Number(stop),
+
+      exit:
+        Number(exit),
+
+      pnl:
+        Number(pnl),
+
+      entry_datetime:
+        entryDatetime,
+
+      exit_datetime:
+        exitDatetime,
     };
 
+
     const {
-      data: { session },
-    } = await supabase.auth.getSession();
+      data: {
+        session,
+      },
+    } =
+      await supabase.auth.getSession();
+
 
     if (!session) {
-      router.push("/login");
+      router.push(
+        "/login"
+      );
+
       return;
     }
 
-    const response = await fetch(
-      `http://127.0.0.1:8000/trades/${tradeId}`,
-      {
-        method: "PATCH",
-        headers: {
-          "Content-Type":
-            "application/json",
-          Authorization:
-            `Bearer ${session.access_token}`,
-        },
-        body: JSON.stringify(tradeData),
-      }
-    );
+
+    const response =
+      await fetch(
+        `http://127.0.0.1:8000/trades/${tradeId}`,
+        {
+          method:
+            "PATCH",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+
+            Authorization:
+              `Bearer ${session.access_token}`,
+          },
+
+          body:
+            JSON.stringify(
+              tradeData
+            ),
+        }
+      );
+
 
     if (response.ok) {
-      if (selectedAccountId !== null) {
-        await loadTrades(
-          session.access_token,
-          selectedAccountId
-        );
-      }
+      await loadTrades(
+        session.access_token,
+        selectedAccountId!
+      );
 
-      setEditingTradeId(null);
+      setEditingTradeId(
+        null
+      );
     }
   }
+
 
   if (authLoading) {
     return null;
   }
 
+
   return (
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar
-        userEmail={userEmail}
-        onLogout={handleLogout}
+        userEmail={
+          userEmail
+        }
+        onLogout={
+          handleLogout
+        }
       />
+
 
       <main className="min-w-0 flex-1 px-8 py-8 xl:px-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -399,42 +710,60 @@ export default function Home() {
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Overview of your trading performance.
+              Overview of your
+              trading performance.
             </p>
           </div>
 
+
           <div className="flex items-center gap-3">
-            {accounts.length > 0 && (
-              <select
-                value={
-                  selectedAccountId ??
-                  ""
-                }
-                onChange={(event) =>
-                  setSelectedAccountId(
-                    Number(
-                      event.target.value
+            {selectedAccountId !==
+              null && (
+                <select
+                  value={
+                    selectedAccountId
+                  }
+                  onChange={(
+                    event
+                  ) =>
+                    setSelectedAccountId(
+                      Number(
+                        event
+                          .target
+                          .value
+                      )
                     )
-                  )
-                }
-                className="rounded-lg border border-slate-300 bg-white px-4 py-3"
-              >
-                {accounts.map(
-                  (account) => (
-                    <option
-                      key={account.id}
-                      value={account.id}
-                    >
-                      {account.name}
-                    </option>
-                  )
-                )}
-              </select>
-            )}
+                  }
+                  className="rounded-lg border border-slate-300 bg-white px-4 py-3"
+                >
+                  {accounts.map(
+                    (
+                      account
+                    ) => (
+                      <option
+                        key={
+                          account.id
+                        }
+                        value={
+                          account.id
+                        }
+                      >
+                        {
+                          account.name
+                        }
+                      </option>
+                    )
+                  )}
+                </select>
+              )}
+
 
             <button
+              type="button"
               onClick={() => {
-                setEditingTradeId(null);
+                setEditingTradeId(
+                  null
+                );
 
                 setSymbol("");
                 setDirection("");
@@ -442,10 +771,18 @@ export default function Home() {
                 setStop("");
                 setExit("");
                 setPnl("");
-                setEntryDatetime("");
-                setExitDatetime("");
 
-                setShowForm(!showForm);
+                setEntryDatetime(
+                  ""
+                );
+
+                setExitDatetime(
+                  ""
+                );
+
+                setShowForm(
+                  !showForm
+                );
               }}
               disabled={
                 selectedAccountId ===
@@ -458,37 +795,64 @@ export default function Home() {
           </div>
         </div>
 
+
         {!dashboardLoading &&
-          accounts.length === 0 && (
+          accounts.length ===
+          0 && (
             <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-              Create a trading account before
-              adding trades.
+              Create a trading
+              account before adding
+              trades.
             </div>
           )}
 
+
         {showForm &&
-          selectedAccountId !== null && (
+          selectedAccountId !==
+          null && (
             <TradeForm
-              symbol={symbol}
-              direction={direction}
-              entry={entry}
-              stop={stop}
-              exit={exit}
-              pnl={pnl}
+              symbol={
+                symbol
+              }
+              direction={
+                direction
+              }
+              entry={
+                entry
+              }
+              stop={
+                stop
+              }
+              exit={
+                exit
+              }
+              pnl={
+                pnl
+              }
               entryDatetime={
                 entryDatetime
               }
               exitDatetime={
                 exitDatetime
               }
-              setSymbol={setSymbol}
+              setSymbol={
+                setSymbol
+              }
               setDirection={
                 setDirection
               }
-              setEntry={setEntry}
-              setStop={setStop}
-              setExit={setExit}
-              setPnl={setPnl}
+              setEntry={
+                setEntry
+              }
+              setStop={
+                setStop
+              }
+              setExit={
+                setExit
+              }
+              setPnl={
+                setPnl
+              }
               setEntryDatetime={
                 setEntryDatetime
               }
@@ -501,15 +865,25 @@ export default function Home() {
             />
           )}
 
+
         {dashboardLoading ? (
           <>
             <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
-              <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
-              <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
-              <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
-              <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
-              <div className="h-24 animate-pulse rounded-xl bg-slate-200" />
+              {Array.from({
+                length: 6,
+              }).map(
+                (
+                  _,
+                  index
+                ) => (
+                  <div
+                    key={
+                      index
+                    }
+                    className="h-24 animate-pulse rounded-xl bg-slate-200"
+                  />
+                )
+              )}
             </div>
 
             <div className="mt-8 h-40 animate-pulse rounded-2xl bg-slate-200" />
@@ -519,54 +893,92 @@ export default function Home() {
         ) : (
           <>
             <StatisticsCards
-              trades={trades}
+              trades={
+                trades
+              }
               startingBalance={
-                selectedAccount?.starting_balance ??
+                selectedAccount
+                  ?.starting_balance ??
                 0
               }
               currency={
-                selectedAccount?.currency ??
+                selectedAccount
+                  ?.currency ??
                 ""
               }
             />
+
 
             <PerformanceChart
-              trades={trades}
+              trades={
+                trades
+              }
               currency={
-                selectedAccount?.currency ??
+                selectedAccount
+                  ?.currency ??
                 ""
               }
             />
 
+
             <TradesTable
-              trades={trades.slice(0, 5)}
-              showViewAll={true}
+              trades={
+                trades.slice(
+                  0,
+                  5
+                )
+              }
+              showViewAll={
+                true
+              }
               selectedAccountId={
                 selectedAccountId
               }
               editingTradeId={
                 editingTradeId
               }
-              symbol={symbol}
-              direction={direction}
-              entry={entry}
-              stop={stop}
-              exit={exit}
-              pnl={pnl}
+              symbol={
+                symbol
+              }
+              direction={
+                direction
+              }
+              entry={
+                entry
+              }
+              stop={
+                stop
+              }
+              exit={
+                exit
+              }
+              pnl={
+                pnl
+              }
               entryDatetime={
                 entryDatetime
               }
               exitDatetime={
                 exitDatetime
               }
-              setSymbol={setSymbol}
+              setSymbol={
+                setSymbol
+              }
               setDirection={
                 setDirection
               }
-              setEntry={setEntry}
-              setStop={setStop}
-              setExit={setExit}
-              setPnl={setPnl}
+              setEntry={
+                setEntry
+              }
+              setStop={
+                setStop
+              }
+              setExit={
+                setExit
+              }
+              setPnl={
+                setPnl
+              }
               setEntryDatetime={
                 setEntryDatetime
               }
