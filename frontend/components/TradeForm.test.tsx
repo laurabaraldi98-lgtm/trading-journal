@@ -1,16 +1,16 @@
 import {
+    cleanup,
+    fireEvent,
     render,
     screen,
-    fireEvent,
-    cleanup
 } from "@testing-library/react";
 
 import {
+    afterEach,
     describe,
     expect,
     test,
     vi,
-    afterEach
 } from "vitest";
 
 import TradeForm from "./TradeForm";
@@ -21,147 +21,187 @@ afterEach(() => {
 });
 
 
+function renderTradeForm(
+    overrides: Partial<
+        React.ComponentProps<
+            typeof TradeForm
+        >
+    > = {}
+) {
+    const props = {
+        symbol: "",
+        direction: "",
+        entry: "",
+        stop: "",
+        exit: "",
+        pnl: "",
+        entryDatetime: "",
+        exitDatetime: "",
+
+        setSymbol: vi.fn(),
+        setDirection: vi.fn(),
+        setEntry: vi.fn(),
+        setStop: vi.fn(),
+        setExit: vi.fn(),
+        setPnl: vi.fn(),
+        setEntryDatetime: vi.fn(),
+        setExitDatetime: vi.fn(),
+
+        onSave: vi.fn(),
+
+        ...overrides,
+    };
+
+    render(
+        <TradeForm {...props} />
+    );
+
+    return props;
+}
+
+
 describe("TradeForm", () => {
-    test("calls onSave when Save Trade is clicked", () => {
-        const mockSave = vi.fn();
+    test(
+        "calls onSave when Save Trade is clicked",
+        () => {
+            const props =
+                renderTradeForm();
 
-        render(
-            <TradeForm
-                symbol=""
-                direction=""
-                entry=""
-                stop=""
-                exit=""
-                pnl=""
-                entryDatetime=""
-                exitDatetime=""
-                setSymbol={() => { }}
-                setDirection={() => { }}
-                setEntry={() => { }}
-                setStop={() => { }}
-                setExit={() => { }}
-                setPnl={() => { }}
-                setEntryDatetime={() => { }}
-                setExitDatetime={() => { }}
-                onSave={mockSave}
-            />
-        );
+            fireEvent.click(
+                screen.getByRole(
+                    "button",
+                    {
+                        name: "Save Trade",
+                    }
+                )
+            );
 
-        fireEvent.click(
-            screen.getByRole("button", { name: "Save Trade" })
-        );
-
-        expect(mockSave).toHaveBeenCalledOnce();
-    });
-});
+            expect(
+                props.onSave
+            ).toHaveBeenCalledOnce();
+        }
+    );
 
 
-const textFieldCases = [
-    ["Symbol", "Symbol", "EURUSD"],
-    ["Entry", "Entry", "1.1500"],
-    ["Stop", "Stop", "1.1400"],
-    ["Exit price", "Exit price", "1.1700"],
-] as const;
+    test.each([
+        [
+            "Symbol",
+            "EURUSD",
+            "setSymbol",
+        ],
+        [
+            "Entry",
+            "1.1500",
+            "setEntry",
+        ],
+        [
+            "Stop",
+            "1.1400",
+            "setStop",
+        ],
+        [
+            "Exit price",
+            "1.1700",
+            "setExit",
+        ],
+        [
+            "P/L",
+            "250",
+            "setPnl",
+        ],
+    ] as const)(
+        "updates %s",
+        (
+            placeholder,
+            value,
+            setterName
+        ) => {
+            const props =
+                renderTradeForm();
 
-textFieldCases.forEach(([caseName, placeholder, value]) => {
-    test(`updates ${caseName}`, () => {
-        const mockSetSymbol = vi.fn();
-        const mockSetEntry = vi.fn();
-        const mockSetStop = vi.fn();
-        const mockSetExit = vi.fn();
+            fireEvent.change(
+                screen.getByPlaceholderText(
+                    placeholder
+                ),
+                {
+                    target: {
+                        value,
+                    },
+                }
+            );
 
-        render(
-            <TradeForm
-                symbol=""
-                direction=""
-                entry=""
-                stop=""
-                exit=""
-                pnl=""
-                entryDatetime=""
-                exitDatetime=""
-                setSymbol={mockSetSymbol}
-                setDirection={() => { }}
-                setEntry={mockSetEntry}
-                setStop={mockSetStop}
-                setExit={mockSetExit}
-                setPnl={() => { }}
-                setEntryDatetime={() => { }}
-                setExitDatetime={() => { }}
-                onSave={() => { }}
-            />
-        );
-
-        const setterMap = {
-            Symbol: mockSetSymbol,
-            Entry: mockSetEntry,
-            Stop: mockSetStop,
-            "Exit price": mockSetExit,
-        };
-
-        fireEvent.change(
-            screen.getByPlaceholderText(placeholder),
-            { target: { value } }
-        );
-
-        expect(
-            setterMap[caseName]
-        ).toHaveBeenCalledWith(value);
-    });
-});
+            expect(
+                props[setterName]
+            ).toHaveBeenCalledWith(
+                value
+            );
+        }
+    );
 
 
-const specialFieldCases = [
-    ["Direction", "long"],
-    ["Entry datetime", "2026-08-12T10:00"],
-    ["Exit datetime", "2026-08-12T11:00"],
-] as const;
+    test(
+        "updates Direction",
+        () => {
+            const props =
+                renderTradeForm();
 
-specialFieldCases.forEach(([caseName, value]) => {
-    test(`updates ${caseName}`, () => {
-        const mockSetDirection = vi.fn();
-        const mockSetEntryDatetime = vi.fn();
-        const mockSetExitDatetime = vi.fn();
+            fireEvent.change(
+                screen.getByRole(
+                    "combobox"
+                ),
+                {
+                    target: {
+                        value: "long",
+                    },
+                }
+            );
 
-        render(
-            <TradeForm
-                symbol=""
-                direction=""
-                entry=""
-                stop=""
-                exit=""
-                pnl=""
-                entryDatetime=""
-                exitDatetime=""
-                setSymbol={() => { }}
-                setDirection={mockSetDirection}
-                setEntry={() => { }}
-                setStop={() => { }}
-                setExit={() => { }}
-                setPnl={() => { }}
-                setEntryDatetime={mockSetEntryDatetime}
-                setExitDatetime={mockSetExitDatetime}
-                onSave={() => { }}
-            />
-        );
+            expect(
+                props.setDirection
+            ).toHaveBeenCalledWith(
+                "long"
+            );
+        }
+    );
 
-        const setterMap = {
-            Direction: mockSetDirection,
-            "Entry datetime": mockSetEntryDatetime,
-            "Exit datetime": mockSetExitDatetime,
-        };
 
-        const field =
-            caseName === "Direction"
-                ? screen.getByRole("combobox")
-                : screen.getByLabelText(caseName);
+    test.each([
+        [
+            "Entry datetime",
+            "2026-08-12T10:00",
+            "setEntryDatetime",
+        ],
+        [
+            "Exit datetime",
+            "2026-08-12T11:00",
+            "setExitDatetime",
+        ],
+    ] as const)(
+        "updates %s",
+        (
+            label,
+            value,
+            setterName
+        ) => {
+            const props =
+                renderTradeForm();
 
-        fireEvent.change(field, {
-            target: { value }
-        });
+            fireEvent.change(
+                screen.getByLabelText(
+                    label
+                ),
+                {
+                    target: {
+                        value,
+                    },
+                }
+            );
 
-        expect(
-            setterMap[caseName]
-        ).toHaveBeenCalledWith(value);
-    });
+            expect(
+                props[setterName]
+            ).toHaveBeenCalledWith(
+                value
+            );
+        }
+    );
 });
