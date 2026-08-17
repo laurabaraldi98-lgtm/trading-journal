@@ -32,8 +32,8 @@ describe("TradesTable", () => {
             number,
             number,
             number,
-            string | null,
-            string | null
+            string,
+            string
         ] = [
                 1,
                 "EURUSD",
@@ -82,62 +82,6 @@ describe("TradesTable", () => {
         ).toBeInTheDocument();
     });
 
-    test("shows dashes when trade dates are missing", () => {
-        const trade: [
-            number,
-            string,
-            string,
-            number,
-            number,
-            number,
-            number,
-            number,
-            string | null,
-            string | null
-        ] = [
-                1,
-                "EURUSD",
-                "long",
-                1.15,
-                1.14,
-                1.17,
-                2,
-                150,
-                null,
-                null
-            ];
-
-        render(
-            <TradesTable
-                trades={[trade]}
-                editingTradeId={null}
-                symbol=""
-                direction=""
-                entry=""
-                stop=""
-                exit=""
-                pnl=""
-                entryDatetime=""
-                exitDatetime=""
-                setSymbol={() => { }}
-                setDirection={() => { }}
-                setEntry={() => { }}
-                setStop={() => { }}
-                setExit={() => { }}
-                setPnl={() => { }}
-                setEntryDatetime={() => { }}
-                setExitDatetime={() => { }}
-                onEdit={() => { }}
-                onUpdate={() => { }}
-                onDelete={() => { }}
-            />
-        );
-
-        expect(
-            screen.getAllByText("-")
-        ).toHaveLength(2);
-    });
-
     test("calls onEdit with the trade when Edit is clicked", () => {
         const mockEdit = vi.fn();
 
@@ -150,8 +94,8 @@ describe("TradesTable", () => {
             number,
             number,
             number,
-            string | null,
-            string | null
+            string,
+            string
         ] = [
                 1,
                 "EURUSD",
@@ -229,8 +173,8 @@ describe("TradesTable", () => {
                 number,
                 number,
                 number,
-                string | null,
-                string | null
+                string,
+                string
             ] = [
                     1,
                     "EURUSD",
@@ -305,8 +249,8 @@ describe("TradesTable", () => {
             number,
             number,
             number,
-            string | null,
-            string | null
+            string,
+            string
         ] = [
                 1,
                 "EURUSD",
@@ -365,8 +309,8 @@ describe("TradesTable", () => {
             number,
             number,
             number,
-            string | null,
-            string | null
+            string,
+            string
         ] = [
                 1,
                 "EURUSD",
@@ -425,8 +369,8 @@ test("shows a short losing trade", () => {
         number,
         number,
         number,
-        string | null,
-        string | null
+        string,
+        string
     ] = [
             1,
             "GBPUSD",
@@ -436,8 +380,8 @@ test("shows a short losing trade", () => {
             1.23,
             -1,
             -100,
-            null,
-            null
+            "2026-08-12T10:00",
+            "2026-08-12T11:00"
         ];
 
     render(
@@ -486,8 +430,8 @@ test("shows a breakeven trade", () => {
         number,
         number,
         number,
-        string | null,
-        string | null
+        string,
+        string
     ] = [
             1,
             "EURUSD",
@@ -497,8 +441,8 @@ test("shows a breakeven trade", () => {
             1.15,
             0,
             0,
-            null,
-            null
+            "2026-08-12T10:00",
+            "2026-08-12T11:00"
         ];
 
     render(
@@ -546,8 +490,8 @@ test.each([
         number,
         number,
         number,
-        string | null,
-        string | null
+        string,
+        string
     ] = [
             1,
             "EURUSD",

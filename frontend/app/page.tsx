@@ -19,8 +19,8 @@ type Trade = [
   number,
   number,
   number,
-  string | null,
-  string | null
+  string,
+  string
 ];
 
 type Account = {
@@ -66,7 +66,8 @@ export default function Home() {
   const [session, setSession] =
     useState<Session | null>(null);
 
-  const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [dashboardLoading, setDashboardLoading] =
+    useState(true);
 
   const selectedAccount =
     accounts.find(
@@ -92,7 +93,7 @@ export default function Home() {
       return;
     }
 
-    const data = await response.json();
+    const data: Trade[] = await response.json();
 
     setTrades(data);
   }
@@ -168,13 +169,16 @@ export default function Home() {
       );
 
       if (response.ok) {
-        const data: Account[] = await response.json();
+        const data: Account[] =
+          await response.json();
 
         setAccounts(data);
 
         if (data.length > 0) {
           setSelectedAccountId((current) =>
-            current === null ? data[0].id : current
+            current === null
+              ? data[0].id
+              : current
           );
         }
       }
@@ -201,6 +205,10 @@ export default function Home() {
   }, [session, selectedAccountId]);
 
   async function handleSaveTrade() {
+    if (!entryDatetime || !exitDatetime) {
+      return;
+    }
+
     if (selectedAccountId === null) {
       return;
     }
@@ -213,10 +221,8 @@ export default function Home() {
       stop: Number(stop),
       exit: Number(exit),
       pnl: Number(pnl),
-      entry_datetime:
-        entryDatetime || null,
-      exit_datetime:
-        exitDatetime || null,
+      entry_datetime: entryDatetime,
+      exit_datetime: exitDatetime,
     };
 
     const {
@@ -310,25 +316,24 @@ export default function Home() {
     setEntry(String(trade[3]));
     setStop(String(trade[4]));
     setExit(String(trade[5]));
-
     setPnl(String(trade[7]));
 
     setEntryDatetime(
-      trade[8]
-        ? trade[8].slice(0, 16)
-        : ""
+      trade[8].slice(0, 16)
     );
 
     setExitDatetime(
-      trade[9]
-        ? trade[9].slice(0, 16)
-        : ""
+      trade[9].slice(0, 16)
     );
   }
 
   async function handleUpdateTrade(
     tradeId: number
   ) {
+    if (!entryDatetime || !exitDatetime) {
+      return;
+    }
+
     const tradeData = {
       symbol,
       direction,
@@ -336,10 +341,8 @@ export default function Home() {
       stop: Number(stop),
       exit: Number(exit),
       pnl: Number(pnl),
-      entry_datetime:
-        entryDatetime || null,
-      exit_datetime:
-        exitDatetime || null,
+      entry_datetime: entryDatetime,
+      exit_datetime: exitDatetime,
     };
 
     const {
@@ -410,8 +413,7 @@ export default function Home() {
                 onChange={(event) =>
                   setSelectedAccountId(
                     Number(
-                      event.target
-                        .value
+                      event.target.value
                     )
                   )
                 }
@@ -420,16 +422,10 @@ export default function Home() {
                 {accounts.map(
                   (account) => (
                     <option
-                      key={
-                        account.id
-                      }
-                      value={
-                        account.id
-                      }
+                      key={account.id}
+                      value={account.id}
                     >
-                      {
-                        account.name
-                      }
+                      {account.name}
                     </option>
                   )
                 )}
@@ -462,12 +458,13 @@ export default function Home() {
           </div>
         </div>
 
-        {!dashboardLoading && accounts.length === 0 && (
-          <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-            Create a trading account before
-            adding trades.
-          </div>
-        )}
+        {!dashboardLoading &&
+          accounts.length === 0 && (
+            <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+              Create a trading account before
+              adding trades.
+            </div>
+          )}
 
         {showForm &&
           selectedAccountId !== null && (
@@ -524,46 +521,71 @@ export default function Home() {
             <StatisticsCards
               trades={trades}
               startingBalance={
-                selectedAccount?.starting_balance ?? 0
+                selectedAccount?.starting_balance ??
+                0
               }
               currency={
-                selectedAccount?.currency ?? ""
+                selectedAccount?.currency ??
+                ""
               }
             />
 
             <PerformanceChart
               trades={trades}
-              currency={selectedAccount?.currency ?? ""}
+              currency={
+                selectedAccount?.currency ??
+                ""
+              }
             />
 
             <TradesTable
               trades={trades.slice(0, 5)}
               showViewAll={true}
-              selectedAccountId={selectedAccountId}
-              editingTradeId={editingTradeId}
+              selectedAccountId={
+                selectedAccountId
+              }
+              editingTradeId={
+                editingTradeId
+              }
               symbol={symbol}
               direction={direction}
               entry={entry}
               stop={stop}
               exit={exit}
               pnl={pnl}
-              entryDatetime={entryDatetime}
-              exitDatetime={exitDatetime}
+              entryDatetime={
+                entryDatetime
+              }
+              exitDatetime={
+                exitDatetime
+              }
               setSymbol={setSymbol}
-              setDirection={setDirection}
+              setDirection={
+                setDirection
+              }
               setEntry={setEntry}
               setStop={setStop}
               setExit={setExit}
               setPnl={setPnl}
-              setEntryDatetime={setEntryDatetime}
-              setExitDatetime={setExitDatetime}
-              onEdit={handleEditTrade}
-              onUpdate={handleUpdateTrade}
-              onDelete={handleDeleteTrade}
+              setEntryDatetime={
+                setEntryDatetime
+              }
+              setExitDatetime={
+                setExitDatetime
+              }
+              onEdit={
+                handleEditTrade
+              }
+              onUpdate={
+                handleUpdateTrade
+              }
+              onDelete={
+                handleDeleteTrade
+              }
             />
           </>
         )}
       </main>
-    </div >
+    </div>
   );
 }
