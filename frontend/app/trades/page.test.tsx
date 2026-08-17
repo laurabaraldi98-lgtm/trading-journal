@@ -1,18 +1,19 @@
 import {
+    act,
+    cleanup,
+    fireEvent,
     render,
     screen,
     waitFor,
-    fireEvent,
-    cleanup,
 } from "@testing-library/react";
 
 import {
-    describe,
-    test,
-    expect,
-    vi,
-    beforeEach,
     afterEach,
+    beforeEach,
+    describe,
+    expect,
+    test,
+    vi,
 } from "vitest";
 
 import TradesPage from "./page";
@@ -31,12 +32,24 @@ type Trade = [
     string
 ];
 
+type Account = {
+    id: number;
+    user_id: string;
+    name: string;
+    starting_balance: number;
+    currency: string;
+    broker: string | null;
+    account_type: string | null;
+};
+
+
 const {
     mockGetSession,
     mockSignOut,
     mockUseSearchParams,
     mockPush,
     mockRouter,
+    tableCallbacks,
 } = vi.hoisted(() => {
     const mockPush = vi.fn();
 
@@ -48,161 +61,301 @@ const {
         mockRouter: {
             push: mockPush,
         },
+
+        tableCallbacks: {
+            onUpdate: null as
+                | ((tradeId: number) => void)
+                | null,
+
+            onDelete: null as
+                | ((tradeId: number) => void)
+                | null,
+        },
     };
 });
 
 
-vi.mock("../../lib/supabase", () => ({
-    supabase: {
-        auth: {
-            getSession: mockGetSession,
-            signOut: mockSignOut,
+vi.mock(
+    "../../lib/supabase",
+    () => ({
+        supabase: {
+            auth: {
+                getSession:
+                    mockGetSession,
+
+                signOut:
+                    mockSignOut,
+            },
         },
-    },
-}));
-
-vi.mock("next/navigation", () => ({
-    useSearchParams: mockUseSearchParams,
-    useRouter: () => mockRouter,
-}));
+    })
+);
 
 
-vi.mock("../../components/Sidebar", () => ({
-    default: ({
-        userEmail,
-        onLogout,
-    }: {
-        userEmail: string | null;
-        onLogout: () => void;
-    }) => (
-        <div>
-            <span data-testid="user-email">
-                {userEmail ?? "no-email"}
-            </span>
+vi.mock(
+    "next/navigation",
+    () => ({
+        useSearchParams:
+            mockUseSearchParams,
 
-            <button
-                type="button"
-                onClick={onLogout}
-            >
-                Fake logout
-            </button>
-        </div>
-    ),
-}));
+        useRouter: () =>
+            mockRouter,
+    })
+);
 
 
-vi.mock("../../components/TradesTable", () => ({
-    default: ({
-        trades,
-        onEdit,
-        onUpdate,
-        onDelete,
-        editingTradeId,
-        symbol,
-        direction,
-        entry,
-        stop,
-        exit,
-        entryDatetime,
-        exitDatetime,
-    }: {
-        trades: Trade[];
-        onEdit: (trade: Trade) => void;
-        onUpdate: (tradeId: number) => void;
-        onDelete: (tradeId: number) => void;
-        editingTradeId: number | null;
-        symbol: string;
-        direction: string;
-        entry: string;
-        stop: string;
-        exit: string;
-        entryDatetime: string;
-        exitDatetime: string;
-    }) => (
-        <div>
-            <span data-testid="trade-count">
-                {trades.length}
-            </span>
+vi.mock(
+    "../../components/Sidebar",
+    () => ({
+        default: ({
+            userEmail,
+            onLogout,
+        }: {
+            userEmail:
+            | string
+            | null;
 
-            <div data-testid="edit-state">
-                {symbol}
-                {" | "}
-                {direction}
-                {" | "}
-                {entry}
-                {" | "}
-                {stop}
-                {" | "}
-                {exit}
-                {" | "}
-                {entryDatetime}
-                {" | "}
-                {exitDatetime}
-            </div>
+            onLogout:
+            () => void;
+        }) => (
+            <div>
+                <span
+                    data-testid="user-email"
+                >
+                    {userEmail ??
+                        "no-email"}
+                </span>
 
-            {trades.map((trade) => (
-                <div key={trade[0]}>
-                    <span>{trade[1]}</span>
-
-                    <button
-                        type="button"
-                        onClick={() => onEdit(trade)}
-                    >
-                        Edit trade {trade[0]}
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => onDelete(trade[0])}
-                    >
-                        Delete trade {trade[0]}
-                    </button>
-                </div>
-            ))}
-
-            {editingTradeId !== null && (
                 <button
                     type="button"
-                    onClick={() => onUpdate(editingTradeId)}
+                    onClick={
+                        onLogout
+                    }
                 >
-                    Save trade
+                    Fake logout
                 </button>
-            )}
-        </div>
-    ),
-}));
+            </div>
+        ),
+    })
+);
+
+
+vi.mock(
+    "../../components/TradesTable",
+    () => ({
+        default: ({
+            trades,
+            onEdit,
+            onUpdate,
+            onDelete,
+            editingTradeId,
+            symbol,
+            direction,
+            entry,
+            stop,
+            exit,
+            pnl,
+            entryDatetime,
+            exitDatetime,
+        }: {
+            trades: Trade[];
+
+            onEdit:
+            (
+                trade:
+                    Trade
+            ) => void;
+
+            onUpdate:
+            (
+                tradeId:
+                    number
+            ) => void;
+
+            onDelete:
+            (
+                tradeId:
+                    number
+            ) => void;
+
+            editingTradeId:
+            | number
+            | null;
+
+            symbol: string;
+            direction: string;
+            entry: string;
+            stop: string;
+            exit: string;
+            pnl: string;
+
+            entryDatetime:
+            string;
+
+            exitDatetime:
+            string;
+        }) => {
+            tableCallbacks.onUpdate =
+                onUpdate;
+
+            tableCallbacks.onDelete =
+                onDelete;
+
+            return (
+                <div>
+                    <span
+                        data-testid="trade-count"
+                    >
+                        {
+                            trades.length
+                        }
+                    </span>
+
+                    <div
+                        data-testid="edit-state"
+                    >
+                        {symbol}
+                        {" | "}
+                        {direction}
+                        {" | "}
+                        {entry}
+                        {" | "}
+                        {stop}
+                        {" | "}
+                        {exit}
+                        {" | "}
+                        {pnl}
+                        {" | "}
+                        {
+                            entryDatetime
+                        }
+                        {" | "}
+                        {
+                            exitDatetime
+                        }
+                    </div>
+
+                    {trades.map(
+                        (
+                            trade
+                        ) => (
+                            <div
+                                key={
+                                    trade[0]
+                                }
+                            >
+                                <span>
+                                    {
+                                        trade[1]
+                                    }
+                                </span>
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        onEdit(
+                                            trade
+                                        )
+                                    }
+                                >
+                                    Edit
+                                    trade{" "}
+                                    {
+                                        trade[0]
+                                    }
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        onDelete(
+                                            trade[0]
+                                        )
+                                    }
+                                >
+                                    Delete
+                                    trade{" "}
+                                    {
+                                        trade[0]
+                                    }
+                                </button>
+                            </div>
+                        )
+                    )}
+
+                    {editingTradeId !==
+                        null && (
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    onUpdate(
+                                        editingTradeId
+                                    )
+                                }
+                            >
+                                Save trade
+                            </button>
+                        )}
+                </div>
+            );
+        },
+    })
+);
 
 
 const fakeSession = {
-    access_token: "fake-token",
+    access_token:
+        "fake-token",
+
     user: {
-        email: "test@example.com",
+        email:
+            "test@example.com",
     },
 };
 
-const fakeAccounts = [
-    {
-        id: 7,
-        user_id: "test-user",
-        name: "FTMO 100K",
-        starting_balance: 100000,
-        currency: "USD",
-        broker: "FTMO",
-        account_type: "Prop Firm",
-    },
-];
+
+const fakeAccounts: Account[] =
+    [
+        {
+            id: 7,
+
+            user_id:
+                "test-user",
+
+            name:
+                "FTMO 100K",
+
+            starting_balance:
+                100000,
+
+            currency:
+                "USD",
+
+            broker:
+                "FTMO",
+
+            account_type:
+                "Prop Firm",
+        },
+    ];
 
 
-let fetchMock: ReturnType<typeof vi.fn>;
+let fetchMock:
+    ReturnType<
+        typeof vi.fn
+    >;
 
 
 function sessionResponse(
     session: {
-        access_token: string;
+        access_token:
+        string;
+
         user: {
-            email?: string;
+            email?:
+            string;
         };
-    } | null = fakeSession
+    } | null =
+        fakeSession
 ) {
     return {
         data: {
@@ -215,13 +368,19 @@ function sessionResponse(
 function makeTrade({
     id = 1,
     symbol = "EURUSD",
-    entryDatetime = "2026-08-12T10:00",
-    exitDatetime = "2026-08-12T11:00",
+    entryDatetime =
+    "2026-08-12T10:00",
+    exitDatetime =
+    "2026-08-12T11:00",
 }: {
     id?: number;
     symbol?: string;
-    entryDatetime?: string;
-    exitDatetime?: string;
+
+    entryDatetime?:
+    string;
+
+    exitDatetime?:
+    string;
 } = {}): Trade {
     return [
         id,
@@ -238,364 +397,950 @@ function makeTrade({
 }
 
 
-function makeTrades(amount: number): Trade[] {
+function makeTrades(
+    amount: number
+): Trade[] {
     return Array.from(
-        { length: amount },
+        {
+            length:
+                amount,
+        },
         (_, index) =>
             makeTrade({
-                id: index + 1,
-                symbol: `TRADE-${index + 1}`,
+                id:
+                    index +
+                    1,
+
+                symbol:
+                    `TRADE-${index + 1}`,
             })
     );
 }
 
 
-function makeResponse({
-    data = [],
-    ok = true,
-}: {
-    data?: Trade[];
-    ok?: boolean;
-} = {}) {
+function response<T>(
+    data: T,
+    ok = true
+) {
     return {
         ok,
-        json: async () => data,
+
+        json:
+            async () =>
+                data,
     } as Response;
 }
 
 
-function makeAccountsResponse() {
-    return {
-        ok: true,
-        json: async () => fakeAccounts,
-    } as Response;
-}
+function accountsResponse(
+    accounts:
+        Account[] =
+        fakeAccounts,
 
-
-function mockLoadTrades(trades: Trade[]) {
-    fetchMock.mockResolvedValue(
-        makeResponse({
-            data: trades,
-        })
+    ok = true
+) {
+    return response(
+        accounts,
+        ok
     );
+}
+
+
+function tradesResponse(
+    trades: Trade[] =
+        [],
+
+    ok = true
+) {
+    return response(
+        trades,
+        ok
+    );
+}
+
+
+function queueInitialLoad(
+    trades: Trade[],
+    accounts:
+        Account[] =
+        fakeAccounts
+) {
+    fetchMock
+        .mockResolvedValueOnce(
+            accountsResponse(
+                accounts
+            )
+        )
+        .mockResolvedValueOnce(
+            tradesResponse(
+                trades
+            )
+        );
 }
 
 
 async function renderLoadedPage(
-    trades: Trade[]
+    trades: Trade[] =
+        [makeTrade()],
+    accounts:
+        Account[] =
+        fakeAccounts
 ) {
-    mockLoadTrades(trades);
+    queueInitialLoad(
+        trades,
+        accounts
+    );
 
-    render(<TradesPage />);
+    const renderResult =
+        render(
+            <TradesPage />
+        );
 
     await waitFor(() => {
         expect(
-            screen.getByTestId("trade-count")
+            screen.getByTestId(
+                "trade-count"
+            )
         ).toBeInTheDocument();
+    });
+
+    return renderResult;
+}
+
+
+async function clickEdit() {
+    fireEvent.click(
+        screen.getByRole(
+            "button",
+            {
+                name:
+                    "Edit trade 1",
+            }
+        )
+    );
+}
+
+
+async function movePageToNoAccounts(
+    rerender:
+        (
+            ui:
+                React.ReactNode
+        ) => void
+) {
+    mockUseSearchParams
+        .mockReturnValue(
+            new URLSearchParams(
+                "account_id=999"
+            )
+        );
+
+    fetchMock
+        .mockResolvedValueOnce(
+            accountsResponse(
+                []
+            )
+        );
+
+    rerender(
+        <TradesPage />
+    );
+
+    await waitFor(() => {
+        expect(
+            screen.getByTestId(
+                "trade-count"
+            )
+        ).toHaveTextContent(
+            "0"
+        );
     });
 }
 
 
-describe("TradesPage", () => {
-    beforeEach(() => {
-        fetchMock = vi.fn();
+describe(
+    "TradesPage",
+    () => {
+        beforeEach(() => {
+            fetchMock =
+                vi.fn();
 
-        vi.stubGlobal(
-            "fetch",
-            fetchMock
-        );
+            vi.stubGlobal(
+                "fetch",
+                fetchMock
+            );
 
-        mockGetSession.mockReset();
-        mockSignOut.mockReset();
-        mockUseSearchParams.mockReset();
-        mockPush.mockReset();
+            mockGetSession
+                .mockReset();
 
-        mockUseSearchParams.mockReturnValue(
-            new URLSearchParams()
-        );
+            mockSignOut
+                .mockReset();
 
-        mockGetSession.mockResolvedValue(
-            sessionResponse()
-        );
+            mockUseSearchParams
+                .mockReset();
 
-        mockSignOut.mockResolvedValue(
-            undefined
-        );
-    });
+            mockPush
+                .mockReset();
 
+            tableCallbacks.onUpdate =
+                null;
 
-    afterEach(() => {
-        cleanup();
-        vi.restoreAllMocks();
-        vi.unstubAllGlobals();
-    });
+            tableCallbacks.onDelete =
+                null;
 
-
-    test(
-        "loads trades for the selected account",
-        async () => {
-            const accounts = [
-                {
-                    id: 7,
-                    user_id: "test-user",
-                    name: "FTMO 100K",
-                    starting_balance: 100000,
-                    currency: "USD",
-                    broker: "FTMO",
-                    account_type: "Prop Firm",
-                },
-            ];
-
-            fetchMock
-                .mockResolvedValueOnce({
-                    ok: true,
-                    json: async () =>
-                        accounts,
-                } as Response)
-                .mockResolvedValueOnce(
-                    makeResponse({
-                        data: [
-                            makeTrade(),
-                        ],
-                    })
+            mockUseSearchParams
+                .mockReturnValue(
+                    new URLSearchParams()
                 );
 
-            render(<TradesPage />);
+            mockGetSession
+                .mockResolvedValue(
+                    sessionResponse()
+                );
 
-            await waitFor(() => {
+            mockSignOut
+                .mockResolvedValue(
+                    undefined
+                );
+        });
+
+
+        afterEach(() => {
+            cleanup();
+
+            vi.restoreAllMocks();
+
+            vi.unstubAllGlobals();
+        });
+
+
+        test(
+            "loads trades for the selected account",
+            async () => {
+                await renderLoadedPage();
+
                 expect(
                     fetchMock
                 ).toHaveBeenCalledWith(
                     "http://127.0.0.1:8000/trades?account_id=7",
-                    expect.objectContaining({
-                        headers:
+                    expect.objectContaining(
+                        {
+                            headers:
+                                expect.objectContaining(
+                                    {
+                                        Authorization:
+                                            "Bearer fake-token",
+                                    }
+                                ),
+                        }
+                    )
+                );
+            }
+        );
+
+
+        test(
+            "uses account id from URL",
+            async () => {
+                const accounts =
+                    [
+                        fakeAccounts[0],
+
+                        {
+                            ...fakeAccounts[0],
+
+                            id: 8,
+
+                            name:
+                                "Second account",
+                        },
+                    ];
+
+                mockUseSearchParams
+                    .mockReturnValue(
+                        new URLSearchParams(
+                            "account_id=8"
+                        )
+                    );
+
+                await renderLoadedPage(
+                    [
+                        makeTrade(
+                            {
+                                symbol:
+                                    "GBPUSD",
+                            }
+                        ),
+                    ],
+                    accounts
+                );
+
+                expect(
+                    fetchMock
+                ).toHaveBeenCalledWith(
+                    "http://127.0.0.1:8000/trades?account_id=8",
+                    expect.anything()
+                );
+            }
+        );
+
+
+        test(
+            "falls back to first account when URL account does not exist",
+            async () => {
+                mockUseSearchParams
+                    .mockReturnValue(
+                        new URLSearchParams(
+                            "account_id=999"
+                        )
+                    );
+
+                await renderLoadedPage();
+
+                expect(
+                    fetchMock
+                ).toHaveBeenCalledWith(
+                    "http://127.0.0.1:8000/trades?account_id=7",
+                    expect.anything()
+                );
+            }
+        );
+
+
+        test(
+            "loads another account from account selector",
+            async () => {
+                const accounts =
+                    [
+                        fakeAccounts[0],
+
+                        {
+                            ...fakeAccounts[0],
+
+                            id: 8,
+
+                            name:
+                                "Second account",
+                        },
+                    ];
+
+                fetchMock
+                    .mockResolvedValueOnce(
+                        accountsResponse(
+                            accounts
+                        )
+                    )
+                    .mockResolvedValueOnce(
+                        tradesResponse(
+                            [
+                                makeTrade(),
+                            ]
+                        )
+                    )
+                    .mockResolvedValueOnce(
+                        tradesResponse(
+                            [
+                                makeTrade(
+                                    {
+                                        id: 2,
+
+                                        symbol:
+                                            "GBPUSD",
+                                    }
+                                ),
+                            ]
+                        )
+                    );
+
+                render(
+                    <TradesPage />
+                );
+
+                await screen.findByText(
+                    "EURUSD"
+                );
+
+                fireEvent.change(
+                    screen.getByLabelText(
+                        "Account"
+                    ),
+                    {
+                        target: {
+                            value:
+                                "8",
+                        },
+                    }
+                );
+
+                expect(
+                    await screen.findByText(
+                        "GBPUSD"
+                    )
+                ).toBeInTheDocument();
+
+                expect(
+                    fetchMock
+                ).toHaveBeenCalledWith(
+                    "http://127.0.0.1:8000/trades?account_id=8",
+                    expect.anything()
+                );
+            }
+        );
+
+
+        test(
+            "paginates trades 20 at a time",
+            async () => {
+                await renderLoadedPage(
+                    makeTrades(
+                        21
+                    )
+                );
+
+                expect(
+                    screen.getByTestId(
+                        "trade-count"
+                    )
+                ).toHaveTextContent(
+                    "20"
+                );
+
+                expect(
+                    screen.queryByText(
+                        "TRADE-21"
+                    )
+                ).not.toBeInTheDocument();
+
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "2",
+                        }
+                    )
+                );
+
+                expect(
+                    screen.getByText(
+                        "TRADE-21"
+                    )
+                ).toBeInTheDocument();
+
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "←",
+                        }
+                    )
+                );
+
+                expect(
+                    screen.getByText(
+                        "TRADE-1"
+                    )
+                ).toBeInTheDocument();
+
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "→",
+                        }
+                    )
+                );
+
+                expect(
+                    screen.getByText(
+                        "TRADE-21"
+                    )
+                ).toBeInTheDocument();
+            }
+        );
+
+
+        test(
+            "does not show pagination for one page",
+            async () => {
+                await renderLoadedPage();
+
+                expect(
+                    screen.queryByRole(
+                        "button",
+                        {
+                            name:
+                                "→",
+                        }
+                    )
+                ).not.toBeInTheDocument();
+            }
+        );
+
+
+        test(
+            "uses null email when session has no email",
+            async () => {
+                mockGetSession
+                    .mockResolvedValue(
+                        sessionResponse(
+                            {
+                                access_token:
+                                    "fake-token",
+
+                                user: {},
+                            }
+                        )
+                    );
+
+                await renderLoadedPage();
+
+                expect(
+                    screen.getByTestId(
+                        "user-email"
+                    )
+                ).toHaveTextContent(
+                    "no-email"
+                );
+            }
+        );
+
+
+        test(
+            "redirects when initial session is missing",
+            async () => {
+                mockGetSession
+                    .mockResolvedValue(
+                        sessionResponse(
+                            null
+                        )
+                    );
+
+                render(
+                    <TradesPage />
+                );
+
+                await waitFor(
+                    () => {
+                        expect(
+                            mockPush
+                        ).toHaveBeenCalledWith(
+                            "/login"
+                        );
+                    }
+                );
+
+                expect(
+                    fetchMock
+                ).not.toHaveBeenCalled();
+            }
+        );
+
+
+        test(
+            "redirects when session disappears while loading trades",
+            async () => {
+                mockGetSession
+                    .mockResolvedValueOnce(
+                        sessionResponse()
+                    )
+                    .mockResolvedValueOnce(
+                        sessionResponse(
+                            null
+                        )
+                    );
+
+                fetchMock
+                    .mockResolvedValueOnce(
+                        accountsResponse()
+                    );
+
+                render(
+                    <TradesPage />
+                );
+
+                await waitFor(
+                    () => {
+                        expect(
+                            mockPush
+                        ).toHaveBeenCalledWith(
+                            "/login"
+                        );
+                    }
+                );
+
+                expect(
+                    fetchMock
+                ).toHaveBeenCalledTimes(
+                    1
+                );
+            }
+        );
+
+
+        test(
+            "stops when loading trades fails",
+            async () => {
+                fetchMock
+                    .mockResolvedValueOnce(
+                        accountsResponse()
+                    )
+                    .mockResolvedValueOnce(
+                        tradesResponse(
+                            [],
+                            false
+                        )
+                    );
+
+                render(
+                    <TradesPage />
+                );
+
+                await waitFor(
+                    () => {
+                        expect(
+                            fetchMock
+                        ).toHaveBeenCalledTimes(
+                            2
+                        );
+                    }
+                );
+
+                expect(
+                    screen.queryByTestId(
+                        "trade-count"
+                    )
+                ).not.toBeInTheDocument();
+            }
+        );
+
+
+        test(
+            "shows page when account list is empty",
+            async () => {
+                fetchMock
+                    .mockResolvedValueOnce(
+                        accountsResponse(
+                            []
+                        )
+                    );
+
+                render(
+                    <TradesPage />
+                );
+
+                expect(
+                    await screen.findByRole(
+                        "heading",
+                        {
+                            name:
+                                "Trades",
+                        }
+                    )
+                ).toBeInTheDocument();
+
+                expect(
+                    fetchMock
+                ).toHaveBeenCalledTimes(
+                    1
+                );
+            }
+        );
+
+
+        test(
+            "shows page when account request fails",
+            async () => {
+                fetchMock
+                    .mockResolvedValueOnce(
+                        accountsResponse(
+                            [],
+                            false
+                        )
+                    );
+
+                render(
+                    <TradesPage />
+                );
+
+                expect(
+                    await screen.findByRole(
+                        "heading",
+                        {
+                            name:
+                                "Trades",
+                        }
+                    )
+                ).toBeInTheDocument();
+            }
+        );
+
+
+        test(
+            "loads trade values into edit state",
+            async () => {
+                await renderLoadedPage();
+
+                await clickEdit();
+
+                expect(
+                    screen.getByTestId(
+                        "edit-state"
+                    )
+                ).toHaveTextContent(
+                    "EURUSD | long | 1.15 | 1.14 | 1.17 | 250 | 2026-08-12T10:00 | 2026-08-12T11:00"
+                );
+            }
+        );
+
+
+        test(
+            "does not update when dates are missing",
+            async () => {
+                await renderLoadedPage(
+                    [
+                        makeTrade(
+                            {
+                                entryDatetime:
+                                    "",
+
+                                exitDatetime:
+                                    "",
+                            }
+                        ),
+                    ]
+                );
+
+                await clickEdit();
+
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "Save trade",
+                        }
+                    )
+                );
+
+                expect(
+                    fetchMock
+                ).toHaveBeenCalledTimes(
+                    2
+                );
+            }
+        );
+
+
+        test(
+            "updates trade and reloads after success",
+            async () => {
+                const trade =
+                    makeTrade();
+
+                fetchMock
+                    .mockResolvedValueOnce(
+                        accountsResponse()
+                    )
+                    .mockResolvedValueOnce(
+                        tradesResponse(
+                            [
+                                trade,
+                            ]
+                        )
+                    )
+                    .mockResolvedValueOnce(
+                        tradesResponse()
+                    )
+                    .mockResolvedValueOnce(
+                        tradesResponse(
+                            [
+                                trade,
+                            ]
+                        )
+                    );
+
+                render(
+                    <TradesPage />
+                );
+
+                await screen.findByText(
+                    "EURUSD"
+                );
+
+                await clickEdit();
+
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "Save trade",
+                        }
+                    )
+                );
+
+                await waitFor(
+                    () => {
+                        expect(
+                            fetchMock
+                        ).toHaveBeenCalledWith(
+                            "http://127.0.0.1:8000/trades/1",
                             expect.objectContaining(
                                 {
-                                    Authorization:
-                                        "Bearer fake-token",
+                                    method:
+                                        "PATCH",
                                 }
-                            ),
-                    })
-                );
-            });
-        }
-    );
-
-
-    test(
-        "loads trades and paginates 20 at a time",
-        async () => {
-            await renderLoadedPage(
-                makeTrades(21)
-            );
-
-            expect(
-                screen.getByTestId(
-                    "trade-count"
-                )
-            ).toHaveTextContent("20");
-
-            expect(
-                screen.getByText(
-                    "TRADE-1"
-                )
-            ).toBeInTheDocument();
-
-            expect(
-                screen.queryByText(
-                    "TRADE-21"
-                )
-            ).not.toBeInTheDocument();
-
-
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    { name: "2" }
-                )
-            );
-
-            expect(
-                screen.getByTestId(
-                    "trade-count"
-                )
-            ).toHaveTextContent("1");
-
-            expect(
-                screen.getByText(
-                    "TRADE-21"
-                )
-            ).toBeInTheDocument();
-
-
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    { name: "←" }
-                )
-            );
-
-            expect(
-                screen.getByText(
-                    "TRADE-1"
-                )
-            ).toBeInTheDocument();
-
-
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    { name: "→" }
-                )
-            );
-
-            expect(
-                screen.getByText(
-                    "TRADE-21"
-                )
-            ).toBeInTheDocument();
-        }
-    );
-
-
-    test(
-        "does not show pagination when there is only one page",
-        async () => {
-            await renderLoadedPage([
-                makeTrade(),
-            ]);
-
-            expect(
-                screen.queryByRole(
-                    "button",
-                    { name: "2" }
-                )
-            ).not.toBeInTheDocument();
-
-            expect(
-                screen.queryByRole(
-                    "button",
-                    { name: "→" }
-                )
-            ).not.toBeInTheDocument();
-        }
-    );
-
-
-    test(
-        "uses null email when session has no email",
-        async () => {
-            mockGetSession.mockResolvedValue(
-                sessionResponse({
-                    access_token:
-                        "fake-token",
-                    user: {},
-                })
-            );
-
-            await renderLoadedPage([
-                makeTrade(),
-            ]);
-
-            expect(
-                screen.getByTestId(
-                    "user-email"
-                )
-            ).toHaveTextContent(
-                "no-email"
-            );
-        }
-    );
-
-
-    test(
-        "loads edit state with dates",
-        async () => {
-            const trade =
-                makeTrade();
-
-            await renderLoadedPage([
-                trade,
-            ]);
-
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name:
-                            "Edit trade 1",
+                            )
+                        );
                     }
-                )
-            );
-
-            expect(
-                screen.getByTestId(
-                    "edit-state"
-                )
-            ).toHaveTextContent(
-                "EURUSD | long | 1.15 | 1.14 | 1.17 | 2026-08-12T10:00 | 2026-08-12T11:00"
-            );
-        }
-    );
-
-
-    test(
-        "updates a trade and reloads after success",
-        async () => {
-            const trade =
-                makeTrade();
-
-            fetchMock
-                .mockResolvedValueOnce(
-                    makeAccountsResponse()
-                )
-                .mockResolvedValueOnce(
-                    makeResponse({
-                        data: [
-                            trade,
-                        ],
-                    })
-                )
-                .mockResolvedValueOnce(
-                    makeResponse({
-                        ok: true,
-                    })
-                )
-                .mockResolvedValueOnce(
-                    makeResponse({
-                        data: [
-                            trade,
-                        ],
-                    })
                 );
 
-            render(<TradesPage />);
+                expect(
+                    fetchMock
+                ).toHaveBeenCalledTimes(
+                    4
+                );
+            }
+        );
 
-            await screen.findByText(
-                "EURUSD"
-            );
 
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name:
-                            "Edit trade 1",
+        test(
+            "does not reload when update fails",
+            async () => {
+                fetchMock
+                    .mockResolvedValueOnce(
+                        accountsResponse()
+                    )
+                    .mockResolvedValueOnce(
+                        tradesResponse(
+                            [
+                                makeTrade(),
+                            ]
+                        )
+                    )
+                    .mockResolvedValueOnce(
+                        tradesResponse(
+                            [],
+                            false
+                        )
+                    );
+
+                render(
+                    <TradesPage />
+                );
+
+                await screen.findByText(
+                    "EURUSD"
+                );
+
+                await clickEdit();
+
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "Save trade",
+                        }
+                    )
+                );
+
+                await waitFor(
+                    () => {
+                        expect(
+                            fetchMock
+                        ).toHaveBeenCalledTimes(
+                            3
+                        );
                     }
-                )
-            );
+                );
+            }
+        );
 
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name:
-                            "Save trade",
+
+        test(
+            "stops update when session is missing",
+            async () => {
+                mockGetSession
+                    .mockResolvedValueOnce(
+                        sessionResponse()
+                    )
+                    .mockResolvedValueOnce(
+                        sessionResponse()
+                    )
+                    .mockResolvedValueOnce(
+                        sessionResponse(
+                            null
+                        )
+                    );
+
+                await renderLoadedPage();
+
+                await clickEdit();
+
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "Save trade",
+                        }
+                    )
+                );
+
+                await waitFor(
+                    () => {
+                        expect(
+                            mockPush
+                        ).toHaveBeenCalledWith(
+                            "/login"
+                        );
                     }
-                )
-            );
+                );
 
-            await waitFor(() => {
+                expect(
+                    fetchMock
+                ).toHaveBeenCalledTimes(
+                    2
+                );
+            }
+        );
+
+
+        test(
+            "covers successful update when selected account becomes null",
+            async () => {
+                const {
+                    rerender,
+                } =
+                    await renderLoadedPage();
+
+                await clickEdit();
+
+                await movePageToNoAccounts(
+                    rerender
+                );
+
+                fetchMock
+                    .mockResolvedValueOnce(
+                        tradesResponse()
+                    );
+
+                expect(
+                    tableCallbacks.onUpdate
+                ).not.toBeNull();
+
+                await act(
+                    async () => {
+                        await tableCallbacks.onUpdate!(
+                            1
+                        );
+                    }
+                );
+
                 expect(
                     fetchMock
                 ).toHaveBeenCalledWith(
@@ -607,189 +1352,267 @@ describe("TradesPage", () => {
                         }
                     )
                 );
-            });
 
-            expect(
-                fetchMock
-            ).toHaveBeenCalledTimes(4);
-        }
-    );
-
-
-    test(
-        "does not reload when update fails",
-        async () => {
-            const trade =
-                makeTrade();
-
-            fetchMock
-                .mockResolvedValueOnce(
-                    makeAccountsResponse()
-                )
-                .mockResolvedValueOnce(
-                    makeResponse({
-                        data: [
-                            trade,
-                        ],
-                    })
-                )
-                .mockResolvedValueOnce(
-                    makeResponse({
-                        ok: false,
-                    })
-                );
-
-            render(<TradesPage />);
-
-            await screen.findByText(
-                "EURUSD"
-            );
-
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name:
-                            "Edit trade 1",
-                    }
-                )
-            );
-
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name:
-                            "Save trade",
-                    }
-                )
-            );
-
-            await waitFor(() => {
                 expect(
                     fetchMock
                 ).toHaveBeenCalledTimes(
-                    3
+                    4
                 );
-            });
-        }
-    );
+            }
+        );
 
 
-    test(
-        "stops update when session is missing",
-        async () => {
-            const trade =
-                makeTrade();
+        test(
+            "does not delete when confirmation is cancelled",
+            async () => {
+                vi.spyOn(
+                    window,
+                    "confirm"
+                ).mockReturnValue(
+                    false
+                );
 
-            mockGetSession
-                .mockResolvedValueOnce(
-                    sessionResponse()
-                )
-                .mockResolvedValueOnce(
-                    sessionResponse()
-                )
-                .mockResolvedValueOnce(
-                    sessionResponse(
-                        null
+                await renderLoadedPage();
+
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "Delete trade 1",
+                        }
                     )
                 );
 
-            mockLoadTrades([
-                trade,
-            ]);
-
-            render(<TradesPage />);
-
-            await screen.findByText(
-                "EURUSD"
-            );
-
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name:
-                            "Edit trade 1",
-                    }
-                )
-            );
-
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name:
-                            "Save trade",
-                    }
-                )
-            );
-
-            await waitFor(() => {
                 expect(
-                    mockGetSession
+                    fetchMock
                 ).toHaveBeenCalledTimes(
-                    3
+                    2
                 );
-            });
+            }
+        );
 
-            expect(
+
+        test(
+            "deletes trade and reloads after success",
+            async () => {
+                vi.spyOn(
+                    window,
+                    "confirm"
+                ).mockReturnValue(
+                    true
+                );
+
                 fetchMock
-            ).toHaveBeenCalledTimes(2);
-        }
-    );
+                    .mockResolvedValueOnce(
+                        accountsResponse()
+                    )
+                    .mockResolvedValueOnce(
+                        tradesResponse(
+                            [
+                                makeTrade(),
+                            ]
+                        )
+                    )
+                    .mockResolvedValueOnce(
+                        tradesResponse()
+                    )
+                    .mockResolvedValueOnce(
+                        tradesResponse()
+                    );
 
-
-    test(
-        "deletes a trade and reloads after success",
-        async () => {
-            const trade =
-                makeTrade();
-
-            vi.spyOn(
-                window,
-                "confirm"
-            ).mockReturnValue(true);
-
-            fetchMock
-                .mockResolvedValueOnce(
-                    makeAccountsResponse()
-                )
-                .mockResolvedValueOnce(
-                    makeResponse({
-                        data: [
-                            trade,
-                        ],
-                    })
-                )
-                .mockResolvedValueOnce(
-                    makeResponse({
-                        ok: true,
-                    })
-                )
-                .mockResolvedValueOnce(
-                    makeResponse({
-                        data: [],
-                    })
+                render(
+                    <TradesPage />
                 );
 
-            render(<TradesPage />);
+                await screen.findByText(
+                    "EURUSD"
+                );
 
-            await screen.findByText(
-                "EURUSD"
-            );
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "Delete trade 1",
+                        }
+                    )
+                );
 
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name:
-                            "Delete trade 1",
+                await waitFor(
+                    () => {
+                        expect(
+                            fetchMock
+                        ).toHaveBeenCalledWith(
+                            "http://127.0.0.1:8000/trades/1",
+                            expect.objectContaining(
+                                {
+                                    method:
+                                        "DELETE",
+                                }
+                            )
+                        );
                     }
-                )
-            );
+                );
 
-            await waitFor(() => {
+                expect(
+                    fetchMock
+                ).toHaveBeenCalledTimes(
+                    4
+                );
+            }
+        );
+
+
+        test(
+            "does not reload when delete fails",
+            async () => {
+                vi.spyOn(
+                    window,
+                    "confirm"
+                ).mockReturnValue(
+                    true
+                );
+
+                fetchMock
+                    .mockResolvedValueOnce(
+                        accountsResponse()
+                    )
+                    .mockResolvedValueOnce(
+                        tradesResponse(
+                            [
+                                makeTrade(),
+                            ]
+                        )
+                    )
+                    .mockResolvedValueOnce(
+                        tradesResponse(
+                            [],
+                            false
+                        )
+                    );
+
+                render(
+                    <TradesPage />
+                );
+
+                await screen.findByText(
+                    "EURUSD"
+                );
+
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "Delete trade 1",
+                        }
+                    )
+                );
+
+                await waitFor(
+                    () => {
+                        expect(
+                            fetchMock
+                        ).toHaveBeenCalledTimes(
+                            3
+                        );
+                    }
+                );
+            }
+        );
+
+
+        test(
+            "stops delete when session is missing",
+            async () => {
+                vi.spyOn(
+                    window,
+                    "confirm"
+                ).mockReturnValue(
+                    true
+                );
+
+                mockGetSession
+                    .mockResolvedValueOnce(
+                        sessionResponse()
+                    )
+                    .mockResolvedValueOnce(
+                        sessionResponse()
+                    )
+                    .mockResolvedValueOnce(
+                        sessionResponse(
+                            null
+                        )
+                    );
+
+                await renderLoadedPage();
+
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "Delete trade 1",
+                        }
+                    )
+                );
+
+                await waitFor(
+                    () => {
+                        expect(
+                            mockPush
+                        ).toHaveBeenCalledWith(
+                            "/login"
+                        );
+                    }
+                );
+
+                expect(
+                    fetchMock
+                ).toHaveBeenCalledTimes(
+                    2
+                );
+            }
+        );
+
+
+        test(
+            "covers successful delete when selected account becomes null",
+            async () => {
+                vi.spyOn(
+                    window,
+                    "confirm"
+                ).mockReturnValue(
+                    true
+                );
+
+                const {
+                    rerender,
+                } =
+                    await renderLoadedPage();
+
+                await movePageToNoAccounts(
+                    rerender
+                );
+
+                fetchMock
+                    .mockResolvedValueOnce(
+                        tradesResponse()
+                    );
+
+                expect(
+                    tableCallbacks.onDelete
+                ).not.toBeNull();
+
+                await act(
+                    async () => {
+                        await tableCallbacks.onDelete!(
+                            1
+                        );
+                    }
+                );
+
                 expect(
                     fetchMock
                 ).toHaveBeenCalledWith(
@@ -801,254 +1624,45 @@ describe("TradesPage", () => {
                         }
                     )
                 );
-            });
 
-            expect(
-                fetchMock
-            ).toHaveBeenCalledTimes(4);
-        }
-    );
-
-
-    test(
-        "does not delete when confirmation is cancelled",
-        async () => {
-            vi.spyOn(
-                window,
-                "confirm"
-            ).mockReturnValue(false);
-
-            await renderLoadedPage([
-                makeTrade(),
-            ]);
-
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name:
-                            "Delete trade 1",
-                    }
-                )
-            );
-
-            expect(
-                fetchMock
-            ).toHaveBeenCalledTimes(2);
-        }
-    );
-
-
-    test(
-        "does not reload when delete fails",
-        async () => {
-            vi.spyOn(
-                window,
-                "confirm"
-            ).mockReturnValue(true);
-
-            fetchMock
-                .mockResolvedValueOnce(
-                    makeAccountsResponse()
-                )
-                .mockResolvedValueOnce(
-                    makeResponse({
-                        data: [
-                            makeTrade(),
-                        ],
-                    })
-                )
-                .mockResolvedValueOnce(
-                    makeResponse({
-                        ok: false,
-                    })
-                );
-
-            render(<TradesPage />);
-
-            await screen.findByText(
-                "EURUSD"
-            );
-
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name:
-                            "Delete trade 1",
-                    }
-                )
-            );
-
-            await waitFor(() => {
                 expect(
                     fetchMock
                 ).toHaveBeenCalledTimes(
-                    3
+                    4
                 );
-            });
-        }
-    );
+            }
+        );
 
 
-    test(
-        "stops delete when session is missing",
-        async () => {
-            vi.spyOn(
-                window,
-                "confirm"
-            ).mockReturnValue(true);
+        test(
+            "logs out",
+            async () => {
+                await renderLoadedPage();
 
-            mockGetSession
-                .mockResolvedValueOnce(
-                    sessionResponse()
-                )
-                .mockResolvedValueOnce(
-                    sessionResponse()
-                )
-                .mockResolvedValueOnce(
-                    sessionResponse(
-                        null
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name:
+                                "Fake logout",
+                        }
                     )
                 );
 
-            mockLoadTrades([
-                makeTrade(),
-            ]);
+                await waitFor(
+                    () => {
+                        expect(
+                            mockSignOut
+                        ).toHaveBeenCalledOnce();
 
-            render(<TradesPage />);
-
-            await screen.findByText(
-                "EURUSD"
-            );
-
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name:
-                            "Delete trade 1",
+                        expect(
+                            mockPush
+                        ).toHaveBeenCalledWith(
+                            "/login"
+                        );
                     }
-                )
-            );
-
-            await waitFor(() => {
-                expect(
-                    mockGetSession
-                ).toHaveBeenCalledTimes(
-                    3
                 );
-            });
-
-            expect(
-                fetchMock
-            ).toHaveBeenCalledTimes(2);
-        }
-    );
-
-
-    test(
-        "does not load trades when session is missing",
-        async () => {
-            mockGetSession.mockResolvedValue(
-                sessionResponse(null)
-            );
-
-            render(<TradesPage />);
-
-            await waitFor(() => {
-                expect(
-                    mockGetSession
-                ).toHaveBeenCalledTimes(
-                    1
-                );
-            });
-
-            expect(
-                fetchMock
-            ).not.toHaveBeenCalled();
-        }
-    );
-
-
-    test(
-        "logs out",
-        async () => {
-            await renderLoadedPage([
-                makeTrade(),
-            ]);
-
-            fireEvent.click(
-                screen.getByRole(
-                    "button",
-                    {
-                        name:
-                            "Fake logout",
-                    }
-                )
-            );
-
-            await waitFor(() => {
-                expect(
-                    mockSignOut
-                ).toHaveBeenCalledTimes(
-                    1
-                );
-            });
-        }
-    );
-
-
-    test(
-        "shows the trades page when the user has no accounts",
-        async () => {
-            fetchMock.mockResolvedValueOnce(
-                {
-                    ok: true,
-                    json: async () =>
-                        [],
-                } as Response
-            );
-
-            render(<TradesPage />);
-
-            expect(
-                await screen.findByRole(
-                    "heading",
-                    {
-                        name:
-                            "Trades",
-                    }
-                )
-            ).toBeInTheDocument();
-
-            expect(
-                fetchMock
-            ).toHaveBeenCalledTimes(1);
-        }
-    );
-
-
-    test(
-        "shows the trades page when loading accounts fails",
-        async () => {
-            fetchMock.mockResolvedValueOnce(
-                {
-                    ok: false,
-                } as Response
-            );
-
-            render(<TradesPage />);
-
-            expect(
-                await screen.findByRole(
-                    "heading",
-                    {
-                        name:
-                            "Trades",
-                    }
-                )
-            ).toBeInTheDocument();
-        }
-    );
-});
+            }
+        );
+    }
+);
