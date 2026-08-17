@@ -71,13 +71,19 @@ export default function Sidebar({
                     Trades
                 </Link>
 
-                <a
-                    href="#"
-                    className="flex items-center gap-3 rounded-xl px-4 py-3 font-medium text-slate-600 transition hover:bg-slate-50 hover:text-slate-900"
+                <div
+                    className="flex cursor-not-allowed items-center justify-between rounded-xl px-4 py-3 font-medium text-slate-400"
+                    aria-disabled="true"
                 >
-                    <Upload size={20} />
-                    Import CSV
-                </a>
+                    <div className="flex items-center gap-3">
+                        <Upload size={20} />
+                        Import CSV
+                    </div>
+
+                    <span className="text-xs font-medium text-slate-400">
+                        Coming soon
+                    </span>
+                </div>
 
                 <Link
                     href="/accounts"
