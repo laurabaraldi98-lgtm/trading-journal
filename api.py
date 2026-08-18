@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 from typing import Literal
 import os
 from datetime import datetime
@@ -19,27 +19,32 @@ from database import (
 )
 
 
-class TradeCreate(BaseModel):
+class TradeBase(BaseModel):
+    symbol: str
+    direction: Literal["long", "short"]
+    entry: float
+    stop: float
+    exit: float
+    pnl: float
+    entry_datetime: datetime
+    exit_datetime: datetime
+
+    @model_validator(mode="after")
+    def validate_dates(self):
+        if self.exit_datetime < self.entry_datetime:
+            raise ValueError(
+                "Exit datetime cannot be before entry datetime"
+            )
+
+        return self
+
+
+class TradeCreate(TradeBase):
     account_id: int
-    symbol: str
-    direction: Literal["long", "short"]
-    entry: float
-    stop: float
-    exit: float
-    pnl: float
-    entry_datetime: datetime
-    exit_datetime: datetime
 
 
-class TradeUpdate(BaseModel):
-    symbol: str
-    direction: Literal["long", "short"]
-    entry: float
-    stop: float
-    exit: float
-    pnl: float
-    entry_datetime: datetime
-    exit_datetime: datetime
+class TradeUpdate(TradeBase):
+    pass
 
 
 class AccountCreate(BaseModel):

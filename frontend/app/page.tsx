@@ -97,10 +97,14 @@ export default function Home() {
     setEntryDatetime,
   ] = useState("");
 
+
   const [
     exitDatetime,
     setExitDatetime,
   ] = useState("");
+
+  const [tradeError, setTradeError] =
+    useState<string | null>(null);
 
 
   const [
@@ -369,9 +373,30 @@ export default function Home() {
 
   async function handleSaveTrade() {
     if (
+      !symbol ||
+      !direction ||
+      !entry ||
+      !stop ||
+      !exit ||
+      !pnl ||
       !entryDatetime ||
       !exitDatetime
     ) {
+      setTradeError(
+        "Please fill in all required fields before saving the trade."
+      );
+
+      return;
+    }
+
+    if (
+      new Date(exitDatetime) <
+      new Date(entryDatetime)
+    ) {
+      setTradeError(
+        "Exit date cannot be before entry date."
+      );
+
       return;
     }
 
@@ -999,6 +1024,31 @@ export default function Home() {
           </>
         )}
       </main>
+      {tradeError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-xl font-bold text-rose-600">
+              Invalid trade
+            </h3>
+
+            <p className="mt-3 text-sm leading-6 text-zinc-700">
+              {tradeError}
+            </p>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                type="button"
+                onClick={() =>
+                  setTradeError(null)
+                }
+                className="cursor-pointer rounded-lg bg-black px-4 py-2 text-sm font-semibold text-white transition hover:bg-zinc-800"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
