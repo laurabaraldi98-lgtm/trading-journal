@@ -1,11 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import {
+    useCallback,
+    useEffect,
+    useState,
+} from "react";
 import { useRouter } from "next/navigation";
+
 import { supabase } from "../../lib/supabase";
 import { API_URL } from "../../lib/api";
+
 import Sidebar from "../../components/Sidebar";
 import AccountForm from "./AccountForm";
+
 import {
     Pencil,
     Trash2,
@@ -26,66 +33,114 @@ type Account = {
 export default function AccountsPage() {
     const router = useRouter();
 
-    const [accounts, setAccounts] = useState<Account[]>([]);
-    const [accountsLoading, setAccountsLoading] = useState(true);
-    const [showAccountForm, setShowAccountForm] = useState(false);
+    const [accounts, setAccounts] =
+        useState<Account[]>([]);
+
+    const [
+        accountsLoading,
+        setAccountsLoading,
+    ] = useState(true);
+
+    const [
+        showAccountForm,
+        setShowAccountForm,
+    ] = useState(false);
 
     const [name, setName] = useState("");
-    const [startingBalance, setStartingBalance] = useState("");
-    const [currency, setCurrency] = useState("USD");
-    const [broker, setBroker] = useState("");
-    const [accountType, setAccountType] = useState("");
-    const [accountError, setAccountError] = useState("");
 
-    const [editingAccountId, setEditingAccountId] =
-        useState<number | null>(null);
+    const [
+        startingBalance,
+        setStartingBalance,
+    ] = useState("");
 
-    const [accountToDelete, setAccountToDelete] =
-        useState<Account | null>(null);
+    const [currency, setCurrency] =
+        useState("USD");
 
-    const [userEmail, setUserEmail] =
-        useState<string | null>(null);
+    const [broker, setBroker] =
+        useState("");
 
-    const [authLoading, setAuthLoading] = useState(true);
+    const [
+        accountType,
+        setAccountType,
+    ] = useState("");
 
-    const loadAccounts = useCallback(async () => {
-        const {
-            data: { session },
-        } = await supabase.auth.getSession();
+    const [
+        accountError,
+        setAccountError,
+    ] = useState("");
 
-        if (!session) {
-            router.push("/login");
-            return;
-        }
+    const [
+        editingAccountId,
+        setEditingAccountId,
+    ] = useState<number | null>(null);
 
-        setAccountsLoading(true);
+    const [
+        accountToDelete,
+        setAccountToDelete,
+    ] = useState<Account | null>(null);
 
-        setUserEmail(session.user.email ?? null);
+    const [
+        userEmail,
+        setUserEmail,
+    ] = useState<string | null>(null);
 
-        const response = await fetch(
-            `${API_URL}/accounts`,
-            {
-                cache: "no-store",
-                headers: {
-                    Authorization:
-                        `Bearer ${session.access_token}`,
-                },
+    const [
+        authLoading,
+        setAuthLoading,
+    ] = useState(true);
+
+    const loadAccounts =
+        useCallback(async () => {
+            const {
+                data: { session },
+            } =
+                await supabase.auth.getSession();
+
+            if (!session) {
+                router.push("/login");
+                return;
             }
-        );
 
-        if (!response.ok) {
-            console.log("ACCOUNTS ERROR:", response.status);
+            setAccountsLoading(true);
+
+            setUserEmail(
+                session.user.email ?? null
+            );
+
+            const response = await fetch(
+                `${API_URL}/accounts`,
+                {
+                    cache: "no-store",
+                    headers: {
+                        Authorization:
+                            `Bearer ${session.access_token}`,
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                console.log(
+                    "ACCOUNTS ERROR:",
+                    response.status
+                );
+
+                setAccountsLoading(false);
+
+                return;
+            }
+
+            const data =
+                await response.json();
+
+            console.log(
+                "ACCOUNTS DATA:",
+                data
+            );
+
+            setAccounts(data);
+
             setAccountsLoading(false);
-            return;
-        }
-
-        const data = await response.json();
-
-        console.log("ACCOUNTS DATA:", data);
-
-        setAccounts(data);
-        setAccountsLoading(false);
-    }, [router]);
+        }, [router]);
 
     function resetForm() {
         setName("");
@@ -105,6 +160,7 @@ export default function AccountsPage() {
             setAccountError(
                 "Please fill in all required fields."
             );
+
             return;
         }
 
@@ -112,18 +168,22 @@ export default function AccountsPage() {
 
         const {
             data: { session },
-        } = await supabase.auth.getSession();
+        } =
+            await supabase.auth.getSession();
 
         if (!session) {
             router.push("/login");
             return;
         }
+
         const accountData = {
             name,
-            starting_balance: Number(startingBalance),
+            starting_balance:
+                Number(startingBalance),
             currency,
             broker: broker || null,
-            account_type: accountType || null,
+            account_type:
+                accountType || null,
         };
 
         const url =
@@ -136,37 +196,61 @@ export default function AccountsPage() {
                 ? "POST"
                 : "PATCH";
 
-        const response = await fetch(url, {
-            method,
-            headers: {
-                "Content-Type":
-                    "application/json",
-                Authorization:
-                    `Bearer ${session.access_token}`,
-            },
-            body: JSON.stringify(accountData),
-        });
+        const response = await fetch(
+            url,
+            {
+                method,
+                headers: {
+                    "Content-Type":
+                        "application/json",
+                    Authorization:
+                        `Bearer ${session.access_token}`,
+                },
+                body: JSON.stringify(
+                    accountData
+                ),
+            }
+        );
 
         if (!response.ok) {
             return;
         }
 
         await loadAccounts();
+
         resetForm();
+
         setShowAccountForm(false);
     }
 
-    function handleEditAccount(account: Account) {
+    function handleEditAccount(
+        account: Account
+    ) {
         setShowAccountForm(false);
-        setEditingAccountId(account.id);
+
+        setEditingAccountId(
+            account.id
+        );
 
         setName(account.name);
+
         setStartingBalance(
-            String(account.starting_balance)
+            String(
+                account.starting_balance
+            )
         );
-        setCurrency(account.currency);
-        setBroker(account.broker ?? "");
-        setAccountType(account.account_type ?? "");
+
+        setCurrency(
+            account.currency
+        );
+
+        setBroker(
+            account.broker ?? ""
+        );
+
+        setAccountType(
+            account.account_type ?? ""
+        );
     }
 
     async function handleDeleteAccount(
@@ -174,7 +258,8 @@ export default function AccountsPage() {
     ) {
         const {
             data: { session },
-        } = await supabase.auth.getSession();
+        } =
+            await supabase.auth.getSession();
 
         if (!session) {
             router.push("/login");
@@ -200,7 +285,10 @@ export default function AccountsPage() {
 
         setAccountToDelete(null);
 
-        if (editingAccountId === accountId) {
+        if (
+            editingAccountId ===
+            accountId
+        ) {
             resetForm();
         }
     }
@@ -215,10 +303,12 @@ export default function AccountsPage() {
         async function loadUser() {
             const {
                 data: { session },
-            } = await supabase.auth.getSession();
+            } =
+                await supabase.auth.getSession();
 
             if (!session) {
                 router.push("/login");
+
                 return;
             }
 
@@ -235,12 +325,16 @@ export default function AccountsPage() {
             supabase.auth.onAuthStateChange(
                 (_event, session) => {
                     if (!session) {
-                        router.push("/login");
+                        router.push(
+                            "/login"
+                        );
+
                         return;
                     }
 
                     setUserEmail(
-                        session.user.email ?? null
+                        session.user.email ??
+                        null
                     );
                 }
             );
@@ -260,7 +354,10 @@ export default function AccountsPage() {
         }
 
         fetchAccounts();
-    }, [authLoading, loadAccounts]);
+    }, [
+        authLoading,
+        loadAccounts,
+    ]);
 
     if (authLoading) {
         return null;
@@ -281,22 +378,37 @@ export default function AccountsPage() {
                         </h2>
 
                         <p className="mt-1 text-zinc-600">
-                            Manage your trading accounts.
+                            Manage your
+                            trading accounts.
                         </p>
                     </div>
 
                     <button
                         type="button"
                         onClick={() => {
-                            setEditingAccountId(null);
+                            setEditingAccountId(
+                                null
+                            );
 
                             setName("");
-                            setStartingBalance("");
-                            setCurrency("USD");
-                            setBroker("");
-                            setAccountType("");
 
-                            setShowAccountForm(!showAccountForm);
+                            setStartingBalance(
+                                ""
+                            );
+
+                            setCurrency(
+                                "USD"
+                            );
+
+                            setBroker("");
+
+                            setAccountType(
+                                ""
+                            );
+
+                            setShowAccountForm(
+                                !showAccountForm
+                            );
                         }}
                         className="cursor-pointer rounded-lg bg-black px-4 py-2 text-white transition hover:bg-zinc-800"
                     >
@@ -308,28 +420,48 @@ export default function AccountsPage() {
                     <>
                         <AccountForm
                             name={name}
-                            startingBalance={startingBalance}
-                            currency={currency}
+                            startingBalance={
+                                startingBalance
+                            }
+                            currency={
+                                currency
+                            }
                             broker={broker}
-                            accountType={accountType}
-                            setName={setName}
-                            setStartingBalance={setStartingBalance}
-                            setCurrency={setCurrency}
-                            setBroker={setBroker}
-                            setAccountType={setAccountType}
-                            onSave={handleSaveAccount}
+                            accountType={
+                                accountType
+                            }
+                            setName={
+                                setName
+                            }
+                            setStartingBalance={
+                                setStartingBalance
+                            }
+                            setCurrency={
+                                setCurrency
+                            }
+                            setBroker={
+                                setBroker
+                            }
+                            setAccountType={
+                                setAccountType
+                            }
+                            onSave={
+                                handleSaveAccount
+                            }
                         />
 
                         {accountError && (
                             <p className="mt-2 text-sm text-red-600">
-                                {accountError}
+                                {
+                                    accountError
+                                }
                             </p>
                         )}
                     </>
                 )}
 
                 <div className="mt-8 rounded-xl border border-zinc-200 bg-white">
-                    <div className="border-b border-zinc-200 px-6 py-4">
+                    <div className="border-b border-zinc-200 px-4 py-4 sm:px-6">
                         <h3 className="text-xl font-semibold">
                             Your accounts
                         </h3>
@@ -337,88 +469,96 @@ export default function AccountsPage() {
 
                     {accountsLoading ? (
                         <p className="p-6 text-zinc-500">
-                            Loading accounts...
+                            Loading
+                            accounts...
                         </p>
-                    ) : accounts.length === 0 ? (
+                    ) : accounts.length ===
+                        0 ? (
                         <p className="p-6 text-zinc-500">
                             No accounts yet.
                         </p>
                     ) : (
-                        <div className="overflow-x-auto">
-                            <table className="w-full min-w-[900px] table-fixed text-left">
-                                <colgroup>
-                                    <col className="w-[180px]" />
-                                    <col className="w-[180px]" />
-                                    <col className="w-[120px]" />
-                                    <col className="w-[180px]" />
-                                    <col className="w-[180px]" />
-                                    <col className="w-[120px]" />
-                                </colgroup>
+                        <>
+                            {/* MOBILE */}
+                            <div className="divide-y divide-zinc-100 md:hidden">
+                                {accounts.map(
+                                    (
+                                        account
+                                    ) =>
+                                        editingAccountId ===
+                                            account.id ? (
+                                            <div
+                                                key={
+                                                    account.id
+                                                }
+                                                className="space-y-4 p-4"
+                                            >
+                                                <div>
+                                                    <label className="mb-1 block text-xs font-medium text-zinc-500">
+                                                        Name
+                                                    </label>
 
-                                <thead className="border-b border-zinc-200 bg-zinc-50 text-sm text-zinc-600">
-                                    <tr>
-                                        <th className="px-6 py-3">
-                                            Name
-                                        </th>
+                                                    <input
+                                                        value={
+                                                            name
+                                                        }
+                                                        onChange={(
+                                                            event
+                                                        ) =>
+                                                            setName(
+                                                                event
+                                                                    .target
+                                                                    .value
+                                                            )
+                                                        }
+                                                        className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                                                    />
+                                                </div>
 
-                                        <th className="px-6 py-3">
-                                            Starting balance
-                                        </th>
+                                                <div>
+                                                    <label className="mb-1 block text-xs font-medium text-zinc-500">
+                                                        Starting
+                                                        balance
+                                                    </label>
 
-                                        <th className="px-6 py-3">
-                                            Currency
-                                        </th>
+                                                    <input
+                                                        type="number"
+                                                        value={
+                                                            startingBalance
+                                                        }
+                                                        onChange={(
+                                                            event
+                                                        ) =>
+                                                            setStartingBalance(
+                                                                event
+                                                                    .target
+                                                                    .value
+                                                            )
+                                                        }
+                                                        className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                                                    />
+                                                </div>
 
-                                        <th className="px-6 py-3">
-                                            Broker
-                                        </th>
+                                                <div className="grid grid-cols-2 gap-3">
+                                                    <div>
+                                                        <label className="mb-1 block text-xs font-medium text-zinc-500">
+                                                            Currency
+                                                        </label>
 
-                                        <th className="px-6 py-3">
-                                            Type
-                                        </th>
-
-                                        <th className="px-6 py-3">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {accounts.map(
-                                        (account) =>
-                                            editingAccountId === account.id ? (
-                                                <tr
-                                                    key={account.id}
-                                                    className="border-b border-zinc-100"
-                                                >
-                                                    <td className="px-6 py-4">
-                                                        <input
-                                                            value={name}
-                                                            onChange={(event) =>
-                                                                setName(event.target.value)
-                                                            }
-                                                            className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
-                                                        />
-                                                    </td>
-
-                                                    <td className="px-6 py-4">
-                                                        <input
-                                                            type="number"
-                                                            value={startingBalance}
-                                                            onChange={(event) =>
-                                                                setStartingBalance(event.target.value)
-                                                            }
-                                                            className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
-                                                        />
-                                                    </td>
-
-                                                    <td className="px-6 py-4">
                                                         <select
-                                                            value={currency}
-                                                            onChange={(event) =>
-                                                                setCurrency(event.target.value)
+                                                            value={
+                                                                currency
                                                             }
-                                                            className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
+                                                            onChange={(
+                                                                event
+                                                            ) =>
+                                                                setCurrency(
+                                                                    event
+                                                                        .target
+                                                                        .value
+                                                                )
+                                                            }
+                                                            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
                                                         >
                                                             <option value="USD">
                                                                 USD
@@ -432,95 +572,412 @@ export default function AccountsPage() {
                                                                 GBP
                                                             </option>
                                                         </select>
-                                                    </td>
+                                                    </div>
 
-                                                    <td className="px-6 py-4">
+                                                    <div>
+                                                        <label className="mb-1 block text-xs font-medium text-zinc-500">
+                                                            Type
+                                                        </label>
+
                                                         <input
-                                                            value={broker}
-                                                            onChange={(event) =>
-                                                                setBroker(event.target.value)
+                                                            value={
+                                                                accountType
                                                             }
-                                                            className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
-                                                        />
-                                                    </td>
-
-                                                    <td className="px-6 py-4">
-                                                        <input
-                                                            value={accountType}
-                                                            onChange={(event) =>
-                                                                setAccountType(event.target.value)
+                                                            onChange={(
+                                                                event
+                                                            ) =>
+                                                                setAccountType(
+                                                                    event
+                                                                        .target
+                                                                        .value
+                                                                )
                                                             }
-                                                            className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
+                                                            className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
                                                         />
-                                                    </td>
+                                                    </div>
+                                                </div>
 
-                                                    <td className="px-6 py-4">
-                                                        <button
-                                                            type="button"
-                                                            onClick={handleSaveAccount}
-                                                            aria-label="Save account"
-                                                            className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100"
-                                                        >
-                                                            <Save size={16} />
-                                                        </button>
-                                                    </td>
-                                                </tr>
-                                            ) : (
-                                                <tr
-                                                    key={account.id}
-                                                    className="border-b border-zinc-100"
+                                                <div>
+                                                    <label className="mb-1 block text-xs font-medium text-zinc-500">
+                                                        Broker
+                                                    </label>
+
+                                                    <input
+                                                        value={
+                                                            broker
+                                                        }
+                                                        onChange={(
+                                                            event
+                                                        ) =>
+                                                            setBroker(
+                                                                event
+                                                                    .target
+                                                                    .value
+                                                            )
+                                                        }
+                                                        className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm"
+                                                    />
+                                                </div>
+
+                                                <button
+                                                    type="button"
+                                                    onClick={
+                                                        handleSaveAccount
+                                                    }
+                                                    aria-label="Save account"
+                                                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-emerald-50 py-2.5 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-100"
                                                 >
-                                                    <td className="px-6 py-4 font-medium">
-                                                        {account.name}
-                                                    </td>
+                                                    <Save
+                                                        size={
+                                                            16
+                                                        }
+                                                    />
+                                                    Save
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div
+                                                key={
+                                                    account.id
+                                                }
+                                                className="p-4"
+                                            >
+                                                <div className="flex items-start justify-between gap-4">
+                                                    <div>
+                                                        <p className="font-semibold text-zinc-900">
+                                                            {
+                                                                account.name
+                                                            }
+                                                        </p>
 
-                                                    <td className="px-6 py-4">
-                                                        {account.starting_balance}
-                                                    </td>
+                                                        <p className="mt-1 text-sm text-zinc-500">
+                                                            {account.broker ??
+                                                                "No broker"}
+                                                        </p>
+                                                    </div>
 
-                                                    <td className="px-6 py-4">
-                                                        {account.currency}
-                                                    </td>
+                                                    <div className="text-right">
+                                                        <p className="font-semibold text-zinc-900">
+                                                            {
+                                                                account.starting_balance
+                                                            }
+                                                        </p>
 
-                                                    <td className="px-6 py-4">
-                                                        {account.broker ?? "—"}
-                                                    </td>
+                                                        <p className="mt-1 text-sm text-zinc-500">
+                                                            {
+                                                                account.currency
+                                                            }
+                                                        </p>
+                                                    </div>
+                                                </div>
 
-                                                    <td className="px-6 py-4">
-                                                        {account.account_type ?? "—"}
-                                                    </td>
+                                                <div className="mt-4">
+                                                    <p className="text-xs text-zinc-400">
+                                                        Account
+                                                        type
+                                                    </p>
 
-                                                    <td className="px-6 py-4">
-                                                        <div className="flex gap-2">
+                                                    <p className="mt-1 text-sm text-zinc-700">
+                                                        {account.account_type ??
+                                                            "—"}
+                                                    </p>
+                                                </div>
+
+                                                <div className="mt-4 flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            handleEditAccount(
+                                                                account
+                                                            )
+                                                        }
+                                                        aria-label="Edit account"
+                                                        className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-blue-50 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-100"
+                                                    >
+                                                        <Pencil
+                                                            size={
+                                                                15
+                                                            }
+                                                        />
+                                                        Edit
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        onClick={() =>
+                                                            setAccountToDelete(
+                                                                account
+                                                            )
+                                                        }
+                                                        aria-label="Delete account"
+                                                        className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-rose-50 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100"
+                                                    >
+                                                        <Trash2
+                                                            size={
+                                                                15
+                                                            }
+                                                        />
+                                                        Delete
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        )
+                                )}
+                            </div>
+
+                            {/* DESKTOP */}
+                            <div className="hidden overflow-x-auto md:block">
+                                <table className="w-full min-w-[900px] table-fixed text-left">
+                                    <colgroup>
+                                        <col className="w-[180px]" />
+                                        <col className="w-[180px]" />
+                                        <col className="w-[120px]" />
+                                        <col className="w-[180px]" />
+                                        <col className="w-[180px]" />
+                                        <col className="w-[120px]" />
+                                    </colgroup>
+
+                                    <thead className="border-b border-zinc-200 bg-zinc-50 text-sm text-zinc-600">
+                                        <tr>
+                                            <th className="px-6 py-3">
+                                                Name
+                                            </th>
+
+                                            <th className="px-6 py-3">
+                                                Starting
+                                                balance
+                                            </th>
+
+                                            <th className="px-6 py-3">
+                                                Currency
+                                            </th>
+
+                                            <th className="px-6 py-3">
+                                                Broker
+                                            </th>
+
+                                            <th className="px-6 py-3">
+                                                Type
+                                            </th>
+
+                                            <th className="px-6 py-3">
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
+
+                                    <tbody>
+                                        {accounts.map(
+                                            (
+                                                account
+                                            ) =>
+                                                editingAccountId ===
+                                                    account.id ? (
+                                                    <tr
+                                                        key={
+                                                            account.id
+                                                        }
+                                                        className="border-b border-zinc-100"
+                                                    >
+                                                        <td className="px-6 py-4">
+                                                            <input
+                                                                value={
+                                                                    name
+                                                                }
+                                                                onChange={(
+                                                                    event
+                                                                ) =>
+                                                                    setName(
+                                                                        event
+                                                                            .target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                                className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
+                                                            />
+                                                        </td>
+
+                                                        <td className="px-6 py-4">
+                                                            <input
+                                                                type="number"
+                                                                value={
+                                                                    startingBalance
+                                                                }
+                                                                onChange={(
+                                                                    event
+                                                                ) =>
+                                                                    setStartingBalance(
+                                                                        event
+                                                                            .target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                                className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
+                                                            />
+                                                        </td>
+
+                                                        <td className="px-6 py-4">
+                                                            <select
+                                                                value={
+                                                                    currency
+                                                                }
+                                                                onChange={(
+                                                                    event
+                                                                ) =>
+                                                                    setCurrency(
+                                                                        event
+                                                                            .target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                                className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
+                                                            >
+                                                                <option value="USD">
+                                                                    USD
+                                                                </option>
+
+                                                                <option value="EUR">
+                                                                    EUR
+                                                                </option>
+
+                                                                <option value="GBP">
+                                                                    GBP
+                                                                </option>
+                                                            </select>
+                                                        </td>
+
+                                                        <td className="px-6 py-4">
+                                                            <input
+                                                                value={
+                                                                    broker
+                                                                }
+                                                                onChange={(
+                                                                    event
+                                                                ) =>
+                                                                    setBroker(
+                                                                        event
+                                                                            .target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                                className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
+                                                            />
+                                                        </td>
+
+                                                        <td className="px-6 py-4">
+                                                            <input
+                                                                value={
+                                                                    accountType
+                                                                }
+                                                                onChange={(
+                                                                    event
+                                                                ) =>
+                                                                    setAccountType(
+                                                                        event
+                                                                            .target
+                                                                            .value
+                                                                    )
+                                                                }
+                                                                className="w-full min-w-0 rounded-lg border border-zinc-300 px-2 py-1"
+                                                            />
+                                                        </td>
+
+                                                        <td className="px-6 py-4">
                                                             <button
                                                                 type="button"
-                                                                onClick={() =>
-                                                                    handleEditAccount(account)
+                                                                onClick={
+                                                                    handleSaveAccount
                                                                 }
-                                                                aria-label="Edit account"
-                                                                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-100"
+                                                                aria-label="Save account"
+                                                                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100"
                                                             >
-                                                                <Pencil size={16} />
+                                                                <Save
+                                                                    size={
+                                                                        16
+                                                                    }
+                                                                />
                                                             </button>
+                                                        </td>
+                                                    </tr>
+                                                ) : (
+                                                    <tr
+                                                        key={
+                                                            account.id
+                                                        }
+                                                        className="border-b border-zinc-100"
+                                                    >
+                                                        <td className="px-6 py-4 font-medium">
+                                                            {
+                                                                account.name
+                                                            }
+                                                        </td>
 
-                                                            <button
-                                                                type="button"
-                                                                onClick={() =>
-                                                                    setAccountToDelete(account)
-                                                                }
-                                                                aria-label="Delete account"
-                                                                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition hover:bg-rose-100"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            )
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                                        <td className="px-6 py-4">
+                                                            {
+                                                                account.starting_balance
+                                                            }
+                                                        </td>
+
+                                                        <td className="px-6 py-4">
+                                                            {
+                                                                account.currency
+                                                            }
+                                                        </td>
+
+                                                        <td className="px-6 py-4">
+                                                            {account.broker ??
+                                                                "—"}
+                                                        </td>
+
+                                                        <td className="px-6 py-4">
+                                                            {account.account_type ??
+                                                                "—"}
+                                                        </td>
+
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex gap-2">
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        handleEditAccount(
+                                                                            account
+                                                                        )
+                                                                    }
+                                                                    aria-label="Edit account"
+                                                                    className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-100"
+                                                                >
+                                                                    <Pencil
+                                                                        size={
+                                                                            16
+                                                                        }
+                                                                    />
+                                                                </button>
+
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() =>
+                                                                        setAccountToDelete(
+                                                                            account
+                                                                        )
+                                                                    }
+                                                                    aria-label="Delete account"
+                                                                    className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-rose-50 text-rose-600 transition hover:bg-rose-100"
+                                                                >
+                                                                    <Trash2
+                                                                        size={
+                                                                            16
+                                                                        }
+                                                                    />
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </>
                     )}
                 </div>
 
@@ -529,25 +986,42 @@ export default function AccountsPage() {
                         <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
                             <div className="mb-4">
                                 <h3 className="text-xl font-bold text-rose-600">
-                                    Delete account
+                                    Delete
+                                    account
                                 </h3>
 
                                 <p className="mt-3 text-sm leading-6 text-zinc-700">
-                                    Are you sure you want to permanently delete{" "}
+                                    Are you sure
+                                    you want to
+                                    permanently
+                                    delete{" "}
                                     <span className="font-semibold">
-                                        {accountToDelete.name}
+                                        {
+                                            accountToDelete.name
+                                        }
                                     </span>
                                     ?
                                 </p>
 
                                 <p className="mt-3 text-sm leading-6 text-zinc-700">
-                                    All trades linked to this account will also be
-                                    permanently deleted, including the related
-                                    statistics and performance history.
+                                    All trades
+                                    linked to
+                                    this account
+                                    will also be
+                                    permanently
+                                    deleted,
+                                    including
+                                    the related
+                                    statistics
+                                    and
+                                    performance
+                                    history.
                                 </p>
 
                                 <p className="mt-3 font-semibold text-rose-600">
-                                    This action cannot be undone.
+                                    This action
+                                    cannot be
+                                    undone.
                                 </p>
                             </div>
 
@@ -555,7 +1029,9 @@ export default function AccountsPage() {
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        setAccountToDelete(null)
+                                        setAccountToDelete(
+                                            null
+                                        )
                                     }
                                     className="cursor-pointer rounded-lg border border-zinc-300 px-4 py-2 text-sm font-medium text-zinc-700 transition hover:bg-zinc-100"
                                 >
@@ -571,7 +1047,8 @@ export default function AccountsPage() {
                                     }
                                     className="cursor-pointer rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700"
                                 >
-                                    Delete permanently
+                                    Delete
+                                    permanently
                                 </button>
                             </div>
                         </div>

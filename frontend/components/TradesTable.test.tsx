@@ -15,7 +15,6 @@ import {
 
 import TradesTable from "./TradesTable";
 
-
 type Trade = [
     number,
     string,
@@ -28,7 +27,6 @@ type Trade = [
     string,
     string
 ];
-
 
 function makeTrade({
     direction = "long",
@@ -52,7 +50,6 @@ function makeTrade({
         "2026-08-12T11:00",
     ];
 }
-
 
 function renderTable(
     overrides: Partial<
@@ -97,11 +94,9 @@ function renderTable(
     return props;
 }
 
-
 afterEach(() => {
     cleanup();
 });
-
 
 describe("TradesTable", () => {
     test(
@@ -110,25 +105,24 @@ describe("TradesTable", () => {
             renderTable();
 
             expect(
-                screen.getByText(
+                screen.getAllByText(
                     "EURUSD"
-                )
+                )[0]
             ).toBeInTheDocument();
 
             expect(
-                screen.getByText(
+                screen.getAllByText(
                     "Long ↑"
-                )
+                )[0]
             ).toBeInTheDocument();
 
             expect(
-                screen.getByText(
+                screen.getAllByText(
                     "2R"
-                )
+                )[0]
             ).toBeInTheDocument();
         }
     );
-
 
     test.each([
         [
@@ -165,19 +159,18 @@ describe("TradesTable", () => {
             });
 
             expect(
-                screen.getByText(
+                screen.getAllByText(
                     expectedDirection
-                )
+                )[0]
             ).toBeInTheDocument();
 
             expect(
-                screen.getByText(
+                screen.getAllByText(
                     expectedResult
-                )
+                )[0]
             ).toBeInTheDocument();
         }
     );
-
 
     test(
         "calls onEdit with the trade",
@@ -191,13 +184,13 @@ describe("TradesTable", () => {
                 });
 
             fireEvent.click(
-                screen.getByRole(
+                screen.getAllByRole(
                     "button",
                     {
                         name:
                             "Edit trade",
                     }
-                )
+                )[0]
             );
 
             expect(
@@ -208,7 +201,6 @@ describe("TradesTable", () => {
         }
     );
 
-
     test(
         "calls onDelete with trade id",
         () => {
@@ -216,13 +208,13 @@ describe("TradesTable", () => {
                 renderTable();
 
             fireEvent.click(
-                screen.getByRole(
+                screen.getAllByRole(
                     "button",
                     {
                         name:
                             "Delete trade",
                     }
-                )
+                )[0]
             );
 
             expect(
@@ -230,7 +222,6 @@ describe("TradesTable", () => {
             ).toHaveBeenCalledWith(1);
         }
     );
-
 
     test(
         "calls onUpdate while editing",
@@ -251,13 +242,13 @@ describe("TradesTable", () => {
                 });
 
             fireEvent.click(
-                screen.getByRole(
+                screen.getAllByRole(
                     "button",
                     {
                         name:
                             "Save trade",
                     }
-                )
+                )[0]
             );
 
             expect(
@@ -265,7 +256,6 @@ describe("TradesTable", () => {
             ).toHaveBeenCalledWith(1);
         }
     );
-
 
     test.each([
         [
@@ -331,9 +321,9 @@ describe("TradesTable", () => {
                 });
 
             fireEvent.change(
-                screen.getByLabelText(
+                screen.getAllByLabelText(
                     label
-                ),
+                )[0],
                 {
                     target: {
                         value,
@@ -348,7 +338,6 @@ describe("TradesTable", () => {
             );
         }
     );
-
 
     test.each([
         [-1, "-1R"],
@@ -379,13 +368,12 @@ describe("TradesTable", () => {
             });
 
             expect(
-                screen.getByText(
+                screen.getAllByText(
                     expectedText
-                )
+                )[0]
             ).toBeInTheDocument();
         }
     );
-
 
     test(
         "does not show View all trades by default",
@@ -405,7 +393,6 @@ describe("TradesTable", () => {
             ).not.toBeInTheDocument();
         }
     );
-
 
     test(
         "links to trades when no account is selected",
@@ -430,7 +417,6 @@ describe("TradesTable", () => {
             );
         }
     );
-
 
     test(
         "includes account id in View all trades link",

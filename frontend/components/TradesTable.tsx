@@ -82,7 +82,328 @@ export default function TradesTable({
                 </h3>
             </div>
 
-            <div className="overflow-x-auto pb-6">
+            {/* MOBILE */}
+            <div className="divide-y divide-slate-100 md:hidden">
+                {trades.map((trade) =>
+                    editingTradeId === trade[0] ? (
+                        <div
+                            key={trade[0]}
+                            className="space-y-4 p-4"
+                        >
+                            <div>
+                                <label
+                                    htmlFor={`mobile-symbol-${trade[0]}`}
+                                    className="mb-1 block text-xs font-medium text-slate-500"
+                                >
+                                    Symbol
+                                </label>
+
+                                <input
+                                    id={`mobile-symbol-${trade[0]}`}
+                                    aria-label="Edit symbol"
+                                    value={symbol}
+                                    onChange={(event) =>
+                                        setSymbol(
+                                            event.target.value
+                                        )
+                                    }
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    htmlFor={`mobile-direction-${trade[0]}`}
+                                    className="mb-1 block text-xs font-medium text-slate-500"
+                                >
+                                    Direction
+                                </label>
+
+                                <select
+                                    id={`mobile-direction-${trade[0]}`}
+                                    aria-label="Edit direction"
+                                    value={direction}
+                                    onChange={(event) =>
+                                        setDirection(
+                                            event.target.value
+                                        )
+                                    }
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                                >
+                                    <option value="long">
+                                        Long
+                                    </option>
+
+                                    <option value="short">
+                                        Short
+                                    </option>
+                                </select>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-3">
+                                <div>
+                                    <label
+                                        htmlFor={`mobile-entry-${trade[0]}`}
+                                        className="mb-1 block text-xs font-medium text-slate-500"
+                                    >
+                                        Entry
+                                    </label>
+
+                                    <input
+                                        id={`mobile-entry-${trade[0]}`}
+                                        aria-label="Edit entry"
+                                        value={entry}
+                                        onChange={(event) =>
+                                            setEntry(
+                                                event.target
+                                                    .value
+                                            )
+                                        }
+                                        className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-2 text-sm"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label
+                                        htmlFor={`mobile-stop-${trade[0]}`}
+                                        className="mb-1 block text-xs font-medium text-slate-500"
+                                    >
+                                        Stop
+                                    </label>
+
+                                    <input
+                                        id={`mobile-stop-${trade[0]}`}
+                                        aria-label="Edit stop"
+                                        value={stop}
+                                        onChange={(event) =>
+                                            setStop(
+                                                event.target
+                                                    .value
+                                            )
+                                        }
+                                        className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-2 text-sm"
+                                    />
+                                </div>
+
+                                <div>
+                                    <label
+                                        htmlFor={`mobile-exit-${trade[0]}`}
+                                        className="mb-1 block text-xs font-medium text-slate-500"
+                                    >
+                                        Exit
+                                    </label>
+
+                                    <input
+                                        id={`mobile-exit-${trade[0]}`}
+                                        aria-label="Edit exit"
+                                        value={exit}
+                                        onChange={(event) =>
+                                            setExit(
+                                                event.target
+                                                    .value
+                                            )
+                                        }
+                                        className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-2 text-sm"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label
+                                    htmlFor={`mobile-entry-time-${trade[0]}`}
+                                    className="mb-1 block text-xs font-medium text-slate-500"
+                                >
+                                    Entry time
+                                </label>
+
+                                <input
+                                    id={`mobile-entry-time-${trade[0]}`}
+                                    type="datetime-local"
+                                    aria-label="Edit entry datetime"
+                                    value={entryDatetime}
+                                    onChange={(event) =>
+                                        setEntryDatetime(
+                                            event.target.value
+                                        )
+                                    }
+                                    required
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    htmlFor={`mobile-exit-time-${trade[0]}`}
+                                    className="mb-1 block text-xs font-medium text-slate-500"
+                                >
+                                    Exit time
+                                </label>
+
+                                <input
+                                    id={`mobile-exit-time-${trade[0]}`}
+                                    type="datetime-local"
+                                    aria-label="Edit exit datetime"
+                                    value={exitDatetime}
+                                    onChange={(event) =>
+                                        setExitDatetime(
+                                            event.target.value
+                                        )
+                                    }
+                                    required
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                                />
+                            </div>
+
+                            <div>
+                                <label
+                                    htmlFor={`mobile-pnl-${trade[0]}`}
+                                    className="mb-1 block text-xs font-medium text-slate-500"
+                                >
+                                    P/L
+                                </label>
+
+                                <input
+                                    id={`mobile-pnl-${trade[0]}`}
+                                    type="number"
+                                    aria-label="Edit P/L"
+                                    value={pnl}
+                                    onChange={(event) =>
+                                        setPnl(
+                                            event.target.value
+                                        )
+                                    }
+                                    className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                                />
+                            </div>
+
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    onUpdate(trade[0])
+                                }
+                                aria-label="Save trade"
+                                className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-emerald-50 py-2.5 text-sm font-semibold text-emerald-600 transition hover:bg-emerald-100"
+                            >
+                                <Save size={16} />
+                                Save
+                            </button>
+                        </div>
+                    ) : (
+                        <div
+                            key={trade[0]}
+                            className="p-4"
+                        >
+                            <div className="flex items-start justify-between gap-4">
+                                <div>
+                                    <p className="font-semibold text-slate-900">
+                                        {trade[1]}
+                                    </p>
+
+                                    <p
+                                        className={
+                                            trade[2] ===
+                                                "long"
+                                                ? "mt-1 text-sm font-semibold text-emerald-600"
+                                                : "mt-1 text-sm font-semibold text-rose-600"
+                                        }
+                                    >
+                                        {trade[2] === "long"
+                                            ? "Long ↑"
+                                            : "Short ↓"}
+                                    </p>
+                                </div>
+
+                                <div className="text-right">
+                                    <p
+                                        className={
+                                            trade[6] > 0
+                                                ? "font-semibold text-emerald-600"
+                                                : trade[6] < 0
+                                                    ? "font-semibold text-rose-600"
+                                                    : "font-semibold text-slate-500"
+                                        }
+                                    >
+                                        {trade[6]}R
+                                    </p>
+
+                                    <p
+                                        className={
+                                            trade[7] > 0
+                                                ? "mt-1 text-sm font-medium text-emerald-600"
+                                                : trade[7] < 0
+                                                    ? "mt-1 text-sm font-medium text-rose-600"
+                                                    : "mt-1 text-sm font-medium text-slate-500"
+                                        }
+                                    >
+                                        P/L {trade[7]}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
+                                <div>
+                                    <p className="text-xs text-slate-400">
+                                        Entry
+                                    </p>
+
+                                    <p className="mt-1 text-slate-700">
+                                        {trade[3]}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p className="text-xs text-slate-400">
+                                        Stop
+                                    </p>
+
+                                    <p className="mt-1 text-slate-700">
+                                        {trade[4]}
+                                    </p>
+                                </div>
+
+                                <div>
+                                    <p className="text-xs text-slate-400">
+                                        Exit
+                                    </p>
+
+                                    <p className="mt-1 text-slate-700">
+                                        {trade[5]}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="mt-4 flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        onEdit(trade)
+                                    }
+                                    aria-label="Edit trade"
+                                    className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-blue-50 py-2 text-sm font-medium text-blue-600 transition hover:bg-blue-100"
+                                >
+                                    <Pencil size={15} />
+                                    Edit
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        onDelete(trade[0])
+                                    }
+                                    aria-label="Delete trade"
+                                    className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-rose-50 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100"
+                                >
+                                    <Trash2 size={15} />
+                                    Delete
+                                </button>
+                            </div>
+                        </div>
+                    )
+                )}
+            </div>
+
+            {/* DESKTOP */}
+            <div className="hidden overflow-x-auto pb-6 md:block">
                 <table className="w-full min-w-[1100px] table-fixed">
                     <colgroup>
                         <col className="w-[170px]" />
@@ -102,30 +423,39 @@ export default function TradesTable({
                             <th className="py-3 pl-6 pr-6">
                                 Symbol
                             </th>
+
                             <th className="py-3 pr-6">
                                 Direction
                             </th>
+
                             <th className="py-3 pr-6">
                                 Entry
                             </th>
+
                             <th className="py-3 pr-6">
                                 Stop
                             </th>
+
                             <th className="py-3 pr-6">
                                 Exit
                             </th>
+
                             <th className="py-3 pr-6">
                                 Entry Time
                             </th>
+
                             <th className="py-3 pr-6">
                                 Exit Time
                             </th>
+
                             <th className="py-3 pr-6">
                                 Result
                             </th>
+
                             <th className="py-3 pr-6">
                                 P/L
                             </th>
+
                             <th className="py-3 pr-6">
                                 Actions
                             </th>
@@ -317,6 +647,7 @@ export default function TradesTable({
 
                                         <td className="py-4 pr-6">
                                             <button
+                                                type="button"
                                                 onClick={() =>
                                                     onUpdate(
                                                         trade[0]
@@ -427,6 +758,7 @@ export default function TradesTable({
                                         <td className="py-4 pr-6">
                                             <div className="flex gap-2">
                                                 <button
+                                                    type="button"
                                                     onClick={() =>
                                                         onEdit(
                                                             trade
@@ -443,6 +775,7 @@ export default function TradesTable({
                                                 </button>
 
                                                 <button
+                                                    type="button"
                                                     onClick={() =>
                                                         onDelete(
                                                             trade[0]

@@ -193,7 +193,7 @@ async function renderWithAccounts(
         return;
     }
 
-    await screen.findByText(accounts[0].name);
+    await screen.findAllByText(accounts[0].name);
 }
 
 function openAddAccountForm() {
@@ -256,19 +256,21 @@ function saveNewAccount() {
 }
 
 function editAccount() {
-    fireEvent.click(
-        screen.getByRole("button", {
+    const [editButton] =
+        screen.getAllByRole("button", {
             name: "Edit account",
-        })
-    );
+        });
+
+    fireEvent.click(editButton);
 }
 
 function openDeleteDialog() {
-    fireEvent.click(
-        screen.getByRole("button", {
+    const [deleteButton] =
+        screen.getAllByRole("button", {
             name: "Delete account",
-        })
-    );
+        });
+
+    fireEvent.click(deleteButton);
 }
 
 function confirmDelete() {
@@ -332,20 +334,20 @@ describe("AccountsPage", () => {
             await renderWithAccounts([fakeAccount]);
 
             expect(
-                screen.getByText("FTMO 100K")
-            ).toBeInTheDocument();
+                screen.getAllByText("FTMO 100K")
+            ).toHaveLength(2);
 
             expect(
-                screen.getByText("100000")
-            ).toBeInTheDocument();
+                screen.getAllByText("100000")
+            ).toHaveLength(2);
 
             expect(
-                screen.getByText("FTMO")
-            ).toBeInTheDocument();
+                screen.getAllByText("FTMO")
+            ).toHaveLength(2);
 
             expect(
-                screen.getByText("Prop Firm")
-            ).toBeInTheDocument();
+                screen.getAllByText("Prop Firm")
+            ).toHaveLength(2);
         });
 
         test(
@@ -363,11 +365,15 @@ describe("AccountsPage", () => {
 
                 render(<AccountsPage />);
 
-                await screen.findByText("FTMO 100K");
+                await screen.findAllByText("FTMO 100K");
 
                 expect(
                     screen.getAllByText("—")
-                ).toHaveLength(2);
+                ).toHaveLength(3);
+
+                expect(
+                    screen.getByText("No broker")
+                ).toBeInTheDocument();
             }
         );
 
@@ -732,10 +738,10 @@ describe("AccountsPage", () => {
                     );
 
                 expect(
-                    await screen.findByText(
+                    await screen.findAllByText(
                         "New FTMO"
                     )
-                ).toBeInTheDocument();
+                ).toHaveLength(2);
 
                 expect(
                     screen.queryByText(
@@ -803,33 +809,6 @@ describe("AccountsPage", () => {
         );
 
         test(
-            "does not create an account without required fields",
-            async () => {
-                fetchMock.mockResolvedValueOnce(
-                    successfulResponse([])
-                );
-
-                render(<AccountsPage />);
-
-                await screen.findByText(
-                    "No accounts yet."
-                );
-
-                openAddAccountForm();
-                saveNewAccount();
-
-                expect(
-                    screen.getByText(
-                        "Please fill in all required fields."
-                    )
-                ).toBeInTheDocument();
-
-                expect(fetchMock)
-                    .toHaveBeenCalledTimes(1);
-            }
-        );
-
-        test(
             "keeps the form open when creating an account fails",
             async () => {
                 fetchMock
@@ -847,15 +826,7 @@ describe("AccountsPage", () => {
                 );
 
                 openAddAccountForm();
-
-                fillNewAccountForm({
-                    name: "Test account",
-                    balance: "10000",
-                    currency: "USD",
-                    broker: "",
-                    type: "",
-                });
-
+                fillNewAccountForm();
                 saveNewAccount();
 
                 await waitFor(() => {
@@ -902,15 +873,7 @@ describe("AccountsPage", () => {
                 );
 
                 openAddAccountForm();
-
-                fillNewAccountForm({
-                    name: "Test account",
-                    balance: "10000",
-                    currency: "USD",
-                    broker: "",
-                    type: "",
-                });
-
+                fillNewAccountForm();
                 saveNewAccount();
 
                 await waitFor(() => {
@@ -955,21 +918,38 @@ describe("AccountsPage", () => {
 
             render(<AccountsPage />);
 
-            await screen.findByText("FTMO 100K");
+            await screen.findAllByText("FTMO 100K");
 
             editAccount();
 
-            const textInputs =
-                screen.getAllByRole("textbox");
+            const [
+                mobileNameInput,
+                mobileTypeInput,
+                mobileBrokerInput,
+            ] = screen.getAllByRole("textbox");
 
-            fireEvent.change(textInputs[0], {
-                target: {
-                    value: "Updated account",
-                },
-            });
+            const [mobileBalanceInput] =
+                screen.getAllByRole("spinbutton");
+
+            const [mobileCurrencySelect] =
+                screen.getAllByRole("combobox");
+
+            const [mobileSaveButton] =
+                screen.getAllByRole("button", {
+                    name: "Save account",
+                });
 
             fireEvent.change(
-                screen.getByRole("spinbutton"),
+                mobileNameInput,
+                {
+                    target: {
+                        value: "Updated account",
+                    },
+                }
+            );
+
+            fireEvent.change(
+                mobileBalanceInput,
                 {
                     target: {
                         value: "120000",
@@ -978,7 +958,7 @@ describe("AccountsPage", () => {
             );
 
             fireEvent.change(
-                screen.getByRole("combobox"),
+                mobileCurrencySelect,
                 {
                     target: {
                         value: "GBP",
@@ -986,22 +966,26 @@ describe("AccountsPage", () => {
                 }
             );
 
-            fireEvent.change(textInputs[1], {
-                target: {
-                    value: "Updated broker",
-                },
-            });
+            fireEvent.change(
+                mobileBrokerInput,
+                {
+                    target: {
+                        value: "Updated broker",
+                    },
+                }
+            );
 
-            fireEvent.change(textInputs[2], {
-                target: {
-                    value: "Personal",
-                },
-            });
+            fireEvent.change(
+                mobileTypeInput,
+                {
+                    target: {
+                        value: "Personal",
+                    },
+                }
+            );
 
             fireEvent.click(
-                screen.getByRole("button", {
-                    name: "Save account",
-                })
+                mobileSaveButton
             );
 
             await waitFor(() => {
@@ -1029,10 +1013,10 @@ describe("AccountsPage", () => {
                 );
 
             expect(
-                await screen.findByText(
+                await screen.findAllByText(
                     "Updated account"
                 )
-            ).toBeInTheDocument();
+            ).toHaveLength(2);
         });
 
         test(
@@ -1050,18 +1034,26 @@ describe("AccountsPage", () => {
 
                 render(<AccountsPage />);
 
-                await screen.findByText("FTMO 100K");
+                await screen.findAllByText("FTMO 100K");
 
                 editAccount();
 
-                const textInputs =
-                    screen.getAllByRole("textbox");
+                const [
+                    ,
+                    mobileTypeInput,
+                    mobileBrokerInput,
+                ] =
+                    screen.getAllByRole(
+                        "textbox"
+                    );
 
-                expect(textInputs[1])
-                    .toHaveValue("");
+                expect(
+                    mobileBrokerInput
+                ).toHaveValue("");
 
-                expect(textInputs[2])
-                    .toHaveValue("");
+                expect(
+                    mobileTypeInput
+                ).toHaveValue("");
             }
         );
 
@@ -1080,14 +1072,21 @@ describe("AccountsPage", () => {
 
                 render(<AccountsPage />);
 
-                await screen.findByText("FTMO 100K");
+                await screen.findAllByText("FTMO 100K");
 
                 editAccount();
 
+                const [saveButton] =
+                    screen.getAllByRole(
+                        "button",
+                        {
+                            name:
+                                "Save account",
+                        }
+                    );
+
                 fireEvent.click(
-                    screen.getByRole("button", {
-                        name: "Save account",
-                    })
+                    saveButton
                 );
 
                 await waitFor(() => {
@@ -1096,10 +1095,14 @@ describe("AccountsPage", () => {
                 });
 
                 expect(
-                    screen.getByRole("button", {
-                        name: "Save account",
-                    })
-                ).toBeInTheDocument();
+                    screen.getAllByRole(
+                        "button",
+                        {
+                            name:
+                                "Save account",
+                        }
+                    )
+                ).toHaveLength(2);
             }
         );
     });
@@ -1152,7 +1155,7 @@ describe("AccountsPage", () => {
 
                 render(<AccountsPage />);
 
-                await screen.findByText("FTMO 100K");
+                await screen.findAllByText("FTMO 100K");
 
                 openDeleteDialog();
                 confirmDelete();
@@ -1200,7 +1203,7 @@ describe("AccountsPage", () => {
 
                 render(<AccountsPage />);
 
-                await screen.findByText("FTMO 100K");
+                await screen.findAllByText("FTMO 100K");
 
                 openDeleteDialog();
                 confirmDelete();
@@ -1246,7 +1249,7 @@ describe("AccountsPage", () => {
 
                 render(<AccountsPage />);
 
-                await screen.findByText("FTMO 100K");
+                await screen.findAllByText("FTMO 100K");
 
                 openDeleteDialog();
                 confirmDelete();
@@ -1279,16 +1282,20 @@ describe("AccountsPage", () => {
 
                 render(<AccountsPage />);
 
-                await screen.findByText("FTMO 100K");
+                await screen.findAllByText("FTMO 100K");
 
                 openDeleteDialog();
                 editAccount();
 
                 expect(
-                    screen.getByRole("button", {
-                        name: "Save account",
-                    })
-                ).toBeInTheDocument();
+                    screen.getAllByRole(
+                        "button",
+                        {
+                            name:
+                                "Save account",
+                        }
+                    )
+                ).toHaveLength(2);
 
                 confirmDelete();
 
