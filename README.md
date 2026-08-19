@@ -1,241 +1,711 @@
 # Trading Journal
 
-A command-line trading journal built with Python and Supabase.
+A full-stack trading journal for recording trades, managing trading accounts, analysing performance and visualising results over time.
 
-## Why I Built This
+The project began as a small Python command-line application and progressively evolved into a multi-user web application with a Next.js frontend, FastAPI backend, Supabase authentication and database persistence, automated testing and validation across the stack.
 
-Keeping track of trades on paper or in a spreadsheet can get messy fast, and it can be difficult to understand the bigger picture: am I actually profitable? What is my win rate? What is my average R?
+---
 
-This project started as a way to answer those questions. It is a terminal application that logs every trade with its symbol, direction, entry price, stop loss, and exit price. It automatically calculates the result in R, also known as risk multiple, and gives aggregate statistics such as total R, win rate, loss rate, and average R across all saved trades.
+## Overview
 
-The project originally stored data in a local text file, then evolved to use Supabase as a cloud database.
+Trading performance is difficult to evaluate by looking at isolated wins and losses.
 
-## Features
+This project was created to make trading data easier to record and analyse by storing each trade together with its risk, result, P/L and execution dates.
 
-- Add a trade with symbol, direction, entry price, stop loss, and exit price
-- Automatically calculate R-multiple for long and short trades
-- Store trades in a Supabase cloud database
-- Load saved trades from Supabase when the program starts
-- View all saved trades
-- View aggregate statistics:
-  - total R
-  - number of trades
-  - average R
-  - winning trades
-  - win rate
-  - losing trades
-  - loss rate
-  - breakeven trades
-- Edit an existing trade
-- Delete a trade
-- Undo the last deletion during the current session
-- Validate numeric inputs
-- Validate trade selection when editing or deleting
-- Use environment variables to keep Supabase credentials out of the codebase
+The application currently allows authenticated users to:
 
-## How It Works
+- create and manage trading accounts
+- record trades
+- edit and delete existing trades
+- calculate trade results in R
+- track P/L and trading statistics
+- visualise performance over time
+- keep each user's data separated
+- validate trade and account data before saving it
 
-The journal stores each trade in a Supabase table called `trades`.
+The current application is the result of several iterations, starting from a local Python script and gradually introducing persistence, APIs, authentication, a frontend, testing and stronger error handling.
 
-Each trade contains:
+---
 
-```txt
-id
-symbol
-direction
-entry
-stop
-exit
-result
-created_at
+# Project Evolution
+
+One of the main goals of this project became learning how a small script evolves into a real full-stack application.
+
+```text
+Python CLI
+    ↓
+Local file persistence
+    ↓
+Supabase database
+    ↓
+FastAPI backend
+    ↓
+Next.js frontend
+    ↓
+Authentication and user accounts
+    ↓
+Multiple trading accounts
+    ↓
+Charts and statistics
+    ↓
+Validation and automated testing
+    ↓
+Centralised database error handling
 ```
 
-The result is calculated as an R-multiple, a standard way traders measure performance relative to risk.
+## 1. Python CLI
 
-For long trades:
+The first version was a command-line application written entirely in Python.
 
-```txt
+It handled the core trading logic:
+
+- adding trades
+- viewing trades
+- editing trades
+- deleting trades
+- calculating R-multiple
+- calculating aggregate statistics
+- validating user input
+
+At this stage, trades were stored locally.
+
+The goal was not yet to build a web application, but to first make the domain logic work correctly.
+
+---
+
+## 2. Moving persistence to Supabase
+
+The next step was replacing local storage with a real database.
+
+Supabase was introduced so that trades could persist outside the local machine.
+
+This required learning how to:
+
+- connect Python to a remote database
+- create, read, update and delete records
+- work with database-generated IDs
+- keep credentials outside the codebase using environment variables
+- convert application data into database records and back again
+
+This was the first major architectural change in the project.
+
+---
+
+## 3. Separating the backend with FastAPI
+
+As the project grew, database operations and application logic were separated from the user interface.
+
+A FastAPI backend was introduced to expose HTTP endpoints for accounts and trades.
+
+The application now follows a structure closer to:
+
+```text
+Browser
+   ↓
+Next.js frontend
+   ↓ HTTP
+FastAPI API
+   ↓
+Supabase / PostgreSQL
+```
+
+The backend is responsible for:
+
+- authenticating API requests
+- validating incoming data
+- calculating R-multiple
+- loading user data
+- creating trades and accounts
+- updating records
+- deleting records
+- communicating with Supabase
+- returning controlled API responses
+
+This refactor turned the original Python application into an API-driven architecture.
+
+---
+
+## 4. Building the web frontend
+
+The command-line interface was eventually replaced by a web interface built with Next.js, React and TypeScript.
+
+The frontend introduced:
+
+- reusable React components
+- application state
+- forms
+- asynchronous API requests
+- authentication state
+- responsive layouts
+- account selection
+- trade management
+- statistics cards
+- performance charts
+- client-side validation
+- loading and error states
+
+The frontend communicates with the FastAPI backend rather than accessing trading data directly.
+
+---
+
+## 5. Authentication and user-owned data
+
+Authentication was added using Supabase Auth.
+
+Authenticated frontend requests include the user's session token, which the backend verifies before accessing protected endpoints.
+
+Database queries are scoped to the authenticated user so that accounts and trades belong to their owner rather than being globally accessible.
+
+This changed the application from a single-user journal into the foundation of a multi-user product.
+
+---
+
+## 6. Multiple trading accounts
+
+The original journal treated all trades as part of the same dataset.
+
+The web application introduced trading accounts.
+
+Each account can contain information such as:
+
+- account name
+- starting balance
+- currency
+- broker
+- account type
+
+Trades belong to a specific account, allowing performance to be analysed independently across different trading accounts.
+
+---
+
+## 7. Performance analytics
+
+The project gradually moved beyond storing trades and began analysing them.
+
+Current analytics include trading statistics and an equity/performance chart.
+
+Trade performance can be evaluated using both P/L and R-multiple.
+
+For a long trade:
+
+```text
 R = (exit - entry) / (entry - stop)
 ```
 
-For short trades:
+For a short trade:
 
-```txt
+```text
 R = (entry - exit) / (stop - entry)
 ```
 
-An R-multiple of `1` means the trade made one unit of planned risk in profit.
+Using R makes trades with different position sizes and monetary values comparable using the amount originally risked.
 
-An R-multiple of `-1` means the trade lost one unit of planned risk.
+---
 
-This makes it possible to compare trades of different sizes using the same measurement.
+## 8. Validation across the stack
 
-When the program starts, it loads trades from Supabase. When a trade is added, edited, deleted, or restored, the change is also sent to Supabase.
+As the application became more complex, data validation became increasingly important.
 
-## Project Evolution
+Validation now happens at multiple levels.
 
-This project started as a simple Python terminal app that stored trades locally in a `trades.txt` file.
+The frontend prevents incomplete forms from being submitted.
 
-It was later refactored to use Supabase as a cloud database. The current version supports full CRUD operations with Supabase:
+The FastAPI backend validates incoming requests using Pydantic models.
 
-- create trades
-- read saved trades
-- update existing trades
-- delete trades
-- restore the last deleted trade during the current session
+Examples include:
 
-This was developed on a separate Git branch before being prepared for the main version of the project.
+- required trade dates
+- exit date cannot be before entry date
+- valid trade direction
+- non-empty trade symbol
+- required account name
+- required currency
+- required account balance data
 
-## Technologies Used
+The backend does not rely exclusively on the frontend to provide valid data.
+
+---
+
+## 9. Automated testing
+
+Testing became a major part of the project during the full-stack refactor.
+
+### Backend
+
+The backend uses:
+
+- Pytest
+- FastAPI `TestClient`
+- mocks for database dependencies
+- parameterised tests
+
+Tests cover areas such as:
+
+- authentication
+- API requests
+- account CRUD
+- trade CRUD
+- validation
+- R calculations
+- database transformations
+- database error handling
+
+### Frontend
+
+The frontend uses:
+
+- Vitest
+- React Testing Library
+- jsdom
+- V8 coverage
+
+Tests cover:
+
+- page behaviour
+- forms
+- user interactions
+- authentication state
+- API requests
+- account management
+- trade management
+- statistics
+- chart behaviour
+- reusable components
+
+During development, the current full-stack test suites reached **100% code coverage**.
+
+Coverage is used as a development signal rather than as a replacement for meaningful behavioural tests.
+
+---
+
+## 10. Database error handling
+
+Database calls originally executed Supabase queries directly.
+
+If Supabase failed, those exceptions could propagate through the application as generic server errors.
+
+The database layer was later refactored to centralise query execution.
+
+```text
+Supabase query
+      ↓
+execute_query()
+      ↓
+DatabaseError
+      ↓
+FastAPI exception handler
+      ↓
+503 Service Unavailable
+```
+
+This avoids repeating the same `try/except` logic around every database operation and gives the API a controlled response when its database dependency fails.
+
+---
+
+# Tech Stack
+
+## Frontend
+
+- Next.js 16
+- React 19
+- TypeScript
+- Tailwind CSS
+- Recharts
+- Supabase JavaScript client
+
+## Backend
 
 - Python
-- Supabase
+- FastAPI
+- Pydantic
+- Supabase Python client
+- PostgreSQL
 - python-dotenv
+
+## Testing
+
+- Pytest
+- FastAPI TestClient
+- Vitest
+- React Testing Library
+- jsdom
+- V8 coverage
+
+## Development
+
 - Git
 - GitHub
+- ESLint
+- npm
 
-## Installation
+---
 
-Make sure Python is installed on your computer.
+# Architecture
 
-Clone the repository:
-
-```bash
-git clone https://github.com/laurabaraldi98-lgtm/trading-journal-python.git
+```text
+┌──────────────────────────────┐
+│        Next.js frontend      │
+│                              │
+│ React · TypeScript · Charts  │
+└──────────────┬───────────────┘
+               │
+               │ HTTP + Bearer token
+               ▼
+┌──────────────────────────────┐
+│        FastAPI backend       │
+│                              │
+│ Auth · Validation · API      │
+│ R calculation · DB layer     │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│           Supabase           │
+│                              │
+│ Authentication · PostgreSQL  │
+└──────────────────────────────┘
 ```
 
-Open the project folder:
+---
 
-```bash
-cd trading-journal-python
+# Main Features
+
+- User authentication
+- Protected API endpoints
+- Multiple trading accounts
+- Create, read, update and delete accounts
+- Create, read, update and delete trades
+- Long and short trades
+- Automatic R-multiple calculation
+- P/L tracking
+- Entry and exit timestamps
+- Trade date validation
+- Performance chart
+- Trading statistics
+- Responsive web interface
+- User-scoped database queries
+- Frontend and backend validation
+- Controlled database error responses
+- Automated frontend and backend test suites
+
+---
+
+# Repository Structure
+
+```text
+trading-journal/
+│
+├── api.py
+│   FastAPI application and API endpoints
+│
+├── auth.py
+│   Authentication helpers
+│
+├── calculations.py
+│   Trading calculations
+│
+├── database.py
+│   Supabase database access layer
+│
+├── tests/
+│   Backend test suite
+│
+├── frontend/
+│   Next.js web application
+│   ├── app/
+│   ├── components/
+│   ├── lib/
+│   └── ...
+│
+├── legacy-cli/
+│   Original command-line implementation
+│
+├── requirements.txt
+├── pyproject.toml
+├── .env.example
+└── README.md
 ```
 
-Install the required dependencies:
+---
+
+# Legacy CLI
+
+The `legacy-cli/` directory contains the original command-line version of the Trading Journal.
+
+It is retained as a historical record of the project's evolution and is no longer the actively maintained version of the application.
+
+Keeping it in the repository makes it possible to see how the project changed from a small procedural Python program into the current full-stack architecture.
+
+---
+
+# Running the Project Locally
+
+## Clone the repository
+
+```bash
+git clone https://github.com/laurabaraldi98-lgtm/trading-journal.git
+cd trading-journal
+```
+
+## Backend
+
+Install the Python dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-## Environment Variables
-
-This project uses Supabase, so you need to create a `.env` file in the project root.
-
-Use `.env.example` as a template:
+Create a `.env` file in the project root:
 
 ```env
 SUPABASE_URL=your_supabase_project_url
-SUPABASE_KEY=your_supabase_anon_or_publishable_key
+SUPABASE_KEY=your_supabase_key
 ```
 
-Create your own `.env` file and replace the placeholder values with your actual Supabase project URL and key.
+The backend also supports configuring allowed frontend origins through:
 
-The `.env` file is ignored by Git and should not be committed.
-
-## Supabase Table
-
-Create a table called `trades` in Supabase with these columns:
-
-```txt
-id
-symbol
-direction
-entry
-stop
-exit
-result
-created_at
+```env
+CORS_ORIGINS=http://localhost:3000
 ```
 
-Example SQL:
-
-```sql
-create table trades (
-  id bigint generated by default as identity primary key,
-  symbol text not null,
-  direction text not null,
-  entry numeric not null,
-  stop numeric not null,
-  exit numeric not null,
-  result numeric not null,
-  created_at timestamp with time zone default now()
-);
-```
-
-## Run the Application
-
-Run the application:
+Start the FastAPI development server:
 
 ```bash
-python journal.py
+uvicorn api:app --reload
 ```
 
-## Usage
+The backend will normally run on:
 
-When you run the program, you will see this menu:
-
-```txt
-TRADING JOURNAL
-1. Add a trade
-2. View trades
-3. View statistics
-4. Delete a trade
-5. Undo last deletion
-6. Edit a trade
-7. Exit
+```text
+http://127.0.0.1:8000
 ```
 
-Choose an option by typing its number. The program will guide you through entering the trade details and will ask again if you type something invalid.
+---
 
-## Project Structure
+## Frontend
 
-```txt
-trading-journal-python/
-│
-├── journal.py
-├── requirements.txt
-├── .env.example
-├── .gitignore
-└── README.md
+Move into the frontend directory:
+
+```bash
+cd frontend
 ```
 
-## What I Learned
+Install dependencies:
 
-Through this project, I practiced:
+```bash
+npm install
+```
 
-- Working with Python variables
-- Working with lists and indexes
-- Using loops and conditional logic
-- Creating reusable functions
-- Handling exceptions with `try/except`
-- Validating user input in a loop
-- Reading environment variables from a `.env` file
-- Connecting Python to a Supabase database
-- Creating, reading, updating, and deleting records in a cloud database
-- Using database-generated IDs to update and delete specific trades
-- Calculating and formatting trading statistics
-- Debugging logic errors
-- Migrating a project from local file storage to cloud database storage
-- Using Git branches to develop a new feature safely
+Create `frontend/.env.local`:
 
-## Roadmap
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+```
 
-- Add better error handling for failed Supabase requests
-- Refactor repeated Supabase response conversion into a helper function
-- Add filtering by symbol
-- Add filtering by date range
-- Add more detailed statistics, such as best trade, worst trade, and streaks
-- Export statistics to CSV
-- Add charts and an equity curve
-- Build a graphical user interface
-- Later migrate the project to a full web app with:
-  - a frontend built with React or Next.js
-  - a backend API built with FastAPI
-  - Supabase as the database
+Start the frontend:
 
-## Project Status
+```bash
+npm run dev
+```
 
-The core terminal functionality is complete.
+The application will normally be available at:
 
-Adding, viewing, editing, deleting, undoing the last deletion, calculating R, validating user input, and viewing statistics are working.
+```text
+http://localhost:3000
+```
 
-The project now uses Supabase as its main storage system instead of a local text file. Future improvements include stronger error handling, code refactoring, charts, filters, a graphical interface, and a full web version with a React or Next.js frontend and a FastAPI backend.
+---
+
+# Running the Tests
+
+## Backend
+
+From the project root:
+
+```bash
+python -m pytest tests
+```
+
+With coverage:
+
+```bash
+python -m pytest tests --cov=. --cov-report=term-missing
+```
+
+## Frontend
+
+From `frontend/`:
+
+```bash
+npm test -- --run
+```
+
+Run the production build:
+
+```bash
+npm run build
+```
+
+Run linting:
+
+```bash
+npm run lint
+```
+
+---
+
+# What I Learned
+
+This project started while I was learning the fundamentals of programming, but its scope changed significantly as I continued developing it.
+
+Building the different versions gave me practical experience with more than just individual languages or frameworks.
+
+## Software design
+
+I learned how code that works well in a small script can become difficult to maintain as the application grows, and why responsibilities eventually need to be separated.
+
+The project moved from one local program to distinct layers for:
+
+- user interface
+- API
+- authentication
+- validation
+- business logic
+- database access
+
+That evolution made architectural concepts much easier to understand than studying them only in isolation.
+
+## Backend development
+
+Through the FastAPI backend I practised:
+
+- designing REST endpoints
+- handling HTTP requests and responses
+- dependency injection with FastAPI
+- authentication
+- bearer tokens
+- Pydantic models
+- server-side validation
+- exception handling
+- database access
+- environment-based configuration
+- separating API and persistence logic
+
+## Frontend development
+
+Building the Next.js application taught me how to work with:
+
+- React components
+- props
+- state
+- event handlers
+- controlled forms
+- asynchronous requests
+- conditional rendering
+- authentication state
+- reusable UI components
+- TypeScript
+- responsive layouts
+- charts and data visualisation
+
+## Databases
+
+Moving from local files to Supabase helped me understand:
+
+- persistent storage
+- database tables
+- IDs and relationships
+- CRUD operations
+- user-owned records
+- querying and filtering data
+- the difference between application logic and persistence logic
+
+## Testing and debugging
+
+Testing became increasingly important as the project grew.
+
+I learned how to:
+
+- reproduce bugs with tests
+- mock external dependencies
+- test API behaviour
+- test React user interactions
+- use parameterised tests to reduce duplication
+- distinguish between coverage and meaningful behaviour
+- use failures to locate regressions
+- refactor while keeping existing behaviour protected
+
+A large part of the development process involved debugging interactions between the frontend, backend, authentication layer and database rather than working on each part independently.
+
+## Full-stack development
+
+The most important lesson from the project was understanding how the different layers of a web application communicate.
+
+```text
+User action
+    ↓
+React state
+    ↓
+HTTP request
+    ↓
+FastAPI endpoint
+    ↓
+authentication + validation
+    ↓
+database query
+    ↓
+API response
+    ↓
+frontend update
+```
+
+Building that complete flow made concepts such as APIs, authentication, persistence and frontend/backend separation much more concrete.
+
+---
+
+# Current Status
+
+The original CLI has been superseded by the full-stack web application.
+
+The current version includes the main functionality required for a usable trading journal:
+
+- authentication
+- account management
+- trade management
+- performance statistics
+- charts
+- data validation
+- database persistence
+- automated testing
+- database error handling
+
+The project is still designed to evolve further rather than being treated as finished software.
+
+---
+
+# Possible Future Improvements
+
+Potential future iterations include:
+
+- more advanced trading analytics
+- additional filters
+- richer account statistics
+- date-range analysis
+- improved dashboard visualisations
+- CSV import/export
+- stronger production observability and logging
+- additional integration and end-to-end testing
+- deployment and production configuration
+- performance improvements as the dataset grows
+
+---
+
+## Why this repository includes the old version
+
+The CLI was intentionally kept rather than deleted.
+
+The goal of this repository is not only to show the final application, but also the engineering progression behind it.
+
+The difference between `legacy-cli/` and the current application documents the transition from learning basic Python programming to designing, testing and debugging a full-stack system.
