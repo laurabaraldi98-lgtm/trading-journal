@@ -155,8 +155,8 @@ export default function PerformanceChart({
                             setMetric("r")
                         }
                         className={`cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium transition ${metric === "r"
-                                ? "bg-white text-slate-900 shadow-sm"
-                                : "text-slate-500 hover:text-slate-900"
+                            ? "bg-white text-slate-900 shadow-sm"
+                            : "text-slate-500 hover:text-slate-900"
                             }`}
                     >
                         R
@@ -170,9 +170,9 @@ export default function PerformanceChart({
                             )
                         }
                         className={`cursor-pointer rounded-lg px-3 py-1.5 text-sm font-medium transition ${metric ===
-                                "pnl"
-                                ? "bg-white text-slate-900 shadow-sm"
-                                : "text-slate-500 hover:text-slate-900"
+                            "pnl"
+                            ? "bg-white text-slate-900 shadow-sm"
+                            : "text-slate-500 hover:text-slate-900"
                             }`}
                     >
                         P/L
@@ -192,7 +192,7 @@ export default function PerformanceChart({
                         }
                     </div>
 
-                    <div className="h-full pl-6">
+                    <div className="h-full pl-2 sm:pl-6">
                         <ResponsiveContainer
                             width="100%"
                             height="100%"
@@ -206,19 +206,17 @@ export default function PerformanceChart({
 
                                 <XAxis
                                     dataKey="tradeNumber"
+                                    minTickGap={20}
                                     label={{
-                                        value:
-                                            "Trade",
-                                        position:
-                                            "insideBottom",
-                                        offset:
-                                            -5,
+                                        value: "Trade",
+                                        position: "insideBottom",
+                                        offset: -5,
                                     }}
                                 />
 
                                 <YAxis
-                                    width={70}
-                                    tickMargin={8}
+                                    width={50}
+                                    tickMargin={4}
                                     tickFormatter={(
                                         value
                                     ) =>

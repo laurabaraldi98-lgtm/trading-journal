@@ -76,7 +76,7 @@ export default function TradesTable({
 }: TradesTableProps) {
     return (
         <div className="mt-8 rounded-2xl border border-slate-200 bg-white">
-            <div className="border-b border-slate-200 px-6 py-5">
+            <div className="border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
                 <h3 className="text-lg font-semibold text-slate-900">
                     Recent Trades
                 </h3>
@@ -468,7 +468,7 @@ export default function TradesTable({
             </div>
 
             {showViewAll && (
-                <div className="flex justify-center border-t border-slate-100 px-6 py-4">
+                <div className="flex justify-center border-t border-slate-100 px-4 py-4 sm:px-6">
                     <Link
                         href={
                             selectedAccountId !==

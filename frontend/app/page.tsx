@@ -719,77 +719,48 @@ export default function Home() {
   return (
     <div className="flex min-h-screen bg-slate-50">
       <Sidebar
-        userEmail={
-          userEmail
-        }
-        onLogout={
-          handleLogout
-        }
+        userEmail={userEmail}
+        onLogout={handleLogout}
       />
 
-
-      <main className="min-w-0 flex-1 px-8 py-8 xl:px-10">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
+      <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 md:px-8 md:py-8 xl:px-10">
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="pl-12 sm:pl-0">
             <h2 className="text-3xl font-bold tracking-tight text-slate-900">
               Dashboard
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Overview of your
-              trading performance.
+              Overview of your trading performance.
             </p>
           </div>
 
-
-          <div className="flex items-center gap-3">
-            {selectedAccountId !==
-              null && (
-                <select
-                  value={
-                    selectedAccountId
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setSelectedAccountId(
-                      Number(
-                        event
-                          .target
-                          .value
-                      )
-                    )
-                  }
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-3"
-                >
-                  {accounts.map(
-                    (
-                      account
-                    ) => (
-                      <option
-                        key={
-                          account.id
-                        }
-                        value={
-                          account.id
-                        }
-                      >
-                        {
-                          account.name
-                        }
-                      </option>
-                    )
-                  )}
-                </select>
-              )}
-
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+            {selectedAccountId !== null && (
+              <select
+                value={selectedAccountId}
+                onChange={(event) =>
+                  setSelectedAccountId(
+                    Number(event.target.value)
+                  )
+                }
+                className="w-full rounded-lg border border-slate-300 bg-white px-4 py-3 sm:w-auto"
+              >
+                {accounts.map((account) => (
+                  <option
+                    key={account.id}
+                    value={account.id}
+                  >
+                    {account.name}
+                  </option>
+                ))}
+              </select>
+            )}
 
             <button
               type="button"
               onClick={() => {
-                setEditingTradeId(
-                  null
-                );
+                setEditingTradeId(null);
 
                 setSymbol("");
                 setDirection("");
@@ -797,119 +768,60 @@ export default function Home() {
                 setStop("");
                 setExit("");
                 setPnl("");
+                setEntryDatetime("");
+                setExitDatetime("");
 
-                setEntryDatetime(
-                  ""
-                );
-
-                setExitDatetime(
-                  ""
-                );
-
-                setShowForm(
-                  !showForm
-                );
+                setShowForm(!showForm);
               }}
-              disabled={
-                selectedAccountId ===
-                null
-              }
-              className="cursor-pointer rounded-lg bg-black px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-40"
+              disabled={selectedAccountId === null}
+              className="w-full cursor-pointer rounded-lg bg-black px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-40 sm:w-auto"
             >
               + Add Trade
             </button>
           </div>
         </div>
 
-
         {!dashboardLoading &&
-          accounts.length ===
-          0 && (
+          accounts.length === 0 && (
             <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
-              Create a trading
-              account before adding
-              trades.
+              Create a trading account before adding trades.
             </div>
           )}
 
-
         {showForm &&
-          selectedAccountId !==
-          null && (
+          selectedAccountId !== null && (
             <TradeForm
-              symbol={
-                symbol
-              }
-              direction={
-                direction
-              }
-              entry={
-                entry
-              }
-              stop={
-                stop
-              }
-              exit={
-                exit
-              }
-              pnl={
-                pnl
-              }
-              entryDatetime={
-                entryDatetime
-              }
-              exitDatetime={
-                exitDatetime
-              }
-              setSymbol={
-                setSymbol
-              }
-              setDirection={
-                setDirection
-              }
-              setEntry={
-                setEntry
-              }
-              setStop={
-                setStop
-              }
-              setExit={
-                setExit
-              }
-              setPnl={
-                setPnl
-              }
-              setEntryDatetime={
-                setEntryDatetime
-              }
-              setExitDatetime={
-                setExitDatetime
-              }
-              onSave={
-                handleSaveTrade
-              }
+              symbol={symbol}
+              direction={direction}
+              entry={entry}
+              stop={stop}
+              exit={exit}
+              pnl={pnl}
+              entryDatetime={entryDatetime}
+              exitDatetime={exitDatetime}
+              setSymbol={setSymbol}
+              setDirection={setDirection}
+              setEntry={setEntry}
+              setStop={setStop}
+              setExit={setExit}
+              setPnl={setPnl}
+              setEntryDatetime={setEntryDatetime}
+              setExitDatetime={setExitDatetime}
+              onSave={handleSaveTrade}
             />
           )}
-
 
         {dashboardLoading ? (
           <>
             <div className="mt-8 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
               {Array.from({
                 length: 6,
-              }).map(
-                (
-                  _,
-                  index
-                ) => (
-                  <div
-                    key={
-                      index
-                    }
-                    className="h-24 animate-pulse rounded-xl bg-slate-200"
-                  />
-                )
-              )}
+              }).map((_, index) => (
+                <div
+                  key={index}
+                  className="h-24 animate-pulse rounded-xl bg-slate-200"
+                />
+              ))}
             </div>
 
             <div className="mt-8 h-40 animate-pulse rounded-2xl bg-slate-200" />
@@ -919,111 +831,51 @@ export default function Home() {
         ) : (
           <>
             <StatisticsCards
-              trades={
-                trades
-              }
+              trades={trades}
               startingBalance={
-                selectedAccount
-                  ?.starting_balance ??
-                0
+                selectedAccount?.starting_balance ?? 0
               }
               currency={
-                selectedAccount
-                  ?.currency ??
-                ""
+                selectedAccount?.currency ?? ""
               }
             />
-
 
             <PerformanceChart
-              trades={
-                trades
-              }
+              trades={trades}
               currency={
-                selectedAccount
-                  ?.currency ??
-                ""
+                selectedAccount?.currency ?? ""
               }
             />
 
-
             <TradesTable
-              trades={
-                trades.slice(
-                  0,
-                  5
-                )
-              }
-              showViewAll={
-                true
-              }
-              selectedAccountId={
-                selectedAccountId
-              }
-              editingTradeId={
-                editingTradeId
-              }
-              symbol={
-                symbol
-              }
-              direction={
-                direction
-              }
-              entry={
-                entry
-              }
-              stop={
-                stop
-              }
-              exit={
-                exit
-              }
-              pnl={
-                pnl
-              }
-              entryDatetime={
-                entryDatetime
-              }
-              exitDatetime={
-                exitDatetime
-              }
-              setSymbol={
-                setSymbol
-              }
-              setDirection={
-                setDirection
-              }
-              setEntry={
-                setEntry
-              }
-              setStop={
-                setStop
-              }
-              setExit={
-                setExit
-              }
-              setPnl={
-                setPnl
-              }
-              setEntryDatetime={
-                setEntryDatetime
-              }
-              setExitDatetime={
-                setExitDatetime
-              }
-              onEdit={
-                handleEditTrade
-              }
-              onUpdate={
-                handleUpdateTrade
-              }
-              onDelete={
-                handleDeleteTrade
-              }
+              trades={trades.slice(0, 5)}
+              showViewAll={true}
+              selectedAccountId={selectedAccountId}
+              editingTradeId={editingTradeId}
+              symbol={symbol}
+              direction={direction}
+              entry={entry}
+              stop={stop}
+              exit={exit}
+              pnl={pnl}
+              entryDatetime={entryDatetime}
+              exitDatetime={exitDatetime}
+              setSymbol={setSymbol}
+              setDirection={setDirection}
+              setEntry={setEntry}
+              setStop={setStop}
+              setExit={setExit}
+              setPnl={setPnl}
+              setEntryDatetime={setEntryDatetime}
+              setExitDatetime={setExitDatetime}
+              onEdit={handleEditTrade}
+              onUpdate={handleUpdateTrade}
+              onDelete={handleDeleteTrade}
             />
           </>
         )}
       </main>
+
       {tradeError && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
           <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">

@@ -273,9 +273,9 @@ export default function AccountsPage() {
                 onLogout={handleLogout}
             />
 
-            <main className="min-w-0 flex-1 p-10">
-                <div className="flex items-start justify-between gap-4">
-                    <div>
+            <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 md:p-10">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="pl-12 sm:pl-0">
                         <h2 className="text-3xl font-bold">
                             Accounts
                         </h2>

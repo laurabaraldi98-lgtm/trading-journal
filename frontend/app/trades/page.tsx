@@ -325,9 +325,9 @@ function TradesPageContent() {
                 onLogout={handleLogout}
             />
 
-            <main className="min-w-0 flex-1 px-8 py-8 xl:px-10">
+            <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 md:px-8 md:py-8 xl:px-10">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                    <div>
+                    <div className="pl-12 sm:pl-0">
                         <h2 className="text-3xl font-bold tracking-tight text-slate-900">
                             Trades
                         </h2>
