@@ -1316,24 +1316,9 @@ describe(
 
                 expect(
                     screen.getByText(
-                        "Please fill in all required fields before saving the trade."
+                        "Please fill in all required fields."
                     )
                 ).toBeInTheDocument();
-
-                fireEvent.click(
-                    screen.getByRole(
-                        "button",
-                        {
-                            name: "OK",
-                        }
-                    )
-                );
-
-                expect(
-                    screen.queryByText(
-                        "Please fill in all required fields before saving the trade."
-                    )
-                ).not.toBeInTheDocument();
             }
         );
 
@@ -1366,6 +1351,21 @@ describe(
                         "Exit date cannot be before entry date."
                     )
                 ).toBeInTheDocument();
+
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name: "OK",
+                        }
+                    )
+                );
+
+                expect(
+                    screen.queryByText(
+                        "Exit date cannot be before entry date."
+                    )
+                ).not.toBeInTheDocument();
             }
         );
 
@@ -1607,30 +1607,6 @@ describe(
                 );
             }
         );
-
-
-        test(
-            "cancels delete",
-            async () => {
-                vi.spyOn(
-                    window,
-                    "confirm"
-                ).mockReturnValue(
-                    false
-                );
-
-                await renderDashboard();
-
-                await deleteTrade();
-
-                expect(
-                    fetchMock
-                ).toHaveBeenCalledTimes(
-                    2
-                );
-            }
-        );
-
 
         test(
             "deletes trade",

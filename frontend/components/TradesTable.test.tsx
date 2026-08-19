@@ -213,32 +213,60 @@ describe("TradesTable", () => {
         );
     });
 
-    test("calls onDelete from both layouts", () => {
+    test("confirms delete from both layouts", () => {
         const props = renderTable();
 
-        screen
-            .getAllByRole("button", {
-                name: "Delete trade",
-            })
-            .forEach((button) => {
-                fireEvent.click(button);
-            });
-
-        expect(
-            props.onDelete
-        ).toHaveBeenCalledTimes(2);
-
-        expect(
-            props.onDelete
-        ).toHaveBeenNthCalledWith(
-            1,
-            1
+        fireEvent.click(
+            screen.getAllByRole(
+                "button",
+                {
+                    name: "Delete trade",
+                }
+            )[0]
         );
 
         expect(
             props.onDelete
-        ).toHaveBeenNthCalledWith(
-            2,
+        ).not.toHaveBeenCalled();
+
+        fireEvent.click(
+            screen.getByRole(
+                "button",
+                {
+                    name: "Cancel",
+                }
+            )
+        );
+
+        expect(
+            props.onDelete
+        ).not.toHaveBeenCalled();
+
+        fireEvent.click(
+            screen.getAllByRole(
+                "button",
+                {
+                    name: "Delete trade",
+                }
+            )[1]
+        );
+
+        fireEvent.click(
+            screen.getByRole(
+                "button",
+                {
+                    name: "Delete permanently",
+                }
+            )
+        );
+
+        expect(
+            props.onDelete
+        ).toHaveBeenCalledOnce();
+
+        expect(
+            props.onDelete
+        ).toHaveBeenCalledWith(
             1
         );
     });

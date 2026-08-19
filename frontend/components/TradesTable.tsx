@@ -80,11 +80,7 @@ export default function TradesTable({
     ] = useState<number | null>(null);
 
     function confirmDelete() {
-        if (tradeToDelete === null) {
-            return;
-        }
-
-        onDelete(tradeToDelete);
+        onDelete(tradeToDelete!);
         setTradeToDelete(null);
     }
 

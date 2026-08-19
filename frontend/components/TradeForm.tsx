@@ -40,102 +40,159 @@ export default function TradeForm({
     onSave,
 }: TradeFormProps) {
     return (
-        <div className="mt-6 rounded-xl bg-white p-6 border border-zinc-200">
-            <h3 className="text-xl font-semibold mb-4">
+        <div className="mt-6 rounded-xl border border-zinc-200 bg-white p-6">
+            <h3 className="text-xl font-semibold">
                 Add Trade
             </h3>
 
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                <input
-                    type="text"
-                    value={symbol}
-                    onChange={(event) =>
-                        setSymbol(event.target.value)
-                    }
-                    placeholder="Symbol"
-                    className="rounded-lg border border-zinc-300 p-3"
-                />
+            <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                    <label className="mb-1 block text-sm font-medium">
+                        Symbol
+                        <span className="ml-1 text-red-600">*</span>
+                    </label>
 
-                <select
-                    value={direction}
-                    onChange={(event) =>
-                        setDirection(event.target.value)
-                    }
-                    className="rounded-lg border border-zinc-300 p-3"
-                >
-                    <option value="">Direction</option>
-                    <option value="long">Long</option>
-                    <option value="short">Short</option>
-                </select>
+                    <input
+                        type="text"
+                        value={symbol}
+                        onChange={(event) =>
+                            setSymbol(event.target.value)
+                        }
+                        placeholder="Symbol"
+                        className="w-full rounded-lg border border-zinc-300 p-3"
+                    />
+                </div>
 
-                <input
-                    type="number"
-                    value={entry}
-                    onChange={(event) =>
-                        setEntry(event.target.value)
-                    }
-                    placeholder="Entry"
-                    className="rounded-lg border border-zinc-300 p-3"
-                />
+                <div>
+                    <label className="mb-1 block text-sm font-medium">
+                        Direction
+                        <span className="ml-1 text-red-600">*</span>
+                    </label>
 
-                <input
-                    type="number"
-                    value={stop}
-                    onChange={(event) =>
-                        setStop(event.target.value)
-                    }
-                    placeholder="Stop"
-                    className="rounded-lg border border-zinc-300 p-3"
-                />
+                    <select
+                        value={direction}
+                        onChange={(event) =>
+                            setDirection(event.target.value)
+                        }
+                        className="w-full rounded-lg border border-zinc-300 p-3"
+                    >
+                        <option value="">Direction</option>
+                        <option value="long">Long</option>
+                        <option value="short">Short</option>
+                    </select>
+                </div>
 
-                <input
-                    type="number"
-                    value={exit}
-                    onChange={(event) =>
-                        setExit(event.target.value)
-                    }
-                    placeholder="Exit price"
-                    className="rounded-lg border border-zinc-300 p-3"
-                />
+                <div>
+                    <label className="mb-1 block text-sm font-medium">
+                        Entry
+                        <span className="ml-1 text-red-600">*</span>
+                    </label>
 
-                <input
-                    type="number"
-                    value={pnl}
-                    onChange={(event) =>
-                        setPnl(event.target.value)
-                    }
-                    placeholder="P/L"
-                    className="rounded-lg border border-zinc-300 p-3"
-                />
+                    <input
+                        type="number"
+                        value={entry}
+                        onChange={(event) =>
+                            setEntry(event.target.value)
+                        }
+                        placeholder="Entry"
+                        className="w-full rounded-lg border border-zinc-300 p-3"
+                    />
+                </div>
 
-                <input
-                    type="datetime-local"
-                    aria-label="Entry datetime"
-                    value={entryDatetime}
-                    onChange={(event) =>
-                        setEntryDatetime(
-                            event.target.value
-                        )
-                    }
-                    required
-                    className="rounded-lg border border-zinc-300 p-3"
-                />
+                <div>
+                    <label className="mb-1 block text-sm font-medium">
+                        Stop
+                        <span className="ml-1 text-red-600">*</span>
+                    </label>
 
-                <input
-                    type="datetime-local"
-                    aria-label="Exit datetime"
-                    value={exitDatetime}
-                    onChange={(event) =>
-                        setExitDatetime(
-                            event.target.value
-                        )
-                    }
-                    required
-                    className="rounded-lg border border-zinc-300 p-3"
-                />
+                    <input
+                        type="number"
+                        value={stop}
+                        onChange={(event) =>
+                            setStop(event.target.value)
+                        }
+                        placeholder="Stop"
+                        className="w-full rounded-lg border border-zinc-300 p-3"
+                    />
+                </div>
+
+                <div>
+                    <label className="mb-1 block text-sm font-medium">
+                        Exit price
+                        <span className="ml-1 text-red-600">*</span>
+                    </label>
+
+                    <input
+                        type="number"
+                        value={exit}
+                        onChange={(event) =>
+                            setExit(event.target.value)
+                        }
+                        placeholder="Exit price"
+                        className="w-full rounded-lg border border-zinc-300 p-3"
+                    />
+                </div>
+
+                <div>
+                    <label className="mb-1 block text-sm font-medium">
+                        P/L
+                        <span className="ml-1 text-red-600">*</span>
+                    </label>
+
+                    <input
+                        type="number"
+                        value={pnl}
+                        onChange={(event) =>
+                            setPnl(event.target.value)
+                        }
+                        placeholder="P/L"
+                        className="w-full rounded-lg border border-zinc-300 p-3"
+                    />
+                </div>
+
+                <div>
+                    <label className="mb-1 block text-sm font-medium">
+                        Entry date
+                        <span className="ml-1 text-red-600">*</span>
+                    </label>
+
+                    <input
+                        type="datetime-local"
+                        aria-label="Entry datetime"
+                        value={entryDatetime}
+                        onChange={(event) =>
+                            setEntryDatetime(
+                                event.target.value
+                            )
+                        }
+                        required
+                        className="w-full rounded-lg border border-zinc-300 p-3"
+                    />
+                </div>
+
+                <div>
+                    <label className="mb-1 block text-sm font-medium">
+                        Exit date
+                        <span className="ml-1 text-red-600">*</span>
+                    </label>
+
+                    <input
+                        type="datetime-local"
+                        aria-label="Exit datetime"
+                        value={exitDatetime}
+                        onChange={(event) =>
+                            setExitDatetime(
+                                event.target.value
+                            )
+                        }
+                        required
+                        className="w-full rounded-lg border border-zinc-300 p-3"
+                    />
+                </div>
             </div>
 
             <button
+                type="button"
                 onClick={onSave}
                 className="mt-4 cursor-pointer rounded-lg bg-black px-5 py-3 text-white"
             >

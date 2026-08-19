@@ -106,6 +106,11 @@ export default function Home() {
   const [tradeError, setTradeError] =
     useState<string | null>(null);
 
+  const [
+    tradeFormError,
+    setTradeFormError,
+  ] = useState<string | null>(null);
+
 
   const [
     trades,
@@ -382,12 +387,14 @@ export default function Home() {
       !entryDatetime ||
       !exitDatetime
     ) {
-      setTradeError(
-        "Please fill in all required fields before saving the trade."
+      setTradeFormError(
+        "Please fill in all required fields."
       );
 
       return;
     }
+
+    setTradeFormError(null);
 
     if (
       new Date(exitDatetime) <
@@ -796,6 +803,10 @@ export default function Home() {
                   ""
                 );
 
+                setTradeFormError(
+                  null
+                );
+
                 setShowForm(
                   !showForm
                 );
@@ -826,59 +837,67 @@ export default function Home() {
         {showForm &&
           selectedAccountId !==
           null && (
-            <TradeForm
-              symbol={
-                symbol
-              }
-              direction={
-                direction
-              }
-              entry={
-                entry
-              }
-              stop={
-                stop
-              }
-              exit={
-                exit
-              }
-              pnl={
-                pnl
-              }
-              entryDatetime={
-                entryDatetime
-              }
-              exitDatetime={
-                exitDatetime
-              }
-              setSymbol={
-                setSymbol
-              }
-              setDirection={
-                setDirection
-              }
-              setEntry={
-                setEntry
-              }
-              setStop={
-                setStop
-              }
-              setExit={
-                setExit
-              }
-              setPnl={
-                setPnl
-              }
-              setEntryDatetime={
-                setEntryDatetime
-              }
-              setExitDatetime={
-                setExitDatetime
-              }
-              onSave={
-                handleSaveTrade
-              }
-            />
+            <>
+              <TradeForm
+                symbol={
+                  symbol
+                }
+                direction={
+                  direction
+                }
+                entry={
+                  entry
+                }
+                stop={
+                  stop
+                }
+                exit={
+                  exit
+                }
+                pnl={
+                  pnl
+                }
+                entryDatetime={
+                  entryDatetime
+                }
+                exitDatetime={
+                  exitDatetime
+                }
+                setSymbol={
+                  setSymbol
+                }
+                setDirection={
+                  setDirection
+                }
+                setEntry={
+                  setEntry
+                }
+                setStop={
+                  setStop
+                }
+                setExit={
+                  setExit
+                }
+                setPnl={
+                  setPnl
+                }
+                setEntryDatetime={
+                  setEntryDatetime
+                }
+                setExitDatetime={
+                  setExitDatetime
+                }
+                onSave={
+                  handleSaveTrade
+                }
+              />
+
+              {tradeFormError && (
+                <p className="mt-2 text-sm text-red-600">
+                  {tradeFormError}
+                </p>
+              )}
+            </>
           )}
 
 

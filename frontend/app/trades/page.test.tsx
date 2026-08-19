@@ -1363,46 +1363,8 @@ describe(
 
 
         test(
-            "does not delete when confirmation is cancelled",
-            async () => {
-                vi.spyOn(
-                    window,
-                    "confirm"
-                ).mockReturnValue(
-                    false
-                );
-
-                await renderLoadedPage();
-
-                fireEvent.click(
-                    screen.getByRole(
-                        "button",
-                        {
-                            name:
-                                "Delete trade 1",
-                        }
-                    )
-                );
-
-                expect(
-                    fetchMock
-                ).toHaveBeenCalledTimes(
-                    2
-                );
-            }
-        );
-
-
-        test(
             "deletes trade and reloads after success",
             async () => {
-                vi.spyOn(
-                    window,
-                    "confirm"
-                ).mockReturnValue(
-                    true
-                );
-
                 fetchMock
                     .mockResolvedValueOnce(
                         accountsResponse()
@@ -1467,13 +1429,6 @@ describe(
         test(
             "does not reload when delete fails",
             async () => {
-                vi.spyOn(
-                    window,
-                    "confirm"
-                ).mockReturnValue(
-                    true
-                );
-
                 fetchMock
                     .mockResolvedValueOnce(
                         accountsResponse()
@@ -1526,13 +1481,6 @@ describe(
         test(
             "stops delete when session is missing",
             async () => {
-                vi.spyOn(
-                    window,
-                    "confirm"
-                ).mockReturnValue(
-                    true
-                );
-
                 mockGetSession
                     .mockResolvedValueOnce(
                         sessionResponse()
@@ -1580,13 +1528,6 @@ describe(
         test(
             "covers successful delete when selected account becomes null",
             async () => {
-                vi.spyOn(
-                    window,
-                    "confirm"
-                ).mockReturnValue(
-                    true
-                );
-
                 const {
                     rerender,
                 } =
