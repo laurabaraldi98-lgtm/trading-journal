@@ -77,6 +77,10 @@ const {
             | (() => void)
             | null,
 
+        reverseDates: null as
+            | (() => void)
+            | null,
+
         save: null as
             | (() => void)
             | null,
@@ -258,6 +262,16 @@ vi.mock("../components/TradeForm", () => ({
             () => {
                 setEntryDatetime("");
                 setExitDatetime("");
+            };
+
+        formActions.reverseDates =
+            () => {
+                setEntryDatetime(
+                    "2026-08-17T11:00"
+                );
+                setExitDatetime(
+                    "2026-08-17T10:00"
+                );
             };
 
         formActions.save =
@@ -688,6 +702,9 @@ describe(
                 null;
 
             formActions.clearDates =
+                null;
+
+            formActions.reverseDates =
                 null;
 
             formActions.save =
@@ -1296,6 +1313,59 @@ describe(
                 ).toHaveBeenCalledTimes(
                     2
                 );
+
+                expect(
+                    screen.getByText(
+                        "Please fill in all required fields before saving the trade."
+                    )
+                ).toBeInTheDocument();
+
+                fireEvent.click(
+                    screen.getByRole(
+                        "button",
+                        {
+                            name: "OK",
+                        }
+                    )
+                );
+
+                expect(
+                    screen.queryByText(
+                        "Please fill in all required fields before saving the trade."
+                    )
+                ).not.toBeInTheDocument();
+            }
+        );
+
+        test(
+            "does not create trade when exit date is before entry date",
+            async () => {
+                await renderDashboard();
+
+                await openForm();
+
+                await fillValidTrade();
+
+                await act(
+                    async () => {
+                        formActions
+                            .reverseDates!();
+                    }
+                );
+
+                await saveTrade();
+
+                expect(
+                    fetchMock
+                ).toHaveBeenCalledTimes(
+                    2
+                );
+
+                expect(
+                    screen.getByText(
+                        "Exit date cannot be before entry date."
+                    )
+                ).toBeInTheDocument();
             }
         );
 

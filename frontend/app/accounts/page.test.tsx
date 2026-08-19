@@ -803,6 +803,33 @@ describe("AccountsPage", () => {
         );
 
         test(
+            "does not create an account without required fields",
+            async () => {
+                fetchMock.mockResolvedValueOnce(
+                    successfulResponse([])
+                );
+
+                render(<AccountsPage />);
+
+                await screen.findByText(
+                    "No accounts yet."
+                );
+
+                openAddAccountForm();
+                saveNewAccount();
+
+                expect(
+                    screen.getByText(
+                        "Please fill in all required fields."
+                    )
+                ).toBeInTheDocument();
+
+                expect(fetchMock)
+                    .toHaveBeenCalledTimes(1);
+            }
+        );
+
+        test(
             "keeps the form open when creating an account fails",
             async () => {
                 fetchMock
