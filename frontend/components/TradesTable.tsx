@@ -1,10 +1,10 @@
+import { useState } from "react";
+import Link from "next/link";
 import {
     Pencil,
     Trash2,
     Save,
 } from "lucide-react";
-
-import Link from "next/link";
 
 type Trade = [
     number,
@@ -74,6 +74,20 @@ export default function TradesTable({
     onUpdate,
     onDelete,
 }: TradesTableProps) {
+    const [
+        tradeToDelete,
+        setTradeToDelete,
+    ] = useState<number | null>(null);
+
+    function confirmDelete() {
+        if (tradeToDelete === null) {
+            return;
+        }
+
+        onDelete(tradeToDelete);
+        setTradeToDelete(null);
+    }
+
     return (
         <div className="mt-8 rounded-2xl border border-slate-200 bg-white">
             <div className="border-b border-slate-200 px-4 py-4 sm:px-6 sm:py-5">
@@ -90,16 +104,11 @@ export default function TradesTable({
                             key={trade[0]}
                             className="space-y-4 p-4"
                         >
-                            <div>
-                                <label
-                                    htmlFor={`mobile-symbol-${trade[0]}`}
-                                    className="mb-1 block text-xs font-medium text-slate-500"
-                                >
+                            <label className="block">
+                                <span className="mb-1 block text-xs font-medium text-slate-500">
                                     Symbol
-                                </label>
-
+                                </span>
                                 <input
-                                    id={`mobile-symbol-${trade[0]}`}
                                     aria-label="Edit symbol"
                                     value={symbol}
                                     onChange={(event) =>
@@ -109,18 +118,13 @@ export default function TradesTable({
                                     }
                                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                                 />
-                            </div>
+                            </label>
 
-                            <div>
-                                <label
-                                    htmlFor={`mobile-direction-${trade[0]}`}
-                                    className="mb-1 block text-xs font-medium text-slate-500"
-                                >
+                            <label className="block">
+                                <span className="mb-1 block text-xs font-medium text-slate-500">
                                     Direction
-                                </label>
-
+                                </span>
                                 <select
-                                    id={`mobile-direction-${trade[0]}`}
                                     aria-label="Edit direction"
                                     value={direction}
                                     onChange={(event) =>
@@ -133,91 +137,67 @@ export default function TradesTable({
                                     <option value="long">
                                         Long
                                     </option>
-
                                     <option value="short">
                                         Short
                                     </option>
                                 </select>
-                            </div>
+                            </label>
 
                             <div className="grid grid-cols-3 gap-3">
-                                <div>
-                                    <label
-                                        htmlFor={`mobile-entry-${trade[0]}`}
-                                        className="mb-1 block text-xs font-medium text-slate-500"
-                                    >
+                                <label>
+                                    <span className="mb-1 block text-xs font-medium text-slate-500">
                                         Entry
-                                    </label>
-
+                                    </span>
                                     <input
-                                        id={`mobile-entry-${trade[0]}`}
                                         aria-label="Edit entry"
                                         value={entry}
                                         onChange={(event) =>
                                             setEntry(
-                                                event.target
-                                                    .value
+                                                event.target.value
                                             )
                                         }
                                         className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-2 text-sm"
                                     />
-                                </div>
+                                </label>
 
-                                <div>
-                                    <label
-                                        htmlFor={`mobile-stop-${trade[0]}`}
-                                        className="mb-1 block text-xs font-medium text-slate-500"
-                                    >
+                                <label>
+                                    <span className="mb-1 block text-xs font-medium text-slate-500">
                                         Stop
-                                    </label>
-
+                                    </span>
                                     <input
-                                        id={`mobile-stop-${trade[0]}`}
                                         aria-label="Edit stop"
                                         value={stop}
                                         onChange={(event) =>
                                             setStop(
-                                                event.target
-                                                    .value
+                                                event.target.value
                                             )
                                         }
                                         className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-2 text-sm"
                                     />
-                                </div>
+                                </label>
 
-                                <div>
-                                    <label
-                                        htmlFor={`mobile-exit-${trade[0]}`}
-                                        className="mb-1 block text-xs font-medium text-slate-500"
-                                    >
+                                <label>
+                                    <span className="mb-1 block text-xs font-medium text-slate-500">
                                         Exit
-                                    </label>
-
+                                    </span>
                                     <input
-                                        id={`mobile-exit-${trade[0]}`}
                                         aria-label="Edit exit"
                                         value={exit}
                                         onChange={(event) =>
                                             setExit(
-                                                event.target
-                                                    .value
+                                                event.target.value
                                             )
                                         }
                                         className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-2 text-sm"
                                     />
-                                </div>
+                                </label>
                             </div>
 
-                            <div>
-                                <label
-                                    htmlFor={`mobile-entry-time-${trade[0]}`}
-                                    className="mb-1 block text-xs font-medium text-slate-500"
-                                >
+                            <label className="block">
+                                <span className="mb-1 block text-xs font-medium text-slate-500">
                                     Entry time
-                                </label>
-
+                                </span>
                                 <input
-                                    id={`mobile-entry-time-${trade[0]}`}
                                     type="datetime-local"
                                     aria-label="Edit entry datetime"
                                     value={entryDatetime}
@@ -229,18 +209,13 @@ export default function TradesTable({
                                     required
                                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                                 />
-                            </div>
+                            </label>
 
-                            <div>
-                                <label
-                                    htmlFor={`mobile-exit-time-${trade[0]}`}
-                                    className="mb-1 block text-xs font-medium text-slate-500"
-                                >
+                            <label className="block">
+                                <span className="mb-1 block text-xs font-medium text-slate-500">
                                     Exit time
-                                </label>
-
+                                </span>
                                 <input
-                                    id={`mobile-exit-time-${trade[0]}`}
                                     type="datetime-local"
                                     aria-label="Edit exit datetime"
                                     value={exitDatetime}
@@ -252,18 +227,13 @@ export default function TradesTable({
                                     required
                                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                                 />
-                            </div>
+                            </label>
 
-                            <div>
-                                <label
-                                    htmlFor={`mobile-pnl-${trade[0]}`}
-                                    className="mb-1 block text-xs font-medium text-slate-500"
-                                >
+                            <label className="block">
+                                <span className="mb-1 block text-xs font-medium text-slate-500">
                                     P/L
-                                </label>
-
+                                </span>
                                 <input
-                                    id={`mobile-pnl-${trade[0]}`}
                                     type="number"
                                     aria-label="Edit P/L"
                                     value={pnl}
@@ -274,7 +244,7 @@ export default function TradesTable({
                                     }
                                     className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
                                 />
-                            </div>
+                            </label>
 
                             <button
                                 type="button"
@@ -301,8 +271,7 @@ export default function TradesTable({
 
                                     <p
                                         className={
-                                            trade[2] ===
-                                                "long"
+                                            trade[2] === "long"
                                                 ? "mt-1 text-sm font-semibold text-emerald-600"
                                                 : "mt-1 text-sm font-semibold text-rose-600"
                                         }
@@ -341,35 +310,20 @@ export default function TradesTable({
                             </div>
 
                             <div className="mt-4 grid grid-cols-3 gap-3 text-sm">
-                                <div>
-                                    <p className="text-xs text-slate-400">
-                                        Entry
-                                    </p>
-
-                                    <p className="mt-1 text-slate-700">
-                                        {trade[3]}
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <p className="text-xs text-slate-400">
-                                        Stop
-                                    </p>
-
-                                    <p className="mt-1 text-slate-700">
-                                        {trade[4]}
-                                    </p>
-                                </div>
-
-                                <div>
-                                    <p className="text-xs text-slate-400">
-                                        Exit
-                                    </p>
-
-                                    <p className="mt-1 text-slate-700">
-                                        {trade[5]}
-                                    </p>
-                                </div>
+                                {[
+                                    ["Entry", trade[3]],
+                                    ["Stop", trade[4]],
+                                    ["Exit", trade[5]],
+                                ].map(([label, value]) => (
+                                    <div key={label}>
+                                        <p className="text-xs text-slate-400">
+                                            {label}
+                                        </p>
+                                        <p className="mt-1 text-slate-700">
+                                            {value}
+                                        </p>
+                                    </div>
+                                ))}
                             </div>
 
                             <div className="mt-4 flex gap-2">
@@ -388,7 +342,9 @@ export default function TradesTable({
                                 <button
                                     type="button"
                                     onClick={() =>
-                                        onDelete(trade[0])
+                                        setTradeToDelete(
+                                            trade[0]
+                                        )
                                     }
                                     aria-label="Delete trade"
                                     className="flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg bg-rose-50 py-2 text-sm font-medium text-rose-600 transition hover:bg-rose-100"
@@ -423,39 +379,30 @@ export default function TradesTable({
                             <th className="py-3 pl-6 pr-6">
                                 Symbol
                             </th>
-
                             <th className="py-3 pr-6">
                                 Direction
                             </th>
-
                             <th className="py-3 pr-6">
                                 Entry
                             </th>
-
                             <th className="py-3 pr-6">
                                 Stop
                             </th>
-
                             <th className="py-3 pr-6">
                                 Exit
                             </th>
-
                             <th className="py-3 pr-6">
                                 Entry Time
                             </th>
-
                             <th className="py-3 pr-6">
                                 Exit Time
                             </th>
-
                             <th className="py-3 pr-6">
                                 Result
                             </th>
-
                             <th className="py-3 pr-6">
                                 P/L
                             </th>
-
                             <th className="py-3 pr-6">
                                 Actions
                             </th>
@@ -475,13 +422,9 @@ export default function TradesTable({
                                             <input
                                                 aria-label="Edit symbol"
                                                 value={symbol}
-                                                onChange={(
-                                                    event
-                                                ) =>
+                                                onChange={(event) =>
                                                     setSymbol(
-                                                        event
-                                                            .target
-                                                            .value
+                                                        event.target.value
                                                     )
                                                 }
                                                 className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
@@ -491,16 +434,10 @@ export default function TradesTable({
                                         <td className="py-4 pr-6">
                                             <select
                                                 aria-label="Edit direction"
-                                                value={
-                                                    direction
-                                                }
-                                                onChange={(
-                                                    event
-                                                ) =>
+                                                value={direction}
+                                                onChange={(event) =>
                                                     setDirection(
-                                                        event
-                                                            .target
-                                                            .value
+                                                        event.target.value
                                                     )
                                                 }
                                                 className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
@@ -508,63 +445,65 @@ export default function TradesTable({
                                                 <option value="long">
                                                     Long
                                                 </option>
-
                                                 <option value="short">
                                                     Short
                                                 </option>
                                             </select>
                                         </td>
 
-                                        <td className="py-4 pr-6">
-                                            <input
-                                                aria-label="Edit entry"
-                                                value={entry}
-                                                onChange={(
-                                                    event
-                                                ) =>
-                                                    setEntry(
-                                                        event
-                                                            .target
-                                                            .value
-                                                    )
-                                                }
-                                                className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
-                                            />
-                                        </td>
-
-                                        <td className="py-4 pr-6">
-                                            <input
-                                                aria-label="Edit stop"
-                                                value={stop}
-                                                onChange={(
-                                                    event
-                                                ) =>
-                                                    setStop(
-                                                        event
-                                                            .target
-                                                            .value
-                                                    )
-                                                }
-                                                className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
-                                            />
-                                        </td>
-
-                                        <td className="py-4 pr-6">
-                                            <input
-                                                aria-label="Edit exit"
-                                                value={exit}
-                                                onChange={(
-                                                    event
-                                                ) =>
-                                                    setExit(
-                                                        event
-                                                            .target
-                                                            .value
-                                                    )
-                                                }
-                                                className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
-                                            />
-                                        </td>
+                                        {[
+                                            [
+                                                "Edit entry",
+                                                entry,
+                                                setEntry,
+                                            ],
+                                            [
+                                                "Edit stop",
+                                                stop,
+                                                setStop,
+                                            ],
+                                            [
+                                                "Edit exit",
+                                                exit,
+                                                setExit,
+                                            ],
+                                        ].map(
+                                            ([
+                                                label,
+                                                value,
+                                                setter,
+                                            ]) => (
+                                                <td
+                                                    key={
+                                                        label as string
+                                                    }
+                                                    className="py-4 pr-6"
+                                                >
+                                                    <input
+                                                        aria-label={
+                                                            label as string
+                                                        }
+                                                        value={
+                                                            value as string
+                                                        }
+                                                        onChange={(
+                                                            event
+                                                        ) =>
+                                                            (
+                                                                setter as (
+                                                                    value: string
+                                                                ) => void
+                                                            )(
+                                                                event
+                                                                    .target
+                                                                    .value
+                                                            )
+                                                        }
+                                                        className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
+                                                    />
+                                                </td>
+                                            )
+                                        )}
 
                                         <td className="py-4 pr-6">
                                             <input
@@ -573,13 +512,9 @@ export default function TradesTable({
                                                 value={
                                                     entryDatetime
                                                 }
-                                                onChange={(
-                                                    event
-                                                ) =>
+                                                onChange={(event) =>
                                                     setEntryDatetime(
-                                                        event
-                                                            .target
-                                                            .value
+                                                        event.target.value
                                                     )
                                                 }
                                                 required
@@ -594,13 +529,9 @@ export default function TradesTable({
                                                 value={
                                                     exitDatetime
                                                 }
-                                                onChange={(
-                                                    event
-                                                ) =>
+                                                onChange={(event) =>
                                                     setExitDatetime(
-                                                        event
-                                                            .target
-                                                            .value
+                                                        event.target.value
                                                     )
                                                 }
                                                 required
@@ -611,19 +542,14 @@ export default function TradesTable({
                                         <td className="py-4 pr-6">
                                             <span
                                                 className={
-                                                    trade[6] >
-                                                        0
+                                                    trade[6] > 0
                                                         ? "font-medium text-emerald-600"
-                                                        : trade[6] <
-                                                            0
+                                                        : trade[6] < 0
                                                             ? "font-medium text-rose-600"
                                                             : "font-medium text-slate-500"
                                                 }
                                             >
-                                                {
-                                                    trade[6]
-                                                }
-                                                R
+                                                {trade[6]}R
                                             </span>
                                         </td>
 
@@ -632,13 +558,9 @@ export default function TradesTable({
                                                 type="number"
                                                 aria-label="Edit P/L"
                                                 value={pnl}
-                                                onChange={(
-                                                    event
-                                                ) =>
+                                                onChange={(event) =>
                                                     setPnl(
-                                                        event
-                                                            .target
-                                                            .value
+                                                        event.target.value
                                                     )
                                                 }
                                                 className="w-full min-w-0 rounded-lg border border-slate-300 px-2 py-1"
@@ -657,9 +579,7 @@ export default function TradesTable({
                                                 className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg bg-emerald-50 text-emerald-600 transition hover:bg-emerald-100"
                                             >
                                                 <Save
-                                                    size={
-                                                        16
-                                                    }
+                                                    size={16}
                                                 />
                                             </button>
                                         </td>
@@ -667,43 +587,31 @@ export default function TradesTable({
                                 ) : (
                                     <>
                                         <td className="py-4 pl-6 pr-6 font-medium text-slate-900">
-                                            {
-                                                trade[1]
-                                            }
+                                            {trade[1]}
                                         </td>
 
                                         <td className="py-4 pr-6">
                                             <span
                                                 className={
-                                                    trade[2] ===
-                                                        "long"
+                                                    trade[2] === "long"
                                                         ? "font-semibold text-emerald-600"
                                                         : "font-semibold text-rose-600"
                                                 }
                                             >
-                                                {trade[2] ===
-                                                    "long"
+                                                {trade[2] === "long"
                                                     ? "Long ↑"
                                                     : "Short ↓"}
                                             </span>
                                         </td>
 
                                         <td className="py-4 pr-6">
-                                            {
-                                                trade[3]
-                                            }
+                                            {trade[3]}
                                         </td>
-
                                         <td className="py-4 pr-6">
-                                            {
-                                                trade[4]
-                                            }
+                                            {trade[4]}
                                         </td>
-
                                         <td className="py-4 pr-6">
-                                            {
-                                                trade[5]
-                                            }
+                                            {trade[5]}
                                         </td>
 
                                         <td className="whitespace-nowrap py-4 pr-6">
@@ -721,37 +629,28 @@ export default function TradesTable({
                                         <td className="py-4 pr-6">
                                             <span
                                                 className={
-                                                    trade[6] >
-                                                        0
+                                                    trade[6] > 0
                                                         ? "font-semibold text-emerald-600"
-                                                        : trade[6] <
-                                                            0
+                                                        : trade[6] < 0
                                                             ? "font-semibold text-rose-600"
                                                             : "font-semibold text-slate-500"
                                                 }
                                             >
-                                                {
-                                                    trade[6]
-                                                }
-                                                R
+                                                {trade[6]}R
                                             </span>
                                         </td>
 
                                         <td className="py-4 pr-6">
                                             <span
                                                 className={
-                                                    trade[7] >
-                                                        0
+                                                    trade[7] > 0
                                                         ? "font-semibold text-emerald-600"
-                                                        : trade[7] <
-                                                            0
+                                                        : trade[7] < 0
                                                             ? "font-semibold text-rose-600"
                                                             : "font-semibold text-slate-500"
                                                 }
                                             >
-                                                {
-                                                    trade[7]
-                                                }
+                                                {trade[7]}
                                             </span>
                                         </td>
 
@@ -777,7 +676,7 @@ export default function TradesTable({
                                                 <button
                                                     type="button"
                                                     onClick={() =>
-                                                        onDelete(
+                                                        setTradeToDelete(
                                                             trade[0]
                                                         )
                                                     }
@@ -800,12 +699,49 @@ export default function TradesTable({
                 </table>
             </div>
 
+            {tradeToDelete !== null && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+                    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                        <h3 className="text-xl font-bold text-rose-600">
+                            Delete trade
+                        </h3>
+
+                        <p className="mt-3 text-sm leading-6 text-slate-700">
+                            Are you sure you want to permanently delete this trade?
+                        </p>
+
+                        <p className="mt-3 font-semibold text-rose-600">
+                            This action cannot be undone.
+                        </p>
+
+                        <div className="mt-6 flex justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={() =>
+                                    setTradeToDelete(null)
+                                }
+                                className="cursor-pointer rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100"
+                            >
+                                Cancel
+                            </button>
+
+                            <button
+                                type="button"
+                                onClick={confirmDelete}
+                                className="cursor-pointer rounded-lg bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-rose-700"
+                            >
+                                Delete permanently
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {showViewAll && (
                 <div className="flex justify-center border-t border-slate-100 px-4 py-4 sm:px-6">
                     <Link
                         href={
-                            selectedAccountId !==
-                                null
+                            selectedAccountId !== null
                                 ? `/trades?account_id=${selectedAccountId}`
                                 : "/trades"
                         }

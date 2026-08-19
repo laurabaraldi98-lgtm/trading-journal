@@ -183,13 +183,6 @@ function TradesPageContent() {
     async function handleDeleteTrade(
         tradeId: number
     ) {
-        const confirmed = window.confirm(
-            "Are you sure you want to delete this trade?"
-        );
-
-        if (!confirmed) {
-            return;
-        }
 
         const {
             data: { session },
