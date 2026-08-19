@@ -119,10 +119,6 @@ export default function AccountsPage() {
             );
 
             if (!response.ok) {
-                console.log(
-                    "ACCOUNTS ERROR:",
-                    response.status
-                );
 
                 setAccountsLoading(false);
 
@@ -131,11 +127,6 @@ export default function AccountsPage() {
 
             const data =
                 await response.json();
-
-            console.log(
-                "ACCOUNTS DATA:",
-                data
-            );
 
             setAccounts(data);
 

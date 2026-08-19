@@ -161,6 +161,54 @@ def test_create_trade_rejects_exit_before_entry(
     assert response.status_code == 422
 
 
+@pytest.mark.parametrize(
+    "method,url,trade_data",
+    [
+        (
+            "post",
+            "/trades",
+            {
+                "account_id": 1,
+                "symbol": "eurusd",
+                "direction": "long",
+                "entry": 1.12,
+                "stop": 1.12,
+                "exit": 1.14,
+                "pnl": 400,
+                "entry_datetime": "2026-08-12T10:00:00",
+                "exit_datetime": "2026-08-12T11:00:00",
+            },
+        ),
+        (
+            "patch",
+            "/trades/5",
+            {
+                "symbol": "eurusd",
+                "direction": "long",
+                "entry": 1.12,
+                "stop": 1.12,
+                "exit": 1.14,
+                "pnl": 400,
+                "entry_datetime": "2026-08-12T10:00:00",
+                "exit_datetime": "2026-08-12T11:00:00",
+            },
+        ),
+    ],
+)
+def test_rejects_entry_equal_to_stop(
+    authenticated_user,
+    method,
+    url,
+    trade_data,
+):
+    response = getattr(client, method)(
+        url,
+        json=trade_data,
+    )
+
+    assert response.status_code == 422
+
+
 def test_create_trade_passes_correct_data_to_save(
     authenticated_user,
 ):

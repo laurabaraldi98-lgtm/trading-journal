@@ -32,10 +32,15 @@ class TradeBase(BaseModel):
     exit_datetime: datetime
 
     @model_validator(mode="after")
-    def validate_dates(self):
+    def validate_trade(self):
         if self.exit_datetime < self.entry_datetime:
             raise ValueError(
                 "Exit datetime cannot be before entry datetime"
+            )
+
+        if self.entry == self.stop:
+            raise ValueError(
+                "Entry and stop cannot be the same"
             )
 
         return self
