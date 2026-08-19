@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, Field, model_validator
 from typing import Literal
 import os
 from datetime import datetime
@@ -47,20 +47,20 @@ class TradeUpdate(TradeBase):
     pass
 
 
-class AccountCreate(BaseModel):
-    name: str
+class AccountBase(BaseModel):
+    name: str = Field(min_length=1)
     starting_balance: float
-    currency: str
+    currency: str = Field(min_length=1)
     broker: str | None = None
     account_type: str | None = None
 
 
-class AccountUpdate(BaseModel):
-    name: str
-    starting_balance: float
-    currency: str
-    broker: str | None = None
-    account_type: str | None = None
+class AccountCreate(AccountBase):
+    pass
+
+
+class AccountUpdate(AccountBase):
+    pass
 
 
 app = FastAPI()

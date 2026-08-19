@@ -820,6 +820,15 @@ describe("AccountsPage", () => {
                 );
 
                 openAddAccountForm();
+
+                fillNewAccountForm({
+                    name: "Test account",
+                    balance: "10000",
+                    currency: "USD",
+                    broker: "",
+                    type: "",
+                });
+
                 saveNewAccount();
 
                 await waitFor(() => {
@@ -866,6 +875,15 @@ describe("AccountsPage", () => {
                 );
 
                 openAddAccountForm();
+
+                fillNewAccountForm({
+                    name: "Test account",
+                    balance: "10000",
+                    currency: "USD",
+                    broker: "",
+                    type: "",
+                });
+
                 saveNewAccount();
 
                 await waitFor(() => {

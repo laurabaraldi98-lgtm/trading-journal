@@ -37,6 +37,7 @@ export default function AccountForm({
                 <div className="lg:col-span-3">
                     <label className="mb-1 block text-sm font-medium">
                         Account name
+                        <span className="ml-1 text-red-600">*</span>
                     </label>
 
                     <input
@@ -53,8 +54,8 @@ export default function AccountForm({
                 <div className="lg:col-span-2">
                     <label className="mb-1 block text-sm font-medium">
                         Starting balance
+                        <span className="ml-1 text-red-600">*</span>
                     </label>
-
                     <input
                         type="number"
                         value={startingBalance}
@@ -69,6 +70,7 @@ export default function AccountForm({
                 <div className="lg:col-span-1">
                     <label className="mb-1 block text-sm font-medium">
                         Currency
+                        <span className="ml-1 text-red-600">*</span>
                     </label>
 
                     <select

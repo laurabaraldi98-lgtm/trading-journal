@@ -35,6 +35,7 @@ export default function AccountsPage() {
     const [currency, setCurrency] = useState("USD");
     const [broker, setBroker] = useState("");
     const [accountType, setAccountType] = useState("");
+    const [accountError, setAccountError] = useState("");
 
     const [editingAccountId, setEditingAccountId] =
         useState<number | null>(null);
@@ -96,6 +97,19 @@ export default function AccountsPage() {
     }
 
     async function handleSaveAccount() {
+        if (
+            !name.trim() ||
+            !startingBalance ||
+            !currency.trim()
+        ) {
+            setAccountError(
+                "Please fill in all required fields."
+            );
+            return;
+        }
+
+        setAccountError("");
+
         const {
             data: { session },
         } = await supabase.auth.getSession();
@@ -104,7 +118,6 @@ export default function AccountsPage() {
             router.push("/login");
             return;
         }
-
         const accountData = {
             name,
             starting_balance: Number(startingBalance),
@@ -292,19 +305,27 @@ export default function AccountsPage() {
                 </div>
 
                 {showAccountForm && (
-                    <AccountForm
-                        name={name}
-                        startingBalance={startingBalance}
-                        currency={currency}
-                        broker={broker}
-                        accountType={accountType}
-                        setName={setName}
-                        setStartingBalance={setStartingBalance}
-                        setCurrency={setCurrency}
-                        setBroker={setBroker}
-                        setAccountType={setAccountType}
-                        onSave={handleSaveAccount}
-                    />
+                    <>
+                        <AccountForm
+                            name={name}
+                            startingBalance={startingBalance}
+                            currency={currency}
+                            broker={broker}
+                            accountType={accountType}
+                            setName={setName}
+                            setStartingBalance={setStartingBalance}
+                            setCurrency={setCurrency}
+                            setBroker={setBroker}
+                            setAccountType={setAccountType}
+                            onSave={handleSaveAccount}
+                        />
+
+                        {accountError && (
+                            <p className="mt-2 text-sm text-red-600">
+                                {accountError}
+                            </p>
+                        )}
+                    </>
                 )}
 
                 <div className="mt-8 rounded-xl border border-zinc-200 bg-white">
