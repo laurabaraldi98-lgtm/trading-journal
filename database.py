@@ -26,6 +26,19 @@ def get_authenticated_client(token: str):
     return client
 
 
+class DatabaseError(Exception):
+    pass
+
+
+def execute_query(query):
+    try:
+        return query.execute()
+    except Exception as error:
+        raise DatabaseError(
+            "Database request failed"
+        ) from error
+
+
 def load_trades_from_supabase(
     user_id: str,
     token: str,
@@ -43,14 +56,12 @@ def load_trades_from_supabase(
     if account_id is not None:
         query = query.eq("account_id", account_id)
 
-    response = (
-        query
-        .order(
+    response = execute_query(
+        query.order(
             "entry_datetime",
             desc=True,
             nullsfirst=False,
         )
-        .execute()
     )
 
     loaded_trades = []
@@ -103,11 +114,10 @@ def save_trade_to_supabase(
         "user_id": user_id,
     }
 
-    response = (
+    response = execute_query(
         client
         .table("trades")
         .insert(new_trade)
-        .execute()
     )
 
     saved_trade = response.data[0]
@@ -131,13 +141,12 @@ def delete_trade_from_supabase(
 ):
     client = get_authenticated_client(token)
 
-    response = (
+    response = execute_query(
         client
         .table("trades")
         .delete()
         .eq("id", trade_id)
         .eq("user_id", user_id)
-        .execute()
     )
 
     return response
@@ -171,13 +180,12 @@ def update_trade_in_supabase(
         ),
     }
 
-    response = (
+    response = execute_query(
         client
         .table("trades")
         .update(trade_data)
         .eq("id", trade_id)
         .eq("user_id", user_id)
-        .execute()
     )
 
     return response
@@ -189,13 +197,12 @@ def load_accounts_from_supabase(
 ):
     client = get_authenticated_client(token)
 
-    response = (
+    response = execute_query(
         client
         .table("accounts")
         .select("*")
         .eq("user_id", user_id)
         .order("created_at")
-        .execute()
     )
 
     return response.data
@@ -217,11 +224,10 @@ def save_account_to_supabase(
         "account_type": account.get("account_type"),
     }
 
-    response = (
+    response = execute_query(
         client
         .table("accounts")
         .insert(data)
-        .execute()
     )
 
     return response.data
@@ -243,13 +249,12 @@ def update_account_in_supabase(
         "account_type": account.get("account_type"),
     }
 
-    response = (
+    response = execute_query(
         client
         .table("accounts")
         .update(data)
         .eq("id", account_id)
         .eq("user_id", user_id)
-        .execute()
     )
 
     return response.data
@@ -262,13 +267,12 @@ def delete_account_from_supabase(
 ):
     client = get_authenticated_client(token)
 
-    response = (
+    response = execute_query(
         client
         .table("accounts")
         .delete()
         .eq("id", account_id)
         .eq("user_id", user_id)
-        .execute()
     )
 
     return response.data

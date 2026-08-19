@@ -1,5 +1,6 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
 from typing import Literal
 import os
@@ -8,6 +9,7 @@ from datetime import datetime
 from auth import get_current_user
 from calculations import calculate_r
 from database import (
+    DatabaseError,
     load_trades_from_supabase,
     save_trade_to_supabase,
     delete_trade_from_supabase,
@@ -20,7 +22,7 @@ from database import (
 
 
 class TradeBase(BaseModel):
-    symbol: str
+    symbol: str = Field(min_length=1)
     direction: Literal["long", "short"]
     entry: float
     stop: float
@@ -64,6 +66,19 @@ class AccountUpdate(AccountBase):
 
 
 app = FastAPI()
+
+
+@app.exception_handler(DatabaseError)
+async def database_error_handler(
+    request: Request,
+    exc: DatabaseError,
+):
+    return JSONResponse(
+        status_code=503,
+        content={
+            "detail": "Database service unavailable"
+        },
+    )
 
 
 cors_origins = os.getenv(

@@ -3,6 +3,7 @@ import pytest
 from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import patch
+from database import DatabaseError
 
 from fastapi.testclient import TestClient
 
@@ -100,12 +101,22 @@ def test_create_trade(authenticated_user):
     assert response.json() == trade_data
 
 
-def test_create_trade_missing_direction(
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("direction", None),
+        ("symbol", ""),
+    ],
+)
+def test_create_trade_rejects_invalid_fields(
     authenticated_user,
+    field,
+    value,
 ):
     trade_data = {
         "account_id": 1,
         "symbol": "eurusd",
+        "direction": "long",
         "entry": 1.12,
         "stop": 1.11,
         "exit": 1.14,
@@ -113,6 +124,11 @@ def test_create_trade_missing_direction(
         "entry_datetime": "2026-08-12T10:00:00",
         "exit_datetime": "2026-08-12T11:00:00",
     }
+
+    if value is None:
+        trade_data.pop(field)
+    else:
+        trade_data[field] = value
 
     response = client.post(
         "/trades",
@@ -319,6 +335,23 @@ def test_update_trade_invalid_direction(
     )
 
     assert response.status_code == 422
+
+
+def test_database_error_returns_503(
+    authenticated_user,
+):
+    with patch(
+        "api.load_trades_from_supabase",
+        side_effect=DatabaseError(
+            "Database request failed"
+        ),
+    ):
+        response = client.get("/trades")
+
+    assert response.status_code == 503
+    assert response.json() == {
+        "detail": "Database service unavailable"
+    }
 
 
 def test_get_accounts(authenticated_user):

@@ -5,6 +5,8 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 from database import (
+    DatabaseError,
+    execute_query,
     load_trades_from_supabase,
     save_trade_to_supabase,
     delete_trade_from_supabase,
@@ -31,6 +33,19 @@ def make_mock_client(mock_query):
     mock_client = MagicMock()
     mock_client.table.return_value = mock_query
     return mock_client
+
+
+def test_execute_query_raises_database_error():
+    mock_query = MagicMock()
+    mock_query.execute.side_effect = Exception(
+        "Supabase failed"
+    )
+
+    with pytest.raises(
+        DatabaseError,
+        match="Database request failed",
+    ):
+        execute_query(mock_query)
 
 
 def test_load_trades_from_supabase():
