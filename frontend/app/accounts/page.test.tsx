@@ -264,11 +264,18 @@ function editAccount() {
     fireEvent.click(editButton);
 }
 
-function openDeleteDialog() {
-    const [deleteButton] =
+function openDeleteDialog(
+    layout: "mobile" | "desktop" = "mobile"
+) {
+    const deleteButtons =
         screen.getAllByRole("button", {
             name: "Delete account",
         });
+
+    const deleteButton =
+        layout === "mobile"
+            ? deleteButtons[0]
+            : deleteButtons[1];
 
     fireEvent.click(deleteButton);
 }
@@ -677,6 +684,25 @@ describe("AccountsPage", () => {
         });
 
         test(
+            "shows an error when required fields are missing",
+            async () => {
+                await renderWithAccounts();
+
+                openAddAccountForm();
+                saveNewAccount();
+
+                expect(
+                    screen.getByText(
+                        "Please fill in all required fields."
+                    )
+                ).toBeInTheDocument();
+
+                expect(fetchMock)
+                    .toHaveBeenCalledTimes(1);
+            }
+        );
+
+        test(
             "creates a new account and reloads the account list",
             async () => {
                 fetchMock
@@ -1020,6 +1046,125 @@ describe("AccountsPage", () => {
         });
 
         test(
+            "edits an account from the desktop table",
+            async () => {
+                fetchMock
+                    .mockResolvedValueOnce(
+                        successfulResponse([
+                            fakeAccount,
+                        ])
+                    )
+                    .mockResolvedValueOnce(
+                        failedResponse()
+                    );
+
+                render(<AccountsPage />);
+
+                await screen.findAllByText(
+                    "FTMO 100K"
+                );
+
+                const editButtons =
+                    screen.getAllByRole(
+                        "button",
+                        {
+                            name: "Edit account",
+                        }
+                    );
+
+                fireEvent.click(
+                    editButtons[1]
+                );
+
+                const textInputs =
+                    screen.getAllByRole(
+                        "textbox"
+                    );
+
+                const desktopNameInput =
+                    textInputs[3];
+                const desktopBrokerInput =
+                    textInputs[4];
+                const desktopTypeInput =
+                    textInputs[5];
+
+                const balanceInputs =
+                    screen.getAllByRole(
+                        "spinbutton"
+                    );
+
+                const currencySelects =
+                    screen.getAllByRole(
+                        "combobox"
+                    );
+
+                fireEvent.change(
+                    desktopNameInput,
+                    {
+                        target: {
+                            value:
+                                "Desktop account",
+                        },
+                    }
+                );
+
+                fireEvent.change(
+                    balanceInputs[1],
+                    {
+                        target: {
+                            value: "150000",
+                        },
+                    }
+                );
+
+                fireEvent.change(
+                    currencySelects[1],
+                    {
+                        target: {
+                            value: "EUR",
+                        },
+                    }
+                );
+
+                fireEvent.change(
+                    desktopBrokerInput,
+                    {
+                        target: {
+                            value:
+                                "Desktop broker",
+                        },
+                    }
+                );
+
+                fireEvent.change(
+                    desktopTypeInput,
+                    {
+                        target: {
+                            value: "Personal",
+                        },
+                    }
+                );
+
+                const saveButtons =
+                    screen.getAllByRole(
+                        "button",
+                        {
+                            name: "Save account",
+                        }
+                    );
+
+                fireEvent.click(
+                    saveButtons[1]
+                );
+
+                await waitFor(() => {
+                    expect(fetchMock)
+                        .toHaveBeenCalledTimes(2);
+                });
+            }
+        );
+
+        test(
             "uses empty editable fields for null broker and type",
             async () => {
                 fetchMock.mockResolvedValue(
@@ -1115,7 +1260,7 @@ describe("AccountsPage", () => {
                     fakeAccount,
                 ]);
 
-                openDeleteDialog();
+                openDeleteDialog("desktop");
 
                 expect(
                     screen.getByText(

@@ -94,35 +94,42 @@ function renderTable(
     return props;
 }
 
+function editingProps() {
+    return {
+        editingTradeId: 1,
+        symbol: "EURUSD",
+        direction: "long",
+        entry: "1.15",
+        stop: "1.14",
+        exit: "1.17",
+        pnl: "150",
+        entryDatetime:
+            "2026-08-12T10:00",
+        exitDatetime:
+            "2026-08-12T11:00",
+    };
+}
+
 afterEach(() => {
     cleanup();
 });
 
 describe("TradesTable", () => {
-    test(
-        "shows trade data",
-        () => {
-            renderTable();
+    test("shows trade data in both layouts", () => {
+        renderTable();
 
-            expect(
-                screen.getAllByText(
-                    "EURUSD"
-                )[0]
-            ).toBeInTheDocument();
+        expect(
+            screen.getAllByText("EURUSD")
+        ).toHaveLength(2);
 
-            expect(
-                screen.getAllByText(
-                    "Long ↑"
-                )[0]
-            ).toBeInTheDocument();
+        expect(
+            screen.getAllByText("Long ↑")
+        ).toHaveLength(2);
 
-            expect(
-                screen.getAllByText(
-                    "2R"
-                )[0]
-            ).toBeInTheDocument();
-        }
-    );
+        expect(
+            screen.getAllByText("2R")
+        ).toHaveLength(2);
+    });
 
     test.each([
         [
@@ -161,101 +168,112 @@ describe("TradesTable", () => {
             expect(
                 screen.getAllByText(
                     expectedDirection
-                )[0]
-            ).toBeInTheDocument();
+                )
+            ).toHaveLength(2);
 
             expect(
                 screen.getAllByText(
                     expectedResult
-                )[0]
-            ).toBeInTheDocument();
+                )
+            ).toHaveLength(2);
         }
     );
 
-    test(
-        "calls onEdit with the trade",
-        () => {
-            const trade =
-                makeTrade();
+    test("calls onEdit from both layouts", () => {
+        const trade = makeTrade();
 
-            const props =
-                renderTable({
-                    trades: [trade],
-                });
+        const props = renderTable({
+            trades: [trade],
+        });
 
-            fireEvent.click(
-                screen.getAllByRole(
-                    "button",
-                    {
-                        name:
-                            "Edit trade",
-                    }
-                )[0]
-            );
+        screen
+            .getAllByRole("button", {
+                name: "Edit trade",
+            })
+            .forEach((button) => {
+                fireEvent.click(button);
+            });
 
-            expect(
-                props.onEdit
-            ).toHaveBeenCalledWith(
-                trade
-            );
-        }
-    );
+        expect(
+            props.onEdit
+        ).toHaveBeenCalledTimes(2);
 
-    test(
-        "calls onDelete with trade id",
-        () => {
-            const props =
-                renderTable();
+        expect(
+            props.onEdit
+        ).toHaveBeenNthCalledWith(
+            1,
+            trade
+        );
 
-            fireEvent.click(
-                screen.getAllByRole(
-                    "button",
-                    {
-                        name:
-                            "Delete trade",
-                    }
-                )[0]
-            );
+        expect(
+            props.onEdit
+        ).toHaveBeenNthCalledWith(
+            2,
+            trade
+        );
+    });
 
-            expect(
-                props.onDelete
-            ).toHaveBeenCalledWith(1);
-        }
-    );
+    test("calls onDelete from both layouts", () => {
+        const props = renderTable();
 
-    test(
-        "calls onUpdate while editing",
-        () => {
-            const props =
-                renderTable({
-                    editingTradeId: 1,
-                    symbol: "EURUSD",
-                    direction: "long",
-                    entry: "1.15",
-                    stop: "1.14",
-                    exit: "1.17",
-                    pnl: "150",
-                    entryDatetime:
-                        "2026-08-12T10:00",
-                    exitDatetime:
-                        "2026-08-12T11:00",
-                });
+        screen
+            .getAllByRole("button", {
+                name: "Delete trade",
+            })
+            .forEach((button) => {
+                fireEvent.click(button);
+            });
 
-            fireEvent.click(
-                screen.getAllByRole(
-                    "button",
-                    {
-                        name:
-                            "Save trade",
-                    }
-                )[0]
-            );
+        expect(
+            props.onDelete
+        ).toHaveBeenCalledTimes(2);
 
-            expect(
-                props.onUpdate
-            ).toHaveBeenCalledWith(1);
-        }
-    );
+        expect(
+            props.onDelete
+        ).toHaveBeenNthCalledWith(
+            1,
+            1
+        );
+
+        expect(
+            props.onDelete
+        ).toHaveBeenNthCalledWith(
+            2,
+            1
+        );
+    });
+
+    test("calls onUpdate from both layouts", () => {
+        const props = renderTable(
+            editingProps()
+        );
+
+        screen
+            .getAllByRole("button", {
+                name: "Save trade",
+            })
+            .forEach((button) => {
+                fireEvent.click(button);
+            });
+
+        expect(
+            props.onUpdate
+        ).toHaveBeenCalledTimes(2);
+
+        expect(
+            props.onUpdate
+        ).toHaveBeenNthCalledWith(
+            1,
+            1
+        );
+
+        expect(
+            props.onUpdate
+        ).toHaveBeenNthCalledWith(
+            2,
+            1
+        );
+    });
 
     test.each([
         [
@@ -299,41 +317,45 @@ describe("TradesTable", () => {
             "setExitDatetime",
         ],
     ] as const)(
-        "updates %s",
+        "updates %s in both layouts",
         (
             label,
             value,
             setterName
         ) => {
             const props =
-                renderTable({
-                    editingTradeId: 1,
-                    symbol: "EURUSD",
-                    direction: "long",
-                    entry: "1.15",
-                    stop: "1.14",
-                    exit: "1.17",
-                    pnl: "150",
-                    entryDatetime:
-                        "2026-08-12T10:00",
-                    exitDatetime:
-                        "2026-08-12T11:00",
+                renderTable(
+                    editingProps()
+                );
+
+            screen
+                .getAllByLabelText(label)
+                .forEach((input) => {
+                    fireEvent.change(
+                        input,
+                        {
+                            target: {
+                                value,
+                            },
+                        }
+                    );
                 });
 
-            fireEvent.change(
-                screen.getAllByLabelText(
-                    label
-                )[0],
-                {
-                    target: {
-                        value,
-                    },
-                }
+            expect(
+                props[setterName]
+            ).toHaveBeenCalledTimes(2);
+
+            expect(
+                props[setterName]
+            ).toHaveBeenNthCalledWith(
+                1,
+                value
             );
 
             expect(
                 props[setterName]
-            ).toHaveBeenCalledWith(
+            ).toHaveBeenNthCalledWith(
+                2,
                 value
             );
         }
@@ -349,28 +371,18 @@ describe("TradesTable", () => {
             expectedText
         ) => {
             renderTable({
+                ...editingProps(),
                 trades: [
                     makeTrade({
                         result,
                     }),
                 ],
-                editingTradeId: 1,
-                symbol: "EURUSD",
-                direction: "long",
-                entry: "1.15",
-                stop: "1.14",
-                exit: "1.17",
-                pnl: "150",
-                entryDatetime:
-                    "2026-08-12T10:00",
-                exitDatetime:
-                    "2026-08-12T11:00",
             });
 
             expect(
-                screen.getAllByText(
+                screen.getByText(
                     expectedText
-                )[0]
+                )
             ).toBeInTheDocument();
         }
     );
@@ -394,13 +406,22 @@ describe("TradesTable", () => {
         }
     );
 
-    test(
-        "links to trades when no account is selected",
-        () => {
+    test.each([
+        [null, "/trades"],
+        [
+            7,
+            "/trades?account_id=7",
+        ],
+    ])(
+        "uses the correct View all trades link",
+        (
+            selectedAccountId,
+            expectedHref
+        ) => {
             renderTable({
                 trades: [],
                 showViewAll: true,
-                selectedAccountId: null,
+                selectedAccountId,
             });
 
             expect(
@@ -413,31 +434,7 @@ describe("TradesTable", () => {
                 )
             ).toHaveAttribute(
                 "href",
-                "/trades"
-            );
-        }
-    );
-
-    test(
-        "includes account id in View all trades link",
-        () => {
-            renderTable({
-                trades: [],
-                showViewAll: true,
-                selectedAccountId: 7,
-            });
-
-            expect(
-                screen.getByRole(
-                    "link",
-                    {
-                        name:
-                            "View all trades →",
-                    }
-                )
-            ).toHaveAttribute(
-                "href",
-                "/trades?account_id=7"
+                expectedHref
             );
         }
     );
