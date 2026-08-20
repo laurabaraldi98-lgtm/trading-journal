@@ -3,11 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
+import { SITE_URL } from "../../lib/api";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
+    const [mode, setMode] = useState<"signin" | "signup">("signin");
+    const [confirmPassword, setConfirmPassword] = useState("");
 
     const router = useRouter();
 
@@ -27,6 +30,10 @@ export default function LoginPage() {
     }
 
     async function handleSignUp() {
+        if (password !== confirmPassword) {
+            setMessage("Passwords do not match.");
+            return;
+        }
         const { error } =
             await supabase.auth.signUp({
                 email,
@@ -40,6 +47,31 @@ export default function LoginPage() {
 
         setMessage(
             "Check your email to confirm your account."
+        );
+    }
+
+    async function handleForgotPassword() {
+        if (!email) {
+            setMessage("Enter your email first.");
+            return;
+        }
+
+        const { error } =
+            await supabase.auth.resetPasswordForEmail(
+                email,
+                {
+                    redirectTo:
+                        `${SITE_URL}/reset-password`,
+                }
+            );
+
+        if (error) {
+            setMessage(error.message);
+            return;
+        }
+
+        setMessage(
+            "Check your email for a password reset link."
         );
     }
 
@@ -75,18 +107,60 @@ export default function LoginPage() {
                         className="rounded-lg border border-zinc-300 p-3"
                     />
 
+                    {mode === "signin" && (
+                        <button
+                            type="button"
+                            onClick={handleForgotPassword}
+                            className="self-end cursor-pointer text-sm text-blue-600 hover:underline"
+                        >
+                            Forgot your password?
+                        </button>
+                    )}
+
+                    {mode === "signup" && (
+                        <input
+                            type="password"
+                            onClick={handleForgotPassword}
+                            value={confirmPassword}
+                            onChange={(event) =>
+                                setConfirmPassword(event.target.value)
+                            }
+                            placeholder="Confirm password"
+                            className="rounded-lg border border-zinc-300 p-3"
+                        />
+                    )}
+
                     <button
-                        onClick={handleLogin}
+                        onClick={
+                            mode === "signin"
+                                ? handleLogin
+                                : handleSignUp
+                        }
                         className="cursor-pointer rounded-lg bg-black px-5 py-3 text-white"
                     >
-                        Sign In
+                        {mode === "signin"
+                            ? "Sign In"
+                            : "Create Account"}
                     </button>
 
                     <button
-                        onClick={handleSignUp}
-                        className="cursor-pointer rounded-lg border border-zinc-300 px-5 py-3"
+                        type="button"
+                        onClick={() => {
+                            setMode(
+                                mode === "signin"
+                                    ? "signup"
+                                    : "signin"
+                            );
+
+                            setPassword("");
+                            setConfirmPassword("");
+                            setMessage("");
+                        }}
+                        className="cursor-pointer text-sm text-zinc-600"
                     >
-                        Create Account
+                        {mode === "signin"
+                            ? "Don't have an account? Create one"
+                            : "Already have an account? Sign in"}
                     </button>
 
                     {message && (
