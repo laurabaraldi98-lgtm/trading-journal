@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
 import { SITE_URL } from "../../lib/api";
+import Image from "next/image";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -151,9 +152,11 @@ export default function LoginPage() {
                     <div className="w-full max-w-[540px] rounded-[28px] border border-slate-200/70 bg-white/95 px-10 py-9 shadow-[0_25px_75px_rgba(15,23,42,0.14)] backdrop-blur-sm">
                         <div className="text-center">
                             <div className="mx-auto h-16 w-16 overflow-hidden rounded-2xl shadow-lg shadow-blue-200/70">
-                                <img
+                                <Image
                                     src="/favicon.ico"
                                     alt="Trading Journal"
+                                    width={64}
+                                    height={64}
                                     className="h-full w-full object-cover"
                                 />
                             </div>
@@ -421,9 +424,11 @@ export default function LoginPage() {
                     <div className="flex flex-1 flex-col justify-center">
                         <div className="mb-4 text-center">
                             <div className="mx-auto h-11 w-11 overflow-hidden rounded-xl shadow-[0_8px_20px_rgba(37,99,235,0.18)]">
-                                <img
+                                <Image
                                     src="/favicon.ico"
                                     alt="Trading Journal"
+                                    width={64}
+                                    height={64}
                                     className="h-full w-full object-cover"
                                 />
                             </div>
