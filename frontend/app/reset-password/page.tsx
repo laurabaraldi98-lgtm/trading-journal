@@ -118,10 +118,8 @@ export default function ResetPasswordPage() {
 
                     <button
                         type="button"
-                        onClick={
-                            handleUpdatePassword
-                        }
-                        className="cursor-pointer rounded-lg bg-black px-5 py-3 text-white"
+                        onClick={handleUpdatePassword}
+                        className="cursor-pointer rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-5 py-3 font-semibold text-white shadow-md shadow-blue-200 transition hover:from-blue-700 hover:to-blue-800"
                     >
                         Update password
                     </button>
