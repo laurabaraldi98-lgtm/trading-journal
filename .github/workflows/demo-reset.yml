@@ -1,10 +1,6 @@
 name: Reset demo data
 
 on:
-  push:
-    branches:
-      - fullstack-refactor
-
   schedule:
     - cron: "0 * * * *"
 
