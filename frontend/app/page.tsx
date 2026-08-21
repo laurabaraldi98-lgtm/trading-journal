@@ -754,7 +754,7 @@ export default function Home() {
                     )
                   )
                 }
-                className="rounded-lg border border-slate-300 bg-white px-4 py-3"
+                className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-medium text-slate-900"
               >
                 {accounts.map(
                   (
