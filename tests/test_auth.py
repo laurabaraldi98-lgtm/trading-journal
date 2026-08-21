@@ -9,6 +9,7 @@ from auth import (
     get_current_user,
     get_demo_session,
     get_user_from_token,
+    update_demo_activity,
 )
 
 
@@ -96,18 +97,142 @@ def test_get_user_from_token_invalid_token():
     )
 
 
-def test_get_current_user_returns_user_and_token():
+def test_update_demo_activity_skips_without_demo_email():
     fake_user = SimpleNamespace(
-        id="user-123"
+        id="user-123",
+        email="user@example.com",
     )
 
-    with patch(
-        "auth.get_user_from_token",
-        return_value=fake_user,
+    with (
+        patch.dict(
+            "os.environ",
+            {},
+            clear=True,
+        ),
+        patch(
+            "auth.create_client"
+        ) as mock_create_client,
+    ):
+        update_demo_activity(
+            fake_user,
+            "abc123",
+        )
+
+    mock_create_client.assert_not_called()
+
+
+def test_update_demo_activity_skips_regular_user():
+    fake_user = SimpleNamespace(
+        id="user-123",
+        email="user@example.com",
+    )
+
+    with (
+        patch.dict(
+            "os.environ",
+            {
+                "DEMO_EMAIL":
+                    "demo@example.com",
+            },
+        ),
+        patch(
+            "auth.create_client"
+        ) as mock_create_client,
+    ):
+        update_demo_activity(
+            fake_user,
+            "abc123",
+        )
+
+    mock_create_client.assert_not_called()
+
+
+def test_update_demo_activity_updates_demo_user():
+    fake_user = SimpleNamespace(
+        id="demo-user",
+        email="demo@example.com",
+    )
+
+    with (
+        patch.dict(
+            "os.environ",
+            {
+                "DEMO_EMAIL":
+                    "demo@example.com",
+            },
+        ),
+        patch(
+            "auth.create_client"
+        ) as mock_create_client,
+    ):
+        mock_client = (
+            mock_create_client.return_value
+        )
+
+        update_demo_activity(
+            fake_user,
+            "demo-token",
+        )
+
+    mock_client.postgrest.auth.assert_called_once_with(
+        "demo-token"
+    )
+
+    mock_client.table.assert_called_once_with(
+        "demo_state"
+    )
+
+    mock_client.table.return_value.update.assert_called_once()
+
+    (
+        mock_client
+        .table
+        .return_value
+        .update
+        .return_value
+        .eq
+        .assert_called_once_with(
+            "user_id",
+            "demo-user",
+        )
+    )
+
+    (
+        mock_client
+        .table
+        .return_value
+        .update
+        .return_value
+        .eq
+        .return_value
+        .execute
+        .assert_called_once_with()
+    )
+
+
+def test_get_current_user_returns_user_and_token():
+    fake_user = SimpleNamespace(
+        id="user-123",
+        email="user@example.com",
+    )
+
+    with (
+        patch(
+            "auth.get_user_from_token",
+            return_value=fake_user,
+        ),
+        patch(
+            "auth.update_demo_activity"
+        ) as mock_update_demo_activity,
     ):
         auth_data = get_current_user(
             "abc123"
         )
+
+    mock_update_demo_activity.assert_called_once_with(
+        fake_user,
+        "abc123",
+    )
 
     assert auth_data == {
         "user": fake_user,

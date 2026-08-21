@@ -338,5 +338,5 @@ def reset_demo_if_inactive():
         print("Demo is active. Reset skipped.")
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     reset_demo_if_inactive()
