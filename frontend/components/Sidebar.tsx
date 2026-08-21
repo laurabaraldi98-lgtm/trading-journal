@@ -52,7 +52,7 @@ export default function Sidebar({
                     setIsOpen(true)
                 }
                 aria-label="Open navigation"
-                className="absolute left-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 shadow-sm md:hidden"
+                className="absolute left-4 top-4 z-40 flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm md:hidden"
             >
                 <Menu size={22} />
             </button>

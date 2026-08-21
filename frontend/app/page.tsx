@@ -725,60 +725,57 @@ export default function Home() {
       />
 
 
-      <main className="min-w-0 flex-1 px-8 py-8 xl:px-10">
+      <main className="min-w-0 flex-1 px-5 py-5 sm:px-6 md:px-8 md:py-8 xl:px-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
+          <div className="pl-14 sm:pl-0">
             <h2 className="text-3xl font-bold tracking-tight text-slate-900">
               Dashboard
             </h2>
 
             <p className="mt-1 text-sm text-slate-500">
-              Overview of your
-              trading performance.
+              Overview of your trading performance.
             </p>
           </div>
 
-
           <div className="flex items-center gap-3">
-            {selectedAccountId !==
-              null && (
-                <select
-                  value={
-                    selectedAccountId
-                  }
-                  onChange={(
-                    event
-                  ) =>
-                    setSelectedAccountId(
-                      Number(
-                        event
-                          .target
-                          .value
-                      )
+            {selectedAccountId !== null && (
+              <select
+                value={
+                  selectedAccountId
+                }
+                onChange={(
+                  event
+                ) =>
+                  setSelectedAccountId(
+                    Number(
+                      event
+                        .target
+                        .value
                     )
-                  }
-                  className="rounded-lg border border-slate-300 bg-white px-4 py-3"
-                >
-                  {accounts.map(
-                    (
-                      account
-                    ) => (
-                      <option
-                        key={
-                          account.id
-                        }
-                        value={
-                          account.id
-                        }
-                      >
-                        {
-                          account.name
-                        }
-                      </option>
-                    )
-                  )}
-                </select>
-              )}
+                  )
+                }
+                className="rounded-lg border border-slate-300 bg-white px-4 py-3"
+              >
+                {accounts.map(
+                  (
+                    account
+                  ) => (
+                    <option
+                      key={
+                        account.id
+                      }
+                      value={
+                        account.id
+                      }
+                    >
+                      {
+                        account.name
+                      }
+                    </option>
+                  )
+                )}
+              </select>
+            )}
 
 
             <button

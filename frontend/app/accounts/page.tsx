@@ -361,14 +361,14 @@ export default function AccountsPage() {
                 onLogout={handleLogout}
             />
 
-            <main className="min-w-0 flex-1 px-4 py-6 sm:px-6 md:p-10">
+            <main className="min-w-0 flex-1 px-5 py-5 sm:px-6 md:px-8 md:py-8 xl:px-10">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="pl-12 sm:pl-0">
-                        <h2 className="text-3xl font-bold">
+                    <div className="pl-14 sm:pl-0">
+                        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
                             Accounts
                         </h2>
 
-                        <p className="mt-1 text-zinc-600">
+                        <p className="mt-1 text-sm text-slate-500">
                             Manage your
                             trading accounts.
                         </p>
@@ -453,7 +453,7 @@ export default function AccountsPage() {
 
                 <div className="mt-8 rounded-xl border border-zinc-200 bg-white">
                     <div className="border-b border-zinc-200 px-4 py-4 sm:px-6">
-                        <h3 className="text-xl font-semibold">
+                        <h3 className="text-xl font-semibold text-slate-900">
                             Your accounts
                         </h3>
                     </div>
