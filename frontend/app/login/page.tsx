@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "../../lib/supabase";
-import { SITE_URL } from "../../lib/api";
+import { API_URL, SITE_URL } from "../../lib/api";
 import Image from "next/image";
 
 export default function LoginPage() {
@@ -28,6 +28,40 @@ export default function LoginPage() {
         }
 
         router.push("/");
+    }
+
+    async function handleDemoLogin() {
+        setMessage("");
+
+        try {
+            const response = await fetch(
+                `${API_URL}/demo-login`,
+                {
+                    method: "POST",
+                }
+            );
+
+            if (!response.ok) {
+                setMessage("Demo login unavailable.");
+                return;
+            }
+
+            const data = await response.json();
+
+            const { error } = await supabase.auth.setSession({
+                access_token: data.access_token,
+                refresh_token: data.refresh_token,
+            });
+
+            if (error) {
+                setMessage(error.message);
+                return;
+            }
+
+            router.push("/");
+        } catch {
+            setMessage("Demo login unavailable.");
+        }
     }
 
     async function handleSignUp() {
@@ -325,8 +359,8 @@ export default function LoginPage() {
 
                             <button
                                 type="button"
-                                disabled
-                                className="rounded-lg border border-blue-500 bg-white px-5 py-3 text-sm font-semibold text-blue-600 opacity-60"
+                                onClick={handleDemoLogin}
+                                className="cursor-pointer rounded-lg border border-blue-500 bg-white px-5 py-3 text-sm font-semibold text-blue-600 transition hover:bg-blue-50"
                             >
                                 Try demo
                             </button>
@@ -594,8 +628,8 @@ export default function LoginPage() {
 
                                 <button
                                     type="button"
-                                    disabled
-                                    className="h-11 rounded-xl border border-blue-300 bg-white px-4 text-[14px] font-semibold text-blue-600 opacity-60"
+                                    onClick={handleDemoLogin}
+                                    className="cursor-pointer rounded-lg border border-blue-500 bg-white px-5 py-3 text-sm font-semibold text-blue-600 transition hover:bg-blue-50"
                                 >
                                     Try demo
                                 </button>

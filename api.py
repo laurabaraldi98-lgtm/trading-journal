@@ -6,7 +6,7 @@ from typing import Literal
 import os
 from datetime import datetime
 
-from auth import get_current_user
+from auth import get_current_user, get_demo_session
 from calculations import calculate_r
 from database import (
     DatabaseError,
@@ -103,6 +103,11 @@ app.add_middleware(
 @app.get("/")
 def root():
     return {"message": "Trading Journal API"}
+
+
+@app.post("/demo-login")
+def demo_login():
+    return get_demo_session()
 
 
 @app.get("/trades")

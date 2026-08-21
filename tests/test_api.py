@@ -39,6 +39,26 @@ def test_root():
     }
 
 
+def test_demo_login():
+    fake_session = {
+        "access_token": "access-token",
+        "refresh_token": "refresh-token",
+    }
+
+    with patch(
+        "api.get_demo_session",
+        return_value=fake_session,
+    ) as mock_demo_session:
+        response = client.post(
+            "/demo-login"
+        )
+
+    assert response.status_code == 200
+    assert response.json() == fake_session
+
+    mock_demo_session.assert_called_once_with()
+
+
 def test_get_trades(authenticated_user):
     fake_trades = [
         [

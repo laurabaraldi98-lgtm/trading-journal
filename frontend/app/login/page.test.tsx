@@ -21,11 +21,13 @@ const {
     mockSignInWithPassword,
     mockSignUp,
     mockResetPasswordForEmail,
+    mockSetSession,
     mockPush,
 } = vi.hoisted(() => ({
     mockSignInWithPassword: vi.fn(),
     mockSignUp: vi.fn(),
     mockResetPasswordForEmail: vi.fn(),
+    mockSetSession: vi.fn(),
     mockPush: vi.fn(),
 }));
 
@@ -37,11 +39,13 @@ vi.mock("../../lib/supabase", () => ({
             signUp: mockSignUp,
             resetPasswordForEmail:
                 mockResetPasswordForEmail,
+            setSession: mockSetSession,
         },
     },
 }));
 
 vi.mock("../../lib/api", () => ({
+    API_URL: "http://127.0.0.1:8000",
     SITE_URL: "http://localhost:3000",
 }));
 
@@ -96,6 +100,15 @@ function getForgotPasswordButton() {
     )[0];
 }
 
+function getDemoButton() {
+    return screen.getAllByRole(
+        "button",
+        {
+            name: "Try demo",
+        }
+    )[0];
+}
+
 function fillLoginCredentials() {
     fireEvent.change(
         getEmailInput(),
@@ -145,12 +158,14 @@ describe("LoginPage", () => {
         mockSignInWithPassword.mockReset();
         mockSignUp.mockReset();
         mockResetPasswordForEmail.mockReset();
+        mockSetSession.mockReset();
         mockPush.mockReset();
     });
 
     afterEach(() => {
         cleanup();
         vi.restoreAllMocks();
+        vi.unstubAllGlobals();
     });
 
     test("renders the sign in form", () => {
@@ -187,7 +202,7 @@ describe("LoginPage", () => {
         ).toBeGreaterThan(0);
     });
 
-    test("shows disabled demo buttons", () => {
+    test("shows enabled demo buttons", () => {
         render(<LoginPage />);
 
         const demoButtons =
@@ -206,9 +221,161 @@ describe("LoginPage", () => {
             (button) => {
                 expect(
                     button
-                ).toBeDisabled();
+                ).toBeEnabled();
             }
         );
+    });
+
+    test("logs in with demo account", async () => {
+        const mockFetch = vi.fn()
+            .mockResolvedValue({
+                ok: true,
+                json: vi.fn()
+                    .mockResolvedValue({
+                        access_token:
+                            "demo-access-token",
+                        refresh_token:
+                            "demo-refresh-token",
+                    }),
+            });
+
+        vi.stubGlobal(
+            "fetch",
+            mockFetch
+        );
+
+        mockSetSession.mockResolvedValue({
+            error: null,
+        });
+
+        render(<LoginPage />);
+
+        fireEvent.click(
+            getDemoButton()
+        );
+
+        await waitFor(() => {
+            expect(
+                mockFetch
+            ).toHaveBeenCalledWith(
+                "http://127.0.0.1:8000/demo-login",
+                {
+                    method: "POST",
+                }
+            );
+        });
+
+        expect(
+            mockSetSession
+        ).toHaveBeenCalledWith({
+            access_token:
+                "demo-access-token",
+            refresh_token:
+                "demo-refresh-token",
+        });
+
+        expect(
+            mockPush
+        ).toHaveBeenCalledWith("/");
+    });
+
+    test("shows demo request error", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue({
+                ok: false,
+            })
+        );
+
+        render(<LoginPage />);
+
+        fireEvent.click(
+            getDemoButton()
+        );
+
+        expect(
+            (
+                await screen.findAllByText(
+                    "Demo login unavailable."
+                )
+            ).length
+        ).toBeGreaterThan(0);
+
+        expect(
+            mockSetSession
+        ).not.toHaveBeenCalled();
+
+        expect(
+            mockPush
+        ).not.toHaveBeenCalled();
+    });
+
+    test("shows demo session error", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockResolvedValue({
+                ok: true,
+                json: vi.fn()
+                    .mockResolvedValue({
+                        access_token:
+                            "demo-access-token",
+                        refresh_token:
+                            "demo-refresh-token",
+                    }),
+            })
+        );
+
+        mockSetSession.mockResolvedValue({
+            error: {
+                message:
+                    "Unable to create session",
+            },
+        });
+
+        render(<LoginPage />);
+
+        fireEvent.click(
+            getDemoButton()
+        );
+
+        expect(
+            (
+                await screen.findAllByText(
+                    "Unable to create session"
+                )
+            ).length
+        ).toBeGreaterThan(0);
+
+        expect(
+            mockPush
+        ).not.toHaveBeenCalled();
+    });
+
+    test("handles unavailable demo backend", async () => {
+        vi.stubGlobal(
+            "fetch",
+            vi.fn().mockRejectedValue(
+                new Error("Network error")
+            )
+        );
+
+        render(<LoginPage />);
+
+        fireEvent.click(
+            getDemoButton()
+        );
+
+        expect(
+            (
+                await screen.findAllByText(
+                    "Demo login unavailable."
+                )
+            ).length
+        ).toBeGreaterThan(0);
+
+        expect(
+            mockPush
+        ).not.toHaveBeenCalled();
     });
 
     test("signs in with email and password", async () => {
@@ -521,6 +688,7 @@ describe("LoginPage", () => {
             ).length
         ).toBeGreaterThan(0);
     });
+
     test("handles mobile login and signup controls", async () => {
         mockSignInWithPassword.mockResolvedValue({
             error: null,
@@ -537,16 +705,21 @@ describe("LoginPage", () => {
         render(<LoginPage />);
 
         const emailInputs =
-            screen.getAllByLabelText("Email");
+            screen.getAllByLabelText(
+                "Email"
+            );
 
         const passwordInputs =
-            screen.getAllByLabelText("Password");
+            screen.getAllByLabelText(
+                "Password"
+            );
 
         fireEvent.change(
             emailInputs[1],
             {
                 target: {
-                    value: "mobile@example.com",
+                    value:
+                        "mobile@example.com",
                 },
             }
         );
@@ -555,7 +728,8 @@ describe("LoginPage", () => {
             passwordInputs[1],
             {
                 target: {
-                    value: "mobile123",
+                    value:
+                        "mobile123",
                 },
             }
         );
@@ -594,8 +768,10 @@ describe("LoginPage", () => {
             expect(
                 mockSignInWithPassword
             ).toHaveBeenCalledWith({
-                email: "mobile@example.com",
-                password: "mobile123",
+                email:
+                    "mobile@example.com",
+                password:
+                    "mobile123",
             });
         });
 
@@ -622,7 +798,8 @@ describe("LoginPage", () => {
             signupPasswordInputs[1],
             {
                 target: {
-                    value: "newmobile123",
+                    value:
+                        "newmobile123",
                 },
             }
         );
@@ -631,7 +808,8 @@ describe("LoginPage", () => {
             confirmPasswordInputs[1],
             {
                 target: {
-                    value: "newmobile123",
+                    value:
+                        "newmobile123",
                 },
             }
         );
@@ -640,7 +818,8 @@ describe("LoginPage", () => {
             screen.getAllByRole(
                 "button",
                 {
-                    name: /^Create account/,
+                    name:
+                        /^Create account/,
                 }
             )[1]
         );
@@ -649,8 +828,10 @@ describe("LoginPage", () => {
             expect(
                 mockSignUp
             ).toHaveBeenCalledWith({
-                email: "mobile@example.com",
-                password: "newmobile123",
+                email:
+                    "mobile@example.com",
+                password:
+                    "newmobile123",
             });
         });
 
