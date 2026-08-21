@@ -3,6 +3,7 @@ import os
 from fastapi import Header, HTTPException, Depends
 from supabase import create_client
 from database import supabase_url, supabase_key
+from datetime import datetime, timezone
 
 
 def get_bearer_token(authorization: str | None = Header(default=None)):
@@ -42,8 +43,37 @@ def get_user_from_token(token: str):
     return response.user
 
 
+def update_demo_activity(user, token):
+    demo_email = os.getenv("DEMO_EMAIL")
+
+    if not demo_email or user.email != demo_email:
+        return
+
+    client = create_client(
+        supabase_url,
+        supabase_key,
+    )
+
+    client.postgrest.auth(token)
+
+    client.table(
+        "demo_state"
+    ).update({
+        "last_activity_at":
+            datetime.now(timezone.utc).isoformat(),
+    }).eq(
+        "user_id",
+        user.id,
+    ).execute()
+
+
 def get_current_user(token: str = Depends(get_bearer_token)):
     user = get_user_from_token(token)
+
+    update_demo_activity(
+        user,
+        token,
+    )
 
     return {
         "user": user,
