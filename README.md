@@ -520,7 +520,7 @@ http://localhost:3000
 
 # Running the Tests
 
-## Backend unit tests
+## Backend tests
 
 From the project root:
 
