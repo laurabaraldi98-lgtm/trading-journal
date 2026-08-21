@@ -93,22 +93,22 @@ def save_trade_to_supabase(
     client = get_authenticated_client(token)
 
     new_trade = {
-        "account_id": trade[0],
-        "symbol": trade[1],
-        "direction": trade[2],
-        "entry": trade[3],
-        "stop": trade[4],
-        "exit": trade[5],
-        "result": trade[6],
-        "pnl": trade[7],
+        "account_id": trade["account_id"],
+        "symbol": trade["symbol"],
+        "direction": trade["direction"],
+        "entry": trade["entry"],
+        "stop": trade["stop"],
+        "exit": trade["exit"],
+        "result": trade["result"],
+        "pnl": trade["pnl"],
         "entry_datetime": (
-            trade[8].isoformat()
-            if trade[8]
+            trade["entry_datetime"].isoformat()
+            if trade["entry_datetime"]
             else None
         ),
         "exit_datetime": (
-            trade[9].isoformat()
-            if trade[9]
+            trade["exit_datetime"].isoformat()
+            if trade["exit_datetime"]
             else None
         ),
         "user_id": user_id,
@@ -161,21 +161,21 @@ def update_trade_in_supabase(
     client = get_authenticated_client(token)
 
     trade_data = {
-        "symbol": updated_trade[1],
-        "direction": updated_trade[2],
-        "entry": updated_trade[3],
-        "stop": updated_trade[4],
-        "exit": updated_trade[5],
-        "result": updated_trade[6],
-        "pnl": updated_trade[7],
+        "symbol": updated_trade["symbol"],
+        "direction": updated_trade["direction"],
+        "entry": updated_trade["entry"],
+        "stop": updated_trade["stop"],
+        "exit": updated_trade["exit"],
+        "result": updated_trade["result"],
+        "pnl": updated_trade["pnl"],
         "entry_datetime": (
-            updated_trade[8].isoformat()
-            if updated_trade[8]
+            updated_trade["entry_datetime"].isoformat()
+            if updated_trade["entry_datetime"]
             else None
         ),
         "exit_datetime": (
-            updated_trade[9].isoformat()
-            if updated_trade[9]
+            updated_trade["exit_datetime"].isoformat()
+            if updated_trade["exit_datetime"]
             else None
         ),
     }

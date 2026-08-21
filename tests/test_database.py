@@ -148,18 +148,18 @@ def test_save_trade_to_supabase(
 
     mock_client = make_mock_client(mock_query)
 
-    trade = [
-        1,
-        "EURUSD",
-        "long",
-        1.15,
-        1.14,
-        1.17,
-        2,
-        400,
-        entry_datetime,
-        exit_datetime,
-    ]
+    trade = {
+        "account_id": 1,
+        "symbol": "EURUSD",
+        "direction": "long",
+        "entry": 1.15,
+        "stop": 1.14,
+        "exit": 1.17,
+        "result": 2,
+        "pnl": 400,
+        "entry_datetime": entry_datetime,
+        "exit_datetime": exit_datetime,
+    }
 
     with patch(
         "database.get_authenticated_client",
@@ -272,18 +272,17 @@ def test_update_trade_in_supabase(
 
     mock_client = make_mock_client(mock_query)
 
-    updated_trade = [
-        5,
-        "GBPUSD",
-        "short",
-        1.30,
-        1.31,
-        1.28,
-        2,
-        400,
-        entry_datetime,
-        exit_datetime,
-    ]
+    updated_trade = {
+        "symbol": "GBPUSD",
+        "direction": "short",
+        "entry": 1.30,
+        "stop": 1.31,
+        "exit": 1.28,
+        "result": 2,
+        "pnl": 400,
+        "entry_datetime": entry_datetime,
+        "exit_datetime": exit_datetime,
+    }
 
     with patch(
         "database.get_authenticated_client",

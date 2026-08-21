@@ -143,18 +143,18 @@ def create_trade(
         2,
     )
 
-    trade_data = [
-        trade.account_id,
-        trade.symbol,
-        trade.direction,
-        trade.entry,
-        trade.stop,
-        trade.exit,
-        result,
-        trade.pnl,
-        trade.entry_datetime,
-        trade.exit_datetime,
-    ]
+    trade_data = {
+        "account_id": trade.account_id,
+        "symbol": trade.symbol,
+        "direction": trade.direction,
+        "entry": trade.entry,
+        "stop": trade.stop,
+        "exit": trade.exit,
+        "result": result,
+        "pnl": trade.pnl,
+        "entry_datetime": trade.entry_datetime,
+        "exit_datetime": trade.exit_datetime,
+    }
 
     return save_trade_to_supabase(
         trade_data,
@@ -197,18 +197,17 @@ def update_trade(
         2,
     )
 
-    updated_trade = [
-        trade_id,
-        trade.symbol,
-        trade.direction,
-        trade.entry,
-        trade.stop,
-        trade.exit,
-        result,
-        trade.pnl,
-        trade.entry_datetime,
-        trade.exit_datetime,
-    ]
+    updated_trade = {
+        "symbol": trade.symbol,
+        "direction": trade.direction,
+        "entry": trade.entry,
+        "stop": trade.stop,
+        "exit": trade.exit,
+        "result": result,
+        "pnl": trade.pnl,
+        "entry_datetime": trade.entry_datetime,
+        "exit_datetime": trade.exit_datetime,
+    }
 
     return update_trade_in_supabase(
         trade_id,

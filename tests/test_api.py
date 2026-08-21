@@ -253,18 +253,18 @@ def test_create_trade_passes_correct_data_to_save(
         )
 
     mock_save.assert_called_once_with(
-        [
-            1,
-            "eurusd",
-            "long",
-            1.12,
-            1.11,
-            1.14,
-            2.0,
-            400.0,
-            datetime(2026, 8, 12, 10, 0),
-            datetime(2026, 8, 12, 11, 0),
-        ],
+        {
+            "account_id": 1,
+            "symbol": "eurusd",
+            "direction": "long",
+            "entry": 1.12,
+            "stop": 1.11,
+            "exit": 1.14,
+            "result": 2.0,
+            "pnl": 400.0,
+            "entry_datetime": datetime(2026, 8, 12, 10, 0),
+            "exit_datetime": datetime(2026, 8, 12, 11, 0),
+        },
         "test-user",
         "fake-token",
     )
@@ -315,18 +315,17 @@ def test_update_trade(authenticated_user):
         "exit_datetime": "2026-08-12T11:00:00",
     }
 
-    expected_trade_for_database = [
-        5,
-        "eurusd",
-        "long",
-        1.12,
-        1.11,
-        1.14,
-        2.0,
-        400.0,
-        datetime(2026, 8, 12, 10, 0),
-        datetime(2026, 8, 12, 11, 0),
-    ]
+    expected_trade_for_database = {
+        "symbol": "eurusd",
+        "direction": "long",
+        "entry": 1.12,
+        "stop": 1.11,
+        "exit": 1.14,
+        "result": 2.0,
+        "pnl": 400.0,
+        "entry_datetime": datetime(2026, 8, 12, 10, 0),
+        "exit_datetime": datetime(2026, 8, 12, 11, 0),
+    }
 
     fake_response = [
         5,
