@@ -502,6 +502,7 @@ Create `frontend/.env.local`:
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 ```
 
 Start the frontend:
@@ -685,6 +686,18 @@ The project is still designed to evolve further rather than being treated as fin
 
 ---
 
+# Deployment
+
+The application is deployed on Vercel as separate frontend and backend services.
+
+- The Next.js frontend is deployed on Vercel.
+- The FastAPI backend is deployed on Vercel as a separate service.
+- Supabase provides authentication and PostgreSQL persistence.
+- Production configuration is managed through environment variables rather than hardcoded values.
+
+
+---
+
 # Possible Future Improvements
 
 Potential future iterations include:
@@ -697,7 +710,6 @@ Potential future iterations include:
 - CSV import/export
 - stronger production observability and logging
 - additional integration and end-to-end testing
-- deployment and production configuration
 - performance improvements as the dataset grows
 
 ---
