@@ -1,52 +1,16 @@
-import os
-from dotenv import load_dotenv
-from supabase import create_client
-
-load_dotenv()
-
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
-
-supabase = create_client(supabase_url, supabase_key)
+from calculations import calculate_r
+from statistics import calculate_statistics
+from database import (
+    load_trades_from_supabase,
+    save_trade_to_supabase,
+    delete_trade_from_supabase,
+    restore_trade_to_supabase,
+    update_trade_in_supabase,
+)
 
 trades = []
 
 last_deleted_trade = None
-
-
-def load_trades_from_supabase():
-    response = supabase.table("trades").select("*").execute()
-
-    loaded_trades = []
-
-    for trade in response.data:
-        loaded_trade = [
-            trade["id"],
-            trade["symbol"],
-            trade["direction"],
-            float(trade["entry"]),
-            float(trade["stop"]),
-            float(trade["exit_price"]),
-            float(trade["result"])
-        ]
-
-        loaded_trades.append(loaded_trade)
-
-    return loaded_trades
-
-
-def calculate_r(direction, entry, stop, exit_price):
-    if direction == "long":
-        risk = entry - stop
-        profit = exit_price - entry
-    else:  # short
-        risk = stop - entry
-        profit = entry - exit_price
-
-    if risk == 0:
-        raise ValueError("Entry and stop cannot be the same")
-
-    return profit / risk
 
 
 def get_number(message):
@@ -65,83 +29,6 @@ def get_integer(message):
             return number
         except ValueError:
             print("Please enter a valid whole number.")
-
-
-def save_trade_to_supabase(trade):
-    new_trade = {
-        "symbol": trade[0],
-        "direction": trade[1],
-        "entry": trade[2],
-        "stop": trade[3],
-        "exit_price": trade[4],
-        "result": trade[5]
-    }
-
-    response = supabase.table("trades").insert(new_trade).execute()
-
-    saved_trade = response.data[0]
-
-    return [
-        saved_trade["id"],
-        saved_trade["symbol"],
-        saved_trade["direction"],
-        float(saved_trade["entry"]),
-        float(saved_trade["stop"]),
-        float(saved_trade["exit_price"]),
-        float(saved_trade["result"])
-    ]
-
-
-def delete_trade_from_supabase(trade_id):
-    response = supabase.table("trades").delete().eq("id", trade_id).execute()
-
-    return response
-
-
-def restore_trade_to_supabase(trade):
-    restored_trade = {
-        "symbol": trade[1],
-        "direction": trade[2],
-        "entry": trade[3],
-        "stop": trade[4],
-        "exit_price": trade[5],
-        "result": trade[6]
-    }
-
-    response = supabase.table("trades").insert(restored_trade).execute()
-
-    saved_trade = response.data[0]
-
-    return [
-        saved_trade["id"],
-        saved_trade["symbol"],
-        saved_trade["direction"],
-        float(saved_trade["entry"]),
-        float(saved_trade["stop"]),
-        float(saved_trade["exit_price"]),
-        float(saved_trade["result"])
-    ]
-
-
-def update_trade_in_supabase(trade_id, updated_trade):
-    trade_data = {
-        "symbol": updated_trade[1],
-        "direction": updated_trade[2],
-        "entry": updated_trade[3],
-        "stop": updated_trade[4],
-        "exit_price": updated_trade[5],
-        "result": updated_trade[6]
-    }
-
-    response = (
-        supabase
-        .table("trades")
-        .update(trade_data)
-        .eq("id", trade_id)
-        .execute()
-    )
-
-    return response
 
 
 trades = load_trades_from_supabase()
@@ -172,15 +59,15 @@ while True:
 
         entry = get_number("Entry price: ")
         stop = get_number("Stop loss: ")
-        exit_price = get_number("Exit price: ")
+        exit = get_number("Exit price: ")
 
         try:
-            result = round(calculate_r(direction, entry, stop, exit_price), 2)
+            result = round(calculate_r(direction, entry, stop, exit), 2)
         except ValueError as e:
             print("Error:", e)
             continue
 
-        trade = [symbol, direction, entry, stop, exit_price, result]
+        trade = [symbol, direction, entry, stop, exit, result]
         saved_trade = save_trade_to_supabase(trade)
         trades.append(saved_trade)
 
@@ -197,40 +84,20 @@ while True:
             print("-------------")
 
     elif choice == "3":
+        stats = calculate_statistics(trades)
+
         if len(trades) == 0:
             print("You have not entered any trades yet.")
 
         else:
-            total = 0
-            winners = 0
-            losers = 0
-            breakeven = 0
-
-            for trade in trades:
-                total = total + trade[6]
-
-                if trade[6] > 0:
-                    winners = winners + 1
-
-                if trade[6] < 0:
-                    losers = losers + 1
-
-                if trade[6] == 0:
-                    breakeven = breakeven + 1
-
-            trade_count = len(trades)
-            average = total / trade_count
-            win_rate = winners / trade_count * 100
-            loss_rate = losers / trade_count * 100
-
-            print("Total R:", round(total, 2))
-            print("Number of trades:", trade_count)
-            print("Average R:", round(average, 2))
-            print("Winning trades:", winners)
-            print("Win rate:", round(win_rate, 2), "%")
-            print("Losing trades:", losers)
-            print("Loss rate:", round(loss_rate, 2), "%")
-            print("Breakeven trades:", breakeven)
+            print("Total R:", round(stats["total"], 2))
+            print("Number of trades:", stats["trade_count"])
+            print("Average R:", round(stats["average"], 2))
+            print("Winning trades:", stats["winners"])
+            print("Win rate:", round(stats["win_rate"], 2), "%")
+            print("Losing trades:", stats["losers"])
+            print("Loss rate:", round(stats["loss_rate"], 2), "%")
+            print("Breakeven trades:", stats["breakeven"])
 
     elif choice == "4":
         for number, trade in enumerate(trades, start=1):
@@ -332,10 +199,10 @@ while True:
 
         entry = get_number("New entry price: ")
         stop = get_number("New stop loss: ")
-        exit_price = get_number("New exit price: ")
+        exit = get_number("New exit price: ")
 
         try:
-            result = round(calculate_r(direction, entry, stop, exit_price), 2)
+            result = round(calculate_r(direction, entry, stop, exit), 2)
         except ValueError as e:
             print("Error:", e)
             continue
@@ -346,7 +213,7 @@ while True:
             direction,
             entry,
             stop,
-            exit_price,
+            exit,
             result
         ]
 

@@ -1,5 +1,7 @@
-﻿trades.txt
-journal_backup.py
-test_file.py
-prova.txt
-.env
+﻿.env
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+.vercel
+.env*

@@ -1,0 +1,32 @@
+name: Backend tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      RLS_USER_A_EMAIL: ${{ secrets.RLS_USER_A_EMAIL }}
+      RLS_USER_A_PASSWORD: ${{ secrets.RLS_USER_A_PASSWORD }}
+      RLS_USER_B_EMAIL: ${{ secrets.RLS_USER_B_EMAIL }}
+      RLS_USER_B_PASSWORD: ${{ secrets.RLS_USER_B_PASSWORD }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run backend tests with coverage
+        run: python -m pytest tests --cov=api --cov=auth --cov=database --cov=calculations --cov=demo --cov-branch --cov-report=term-missing

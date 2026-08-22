@@ -1,0 +1,23 @@
+[project]
+name = "trading-journal-api"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "python-dotenv",
+    "supabase",
+    "pytest",
+    "fastapi",
+    "uvicorn",
+    "httpx",
+    "pytest-cov",
+]
+
+[tool.vercel]
+entrypoint = "api:app"
+
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore:Using `httpx` with `starlette.testclient` is deprecated.*",
+    "ignore:The 'timeout' parameter is deprecated.*:DeprecationWarning:supabase\\._sync\\.client",
+    "ignore:The 'verify' parameter is deprecated.*:DeprecationWarning:supabase\\._sync\\.client",
+]
