@@ -64,7 +64,7 @@ The current application is the result of several iterations, gradually introduci
 - User-scoped database queries
 - PostgreSQL Row Level Security
 - Frontend and backend validation
-- Controlled database error responses
+- Controlled API error responses
 - Public demo mode
 - Automatic demo-data restoration
 - Automated frontend and backend testing
@@ -244,6 +244,10 @@ The backend verifies that token and obtains the authenticated user's identity be
 
 Database operations are scoped by user ID.
 
+When creating a trade, the backend also verifies that the selected account belongs to the authenticated user before allowing the trade to be stored.
+
+If the account does not exist or belongs to another user, the request is rejected with a `404 Not Found` response.
+
 The project also includes Supabase integration tests that verify Row Level Security between separate test users, including attempts to access or modify another user's data.
 
 This provides protection at both the application and database layers.
@@ -272,23 +276,27 @@ The application also provides aggregate statistics and a chronological performan
 
 ---
 
-# Database Error Handling
+# API Error Handling
 
-Database queries pass through a centralised execution helper.
+The backend converts authentication, resource and database failures into controlled HTTP responses.
 
 ```text
-Supabase query
+Invalid or expired token
       ↓
-execute_query()
+401 Unauthorized
+
+Missing or inaccessible resource
       ↓
-DatabaseError
-      ↓
-FastAPI exception handler
+404 Not Found
+
+Database or authentication service failure
       ↓
 503 Service Unavailable
 ```
 
-This avoids duplicating database exception handling throughout the application and provides controlled API responses when the database dependency is unavailable.
+Database queries pass through a centralised execution helper. Database failures are converted into `DatabaseError` and handled by FastAPI as `503 Service Unavailable` responses.
+
+This keeps error handling predictable across the API and avoids exposing raw dependency errors to the frontend.
 
 ---
 
@@ -307,6 +315,7 @@ Backend tests cover:
 - API endpoints
 - account CRUD
 - trade CRUD
+- account ownership validation
 - request validation
 - R calculations
 - database transformations
@@ -336,6 +345,7 @@ Frontend tests cover:
 - API requests
 - account management
 - trade management
+- loading and error states
 - statistics
 - chart behaviour
 - responsive components
@@ -358,7 +368,7 @@ The backend workflow:
 - installs Python dependencies
 - runs the backend test suite
 - collects coverage
-- runs Supabase integration and RLS tests when the required secrets are available
+- runs Supabase integration and RLS tests when the required secrets are configured
 
 ## Frontend workflow
 
@@ -910,7 +920,7 @@ The current version includes the main functionality required for a usable tradin
 - database persistence
 - Row Level Security
 - automated testing
-- database error handling
+- controlled API error handling
 - deployed frontend and backend
 - public demo access
 - automatic demo-data restoration
@@ -929,6 +939,8 @@ Potential future iterations include:
 - richer account statistics
 - improved dashboard visualisations
 - CSV import/export
+- server-side pagination for larger datasets
+- refactoring larger frontend components into smaller reusable pieces
 - production observability and structured logging
 - additional end-to-end testing
 - performance improvements for larger datasets
