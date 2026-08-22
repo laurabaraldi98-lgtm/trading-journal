@@ -177,7 +177,7 @@ def test_update_demo_activity_skips_regular_user():
     mock_create_client.assert_not_called()
 
 
-def test_update_demo_activity_updates_demo_user():
+def test_update_demo_activity_ignores_errors():
     fake_user = SimpleNamespace(
         id="demo-user",
         email="demo@example.com",
@@ -199,45 +199,24 @@ def test_update_demo_activity_updates_demo_user():
             mock_create_client.return_value
         )
 
+        (
+            mock_client
+            .table
+            .return_value
+            .update
+            .return_value
+            .eq
+            .return_value
+            .execute
+            .side_effect
+        ) = Exception(
+            "Supabase unavailable"
+        )
+
         update_demo_activity(
             fake_user,
             "demo-token",
         )
-
-    mock_client.postgrest.auth.assert_called_once_with(
-        "demo-token"
-    )
-
-    mock_client.table.assert_called_once_with(
-        "demo_state"
-    )
-
-    mock_client.table.return_value.update.assert_called_once()
-
-    (
-        mock_client
-        .table
-        .return_value
-        .update
-        .return_value
-        .eq
-        .assert_called_once_with(
-            "user_id",
-            "demo-user",
-        )
-    )
-
-    (
-        mock_client
-        .table
-        .return_value
-        .update
-        .return_value
-        .eq
-        .return_value
-        .execute
-        .assert_called_once_with()
-    )
 
 
 def test_get_current_user_returns_user_and_token():

@@ -55,22 +55,26 @@ def update_demo_activity(user, token):
     if not demo_email or user.email != demo_email:
         return
 
-    client = create_client(
-        supabase_url,
-        supabase_key,
-    )
+    try:
+        client = create_client(
+            supabase_url,
+            supabase_key,
+        )
 
-    client.postgrest.auth(token)
+        client.postgrest.auth(token)
 
-    client.table(
-        "demo_state"
-    ).update({
-        "last_activity_at":
-            datetime.now(timezone.utc).isoformat(),
-    }).eq(
-        "user_id",
-        user.id,
-    ).execute()
+        client.table(
+            "demo_state"
+        ).update({
+            "last_activity_at":
+                datetime.now(timezone.utc).isoformat(),
+        }).eq(
+            "user_id",
+            user.id,
+        ).execute()
+
+    except Exception:
+        return
 
 
 def get_current_user(token: str = Depends(get_bearer_token)):
