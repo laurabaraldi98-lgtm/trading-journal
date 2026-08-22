@@ -3,7 +3,10 @@ import pytest
 from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import patch
-from database import DatabaseError
+from database import (
+    DatabaseError,
+    ResourceNotFoundError,
+)
 
 from fastapi.testclient import TestClient
 
@@ -418,6 +421,25 @@ def test_database_error_returns_503(
     assert response.status_code == 503
     assert response.json() == {
         "detail": "Database service unavailable"
+    }
+
+
+def test_resource_not_found_returns_404(
+    authenticated_user,
+):
+    with patch(
+        "api.delete_trade_from_supabase",
+        side_effect=ResourceNotFoundError(
+            "Trade not found"
+        ),
+    ):
+        response = client.delete(
+            "/trades/999999"
+        )
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": "Trade not found"
     }
 
 

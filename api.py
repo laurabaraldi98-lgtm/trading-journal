@@ -18,6 +18,7 @@ from database import (
     save_account_to_supabase,
     update_account_in_supabase,
     delete_account_from_supabase,
+    ResourceNotFoundError,
 )
 
 
@@ -82,6 +83,19 @@ async def database_error_handler(
         status_code=503,
         content={
             "detail": "Database service unavailable"
+        },
+    )
+
+
+@app.exception_handler(ResourceNotFoundError)
+async def resource_not_found_handler(
+    request: Request,
+    exc: ResourceNotFoundError,
+):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": str(exc)
         },
     )
 

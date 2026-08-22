@@ -30,6 +30,10 @@ class DatabaseError(Exception):
     pass
 
 
+class ResourceNotFoundError(Exception):
+    pass
+
+
 def execute_query(query):
     try:
         return query.execute()
@@ -149,6 +153,11 @@ def delete_trade_from_supabase(
         .eq("user_id", user_id)
     )
 
+    if not response.data:
+        raise ResourceNotFoundError(
+            "Trade not found"
+        )
+
     return response
 
 
@@ -187,6 +196,11 @@ def update_trade_in_supabase(
         .eq("id", trade_id)
         .eq("user_id", user_id)
     )
+
+    if not response.data:
+        raise ResourceNotFoundError(
+            "Trade not found"
+        )
 
     return response
 
@@ -257,6 +271,11 @@ def update_account_in_supabase(
         .eq("user_id", user_id)
     )
 
+    if not response.data:
+        raise ResourceNotFoundError(
+            "Account not found"
+        )
+
     return response.data
 
 
@@ -274,5 +293,10 @@ def delete_account_from_supabase(
         .eq("id", account_id)
         .eq("user_id", user_id)
     )
+
+    if not response.data:
+        raise ResourceNotFoundError(
+            "Account not found"
+        )
 
     return response.data

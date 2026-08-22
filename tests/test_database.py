@@ -14,7 +14,8 @@ from database import (
     load_accounts_from_supabase,
     save_account_to_supabase,
     update_account_in_supabase,
-    delete_account_from_supabase
+    delete_account_from_supabase,
+    ResourceNotFoundError,
 )
 
 
@@ -206,7 +207,7 @@ def test_save_trade_to_supabase(
 
 
 def test_delete_trade_from_supabase():
-    fake_response = SimpleNamespace(data=[])
+    fake_response = SimpleNamespace(data=[{"id": 5}])
 
     mock_query = make_mock_query(fake_response)
     mock_query.delete.return_value = mock_query
@@ -242,6 +243,31 @@ def test_delete_trade_from_supabase():
     assert response == fake_response
 
 
+def test_delete_trade_not_found():
+    fake_response = SimpleNamespace(
+        data=[]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.delete.return_value = mock_query
+
+    mock_client = make_mock_client(mock_query)
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        with pytest.raises(
+            ResourceNotFoundError,
+            match="Trade not found",
+        ):
+            delete_trade_from_supabase(
+                999,
+                "user-123",
+                "fake-token",
+            )
+
+
 @pytest.mark.parametrize(
     "entry_datetime, exit_datetime, expected_entry_datetime, expected_exit_datetime",
     [
@@ -265,7 +291,7 @@ def test_update_trade_in_supabase(
     expected_entry_datetime,
     expected_exit_datetime,
 ):
-    fake_response = SimpleNamespace(data=[])
+    fake_response = SimpleNamespace(data=[{"id": 5}])
 
     mock_query = make_mock_query(fake_response)
     mock_query.update.return_value = mock_query
@@ -326,6 +352,48 @@ def test_update_trade_in_supabase(
     )
 
     assert response == fake_response
+
+
+def test_update_trade_not_found():
+    fake_response = SimpleNamespace(
+        data=[]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.update.return_value = mock_query
+
+    mock_client = make_mock_client(mock_query)
+
+    updated_trade = {
+        "symbol": "EURUSD",
+        "direction": "long",
+        "entry": 1.10,
+        "stop": 1.09,
+        "exit": 1.12,
+        "result": 2,
+        "pnl": 200,
+        "entry_datetime": datetime(
+            2026, 8, 22, 10, 0
+        ),
+        "exit_datetime": datetime(
+            2026, 8, 22, 11, 0
+        ),
+    }
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        with pytest.raises(
+            ResourceNotFoundError,
+            match="Trade not found",
+        ):
+            update_trade_in_supabase(
+                999,
+                updated_trade,
+                "user-123",
+                "fake-token",
+            )
 
 
 def test_load_accounts_from_supabase():
@@ -519,6 +587,40 @@ def test_update_account_in_supabase(
     assert result == fake_response.data
 
 
+def test_update_account_not_found():
+    fake_response = SimpleNamespace(
+        data=[]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.update.return_value = mock_query
+
+    mock_client = make_mock_client(mock_query)
+
+    account = {
+        "name": "Test",
+        "starting_balance": 10000,
+        "currency": "USD",
+        "broker": None,
+        "account_type": None,
+    }
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        with pytest.raises(
+            ResourceNotFoundError,
+            match="Account not found",
+        ):
+            update_account_in_supabase(
+                999,
+                account,
+                "user-123",
+                "fake-token",
+            )
+
+
 def test_delete_account_from_supabase():
     fake_response = SimpleNamespace(
         data=[
@@ -566,6 +668,31 @@ def test_delete_account_from_supabase():
     )
 
     assert result == fake_response.data
+
+
+def test_delete_account_not_found():
+    fake_response = SimpleNamespace(
+        data=[]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.delete.return_value = mock_query
+
+    mock_client = make_mock_client(mock_query)
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        with pytest.raises(
+            ResourceNotFoundError,
+            match="Account not found",
+        ):
+            delete_account_from_supabase(
+                999,
+                "user-123",
+                "fake-token",
+            )
 
 
 def test_load_trades_from_supabase_filters_by_account():
