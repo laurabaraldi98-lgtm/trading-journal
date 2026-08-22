@@ -47,7 +47,7 @@ export default function TradeForm({
 
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                    <label className="mb-1 block text-sm font-medium">
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
                         Symbol
                         <span className="ml-1 text-red-600">*</span>
                     </label>
@@ -59,12 +59,12 @@ export default function TradeForm({
                             setSymbol(event.target.value)
                         }
                         placeholder="Symbol"
-                        className="w-full rounded-lg border border-zinc-300 p-3"
+                        className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-slate-900 placeholder:text-slate-400"
                     />
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium">
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
                         Direction
                         <span className="ml-1 text-red-600">*</span>
                     </label>
@@ -74,7 +74,7 @@ export default function TradeForm({
                         onChange={(event) =>
                             setDirection(event.target.value)
                         }
-                        className="w-full rounded-lg border border-zinc-300 p-3"
+                        className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-slate-900"
                     >
                         <option value="">Direction</option>
                         <option value="long">Long</option>
@@ -83,7 +83,7 @@ export default function TradeForm({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium">
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
                         Entry
                         <span className="ml-1 text-red-600">*</span>
                     </label>
@@ -95,12 +95,12 @@ export default function TradeForm({
                             setEntry(event.target.value)
                         }
                         placeholder="Entry"
-                        className="w-full rounded-lg border border-zinc-300 p-3"
+                        className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-slate-900 placeholder:text-slate-400"
                     />
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium">
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
                         Stop
                         <span className="ml-1 text-red-600">*</span>
                     </label>
@@ -112,12 +112,12 @@ export default function TradeForm({
                             setStop(event.target.value)
                         }
                         placeholder="Stop"
-                        className="w-full rounded-lg border border-zinc-300 p-3"
+                        className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-slate-900 placeholder:text-slate-400"
                     />
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium">
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
                         Exit price
                         <span className="ml-1 text-red-600">*</span>
                     </label>
@@ -129,12 +129,12 @@ export default function TradeForm({
                             setExit(event.target.value)
                         }
                         placeholder="Exit price"
-                        className="w-full rounded-lg border border-zinc-300 p-3"
+                        className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-slate-900 placeholder:text-slate-400"
                     />
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium">
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
                         P/L
                         <span className="ml-1 text-red-600">*</span>
                     </label>
@@ -146,12 +146,12 @@ export default function TradeForm({
                             setPnl(event.target.value)
                         }
                         placeholder="P/L"
-                        className="w-full rounded-lg border border-zinc-300 p-3"
+                        className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-slate-900 placeholder:text-slate-400"
                     />
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium">
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
                         Entry date
                         <span className="ml-1 text-red-600">*</span>
                     </label>
@@ -166,12 +166,12 @@ export default function TradeForm({
                             )
                         }
                         required
-                        className="w-full rounded-lg border border-zinc-300 p-3"
+                        className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-slate-900"
                     />
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium">
+                    <label className="mb-1 block text-sm font-medium text-slate-700">
                         Exit date
                         <span className="ml-1 text-red-600">*</span>
                     </label>
@@ -186,7 +186,7 @@ export default function TradeForm({
                             )
                         }
                         required
-                        className="w-full rounded-lg border border-zinc-300 p-3"
+                        className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-slate-900"
                     />
                 </div>
             </div>
