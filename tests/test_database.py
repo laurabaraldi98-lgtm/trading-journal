@@ -15,6 +15,7 @@ from database import (
     save_account_to_supabase,
     update_account_in_supabase,
     delete_account_from_supabase,
+    account_belongs_to_user,
     ResourceNotFoundError,
 )
 
@@ -737,3 +738,55 @@ def test_load_trades_from_supabase_filters_by_account():
         "account_id",
         7,
     )
+
+
+def test_account_belongs_to_user_returns_true():
+    fake_response = SimpleNamespace(
+        data=[{"id": 1}]
+    )
+
+    mock_query = make_mock_query(
+        fake_response
+    )
+
+    mock_client = make_mock_client(
+        mock_query
+    )
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        result = account_belongs_to_user(
+            1,
+            "user-123",
+            "fake-token",
+        )
+
+    assert result is True
+
+
+def test_account_belongs_to_user_returns_false():
+    fake_response = SimpleNamespace(
+        data=[]
+    )
+
+    mock_query = make_mock_query(
+        fake_response
+    )
+
+    mock_client = make_mock_client(
+        mock_query
+    )
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        result = account_belongs_to_user(
+            999,
+            "user-123",
+            "fake-token",
+        )
+
+    assert result is False

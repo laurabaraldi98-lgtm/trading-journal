@@ -222,6 +222,24 @@ def load_accounts_from_supabase(
     return response.data
 
 
+def account_belongs_to_user(
+    account_id: int,
+    user_id: str,
+    token: str,
+):
+    client = get_authenticated_client(token)
+
+    response = execute_query(
+        client
+        .table("accounts")
+        .select("id")
+        .eq("id", account_id)
+        .eq("user_id", user_id)
+    )
+
+    return bool(response.data)
+
+
 def save_account_to_supabase(
     account,
     user_id: str,

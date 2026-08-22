@@ -111,9 +111,15 @@ def test_create_trade(authenticated_user):
         "exit_datetime": "2026-08-12T11:00:00",
     }
 
-    with patch(
-        "api.save_trade_to_supabase",
-        return_value=trade_data,
+    with (
+        patch(
+            "api.account_belongs_to_user",
+            return_value=True,
+        ),
+        patch(
+            "api.save_trade_to_supabase",
+            return_value=trade_data,
+        ),
     ):
         response = client.post(
             "/trades",
@@ -247,9 +253,15 @@ def test_create_trade_passes_correct_data_to_save(
         "exit_datetime": "2026-08-12T11:00:00",
     }
 
-    with patch(
-        "api.save_trade_to_supabase"
-    ) as mock_save:
+    with (
+        patch(
+            "api.account_belongs_to_user",
+            return_value=True,
+        ),
+        patch(
+            "api.save_trade_to_supabase"
+        ) as mock_save,
+    ):
         client.post(
             "/trades",
             json=trade_data,
@@ -505,6 +517,36 @@ def test_create_account(authenticated_user):
         "test-user",
         "fake-token",
     )
+
+
+def test_create_trade_returns_404_for_invalid_account(
+    authenticated_user,
+):
+    trade = {
+        "account_id": 999,
+        "symbol": "EURUSD",
+        "direction": "long",
+        "entry": 1.10,
+        "stop": 1.09,
+        "exit": 1.12,
+        "pnl": 200,
+        "entry_datetime": "2026-08-22T10:00:00",
+        "exit_datetime": "2026-08-22T11:00:00",
+    }
+
+    with patch(
+        "api.account_belongs_to_user",
+        return_value=False,
+    ):
+        response = client.post(
+            "/trades",
+            json=trade,
+        )
+
+    assert response.status_code == 404
+    assert response.json() == {
+        "detail": "Account not found"
+    }
 
 
 def test_update_account(authenticated_user):

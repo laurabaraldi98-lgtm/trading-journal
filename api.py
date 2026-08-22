@@ -18,6 +18,7 @@ from database import (
     save_account_to_supabase,
     update_account_in_supabase,
     delete_account_from_supabase,
+    account_belongs_to_user,
     ResourceNotFoundError,
 )
 
@@ -146,6 +147,15 @@ def create_trade(
 ):
     user = auth_data["user"]
     token = auth_data["token"]
+
+    if not account_belongs_to_user(
+        trade.account_id,
+        user.id,
+        token,
+    ):
+        raise ResourceNotFoundError(
+            "Account not found"
+        )
 
     result = round(
         calculate_r(
