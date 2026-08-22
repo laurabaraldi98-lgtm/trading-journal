@@ -2,6 +2,7 @@ import os
 
 from fastapi import Header, HTTPException, Depends
 from supabase import create_client
+from supabase_auth.errors import AuthApiError
 from database import supabase_url, supabase_key
 from datetime import datetime, timezone
 
@@ -33,11 +34,16 @@ def get_user_from_token(token: str):
 
         response = client.auth.get_user(token)
 
-    except Exception as error:
-
+    except AuthApiError:
         raise HTTPException(
             status_code=401,
             detail="Invalid or expired token"
+        )
+
+    except Exception:
+        raise HTTPException(
+            status_code=503,
+            detail="Authentication service unavailable"
         )
 
     return response.user

@@ -3,6 +3,7 @@ import pytest
 from fastapi import HTTPException
 from types import SimpleNamespace
 from unittest.mock import patch
+from supabase_auth.errors import AuthApiError
 
 from auth import (
     get_bearer_token,
@@ -79,8 +80,10 @@ def test_get_user_from_token_invalid_token():
         )
 
         mock_client.auth.get_user.side_effect = (
-            Exception(
-                "Invalid token"
+            AuthApiError(
+                "Invalid token",
+                401,
+                "invalid_token",
             )
         )
 
@@ -94,6 +97,33 @@ def test_get_user_from_token_invalid_token():
     assert error.value.status_code == 401
     assert error.value.detail == (
         "Invalid or expired token"
+    )
+
+
+def test_get_user_from_token_service_error():
+    with patch(
+        "auth.create_client"
+    ) as mock_create_client:
+        mock_client = (
+            mock_create_client.return_value
+        )
+
+        mock_client.auth.get_user.side_effect = (
+            Exception(
+                "Supabase unavailable"
+            )
+        )
+
+        with pytest.raises(
+            HTTPException
+        ) as error:
+            get_user_from_token(
+                "abc123"
+            )
+
+    assert error.value.status_code == 503
+    assert error.value.detail == (
+        "Authentication service unavailable"
     )
 
 
