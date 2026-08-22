@@ -384,18 +384,16 @@ describe("AccountsPage", () => {
             }
         );
 
-        test("handles a failed accounts request", async () => {
-            fetchMock.mockResolvedValue(
-                failedResponse(500)
-            );
+        test("shows an error when loading accounts fails", async () => {
+            fetchMock.mockResolvedValue(failedResponse(500));
 
             render(<AccountsPage />);
 
             expect(
-                await screen.findByText(
-                    "No accounts yet."
-                )
+                await screen.findByText("Unable to load accounts.")
             ).toBeInTheDocument();
+
+            expect(screen.getByText("No accounts yet.")).toBeInTheDocument();
         });
     });
 
