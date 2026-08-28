@@ -27,7 +27,7 @@ class TradeBase(BaseModel):
     symbol: str = Field(min_length=1)
     direction: Literal["long", "short"]
     entry: float
-    stop: float
+    stop: float | None = None
     exit: float
     pnl: float
     entry_datetime: datetime
@@ -40,7 +40,10 @@ class TradeBase(BaseModel):
                 "Exit datetime cannot be before entry datetime"
             )
 
-        if self.entry == self.stop:
+        if (
+            self.stop is not None
+            and self.entry == self.stop
+        ):
             raise ValueError(
                 "Entry and stop cannot be the same"
             )
@@ -157,15 +160,18 @@ def create_trade(
             "Account not found"
         )
 
-    result = round(
-        calculate_r(
-            trade.direction,
-            trade.entry,
-            trade.stop,
-            trade.exit,
-        ),
-        2,
-    )
+    result = None
+
+    if trade.stop is not None:
+        result = round(
+            calculate_r(
+                trade.direction,
+                trade.entry,
+                trade.stop,
+                trade.exit,
+            ),
+            2,
+        )
 
     trade_data = {
         "account_id": trade.account_id,
@@ -211,15 +217,18 @@ def update_trade(
     user = auth_data["user"]
     token = auth_data["token"]
 
-    result = round(
-        calculate_r(
-            trade.direction,
-            trade.entry,
-            trade.stop,
-            trade.exit,
-        ),
-        2,
-    )
+    result = None
+
+    if trade.stop is not None:
+        result = round(
+            calculate_r(
+                trade.direction,
+                trade.entry,
+                trade.stop,
+                trade.exit,
+            ),
+            2,
+        )
 
     updated_trade = {
         "symbol": trade.symbol,

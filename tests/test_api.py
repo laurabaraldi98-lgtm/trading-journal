@@ -611,3 +611,70 @@ def test_delete_account(authenticated_user):
         "test-user",
         "fake-token",
     )
+
+
+def test_create_trade_without_stop(
+    authenticated_user,
+):
+    trade_data = {
+        "account_id": 1,
+        "symbol": "eurusd",
+        "direction": "long",
+        "entry": 1.12,
+        "exit": 1.14,
+        "pnl": 400,
+        "entry_datetime": "2026-08-12T10:00:00",
+        "exit_datetime": "2026-08-12T11:00:00",
+    }
+
+    with (
+        patch(
+            "api.account_belongs_to_user",
+            return_value=True,
+        ),
+        patch(
+            "api.save_trade_to_supabase",
+            return_value=trade_data,
+        ) as mock_save,
+    ):
+        response = client.post(
+            "/trades",
+            json=trade_data,
+        )
+
+    assert response.status_code == 200
+
+    saved_trade = mock_save.call_args.args[0]
+
+    assert saved_trade["stop"] is None
+    assert saved_trade["result"] is None
+
+
+def test_update_trade_without_stop(
+    authenticated_user,
+):
+    trade_data = {
+        "symbol": "eurusd",
+        "direction": "long",
+        "entry": 1.12,
+        "exit": 1.14,
+        "pnl": 400,
+        "entry_datetime": "2026-08-12T10:00:00",
+        "exit_datetime": "2026-08-12T11:00:00",
+    }
+
+    with patch(
+        "api.update_trade_in_supabase",
+        return_value=trade_data,
+    ) as mock_update:
+        response = client.patch(
+            "/trades/5",
+            json=trade_data,
+        )
+
+    assert response.status_code == 200
+
+    updated_trade = mock_update.call_args.args[1]
+
+    assert updated_trade["stop"] is None
+    assert updated_trade["result"] is None

@@ -76,9 +76,17 @@ def load_trades_from_supabase(
             trade["symbol"],
             trade["direction"],
             float(trade["entry"]),
-            float(trade["stop"]),
+            (
+                float(trade["stop"])
+                if trade["stop"] is not None
+                else None
+            ),
             float(trade["exit"]),
-            float(trade["result"]),
+            (
+                float(trade["result"])
+                if trade["result"] is not None
+                else None
+            ),
             float(trade["pnl"]),
             trade["entry_datetime"],
             trade["exit_datetime"],
@@ -131,9 +139,17 @@ def save_trade_to_supabase(
         saved_trade["symbol"],
         saved_trade["direction"],
         float(saved_trade["entry"]),
-        float(saved_trade["stop"]),
+        (
+            float(saved_trade["stop"])
+            if saved_trade["stop"] is not None
+            else None
+        ),
         float(saved_trade["exit"]),
-        float(saved_trade["result"]),
+        (
+            float(saved_trade["result"])
+            if saved_trade["result"] is not None
+            else None
+        ),
         float(saved_trade["pnl"]),
     ]
 

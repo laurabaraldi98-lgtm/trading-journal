@@ -107,6 +107,41 @@ def test_load_trades_from_supabase():
     ]
 
 
+def test_load_trade_without_stop_or_result():
+    fake_response = SimpleNamespace(
+        data=[
+            {
+                "id": 1,
+                "symbol": "EURUSD",
+                "direction": "long",
+                "entry": "1.15",
+                "stop": None,
+                "exit": "1.17",
+                "result": None,
+                "pnl": "400",
+                "entry_datetime": "2026-08-12T10:00:00",
+                "exit_datetime": "2026-08-12T11:00:00",
+            }
+        ]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.order.return_value = mock_query
+    mock_client = make_mock_client(mock_query)
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        trades = load_trades_from_supabase(
+            "user-123",
+            "fake-token",
+        )
+
+    assert trades[0][4] is None
+    assert trades[0][6] is None
+
+
 @pytest.mark.parametrize(
     "entry_datetime, exit_datetime, expected_entry_datetime, expected_exit_datetime",
     [
@@ -205,6 +240,53 @@ def test_save_trade_to_supabase(
         2.0,
         400.0,
     ]
+
+
+def test_save_trade_without_stop_or_result():
+    fake_response = SimpleNamespace(
+        data=[
+            {
+                "id": 10,
+                "symbol": "EURUSD",
+                "direction": "long",
+                "entry": "1.15",
+                "stop": None,
+                "exit": "1.17",
+                "result": None,
+                "pnl": "400",
+            }
+        ]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.insert.return_value = mock_query
+    mock_client = make_mock_client(mock_query)
+
+    trade = {
+        "account_id": 1,
+        "symbol": "EURUSD",
+        "direction": "long",
+        "entry": 1.15,
+        "stop": None,
+        "exit": 1.17,
+        "result": None,
+        "pnl": 400,
+        "entry_datetime": datetime(2026, 8, 12, 10, 0),
+        "exit_datetime": datetime(2026, 8, 12, 11, 0),
+    }
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        saved_trade = save_trade_to_supabase(
+            trade,
+            "user-123",
+            "fake-token",
+        )
+
+    assert saved_trade[4] is None
+    assert saved_trade[6] is None
 
 
 def test_delete_trade_from_supabase():
