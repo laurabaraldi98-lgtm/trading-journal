@@ -102,7 +102,6 @@ export default function TradeForm({
                 <div>
                     <label className="mb-1 block text-sm font-medium text-slate-700">
                         Stop
-                        <span className="ml-1 text-red-600">*</span>
                     </label>
 
                     <input

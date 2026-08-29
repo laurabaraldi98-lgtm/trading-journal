@@ -7,9 +7,9 @@ type Trade = [
     string,
     string,
     number,
+    number | null,
     number,
-    number,
-    number,
+    number | null,
     number,
     string,
     string
@@ -171,9 +171,11 @@ function sessionResponse(session: {
     };
 }
 
-function makeTrade({ id = 1, symbol = "EURUSD", entryDatetime = "2026-08-12T10:00", exitDatetime = "2026-08-12T11:00", }: {
+function makeTrade({ id = 1, symbol = "EURUSD", stop = 1.14, result = 2, entryDatetime = "2026-08-12T10:00", exitDatetime = "2026-08-12T11:00", }: {
     id?: number;
     symbol?: string;
+    stop?: number | null;
+    result?: number | null;
     entryDatetime?: string;
     exitDatetime?: string;
 } = {}): Trade {
@@ -182,9 +184,9 @@ function makeTrade({ id = 1, symbol = "EURUSD", entryDatetime = "2026-08-12T10:0
         symbol,
         "long",
         1.15,
-        1.14,
+        stop,
         1.17,
-        2,
+        result,
         250,
         entryDatetime,
         exitDatetime,
@@ -432,6 +434,52 @@ describe("TradesPage", () => {
         await renderLoadedPage();
         await clickEdit();
         expect(screen.getByTestId("edit-state")).toHaveTextContent("EURUSD | long | 1.15 | 1.14 | 1.17 | 250 | 2026-08-12T10:00 | 2026-08-12T11:00");
+    });
+
+    test("updates trade without stop", async () => {
+        const tradeWithoutStop = makeTrade({
+            stop: null,
+            result: null,
+        });
+
+        fetchMock
+            .mockResolvedValueOnce(accountsResponse())
+            .mockResolvedValueOnce(tradesResponse([
+                tradeWithoutStop,
+            ]))
+            .mockResolvedValueOnce(tradesResponse())
+            .mockResolvedValueOnce(tradesResponse([
+                tradeWithoutStop,
+            ]));
+
+        render(<TradesPage />);
+
+        await screen.findByText("EURUSD");
+        await clickEdit();
+
+        expect(
+            screen.getByTestId("edit-state")
+        ).toHaveTextContent(
+            "EURUSD | long | 1.15 | | 1.17 | 250 | 2026-08-12T10:00 | 2026-08-12T11:00"
+        );
+
+        fireEvent.click(screen.getByRole("button", {
+            name: "Save trade",
+        }));
+
+        await waitFor(() => {
+            const updateCall = fetchMock.mock.calls.find(
+                ([url, options]) =>
+                    url === "http://127.0.0.1:8000/trades/1" &&
+                    options?.method === "PATCH"
+            );
+
+            expect(
+                JSON.parse(updateCall![1].body as string)
+            ).toMatchObject({
+                stop: null,
+            });
+        });
     });
 
     test("does not update when dates are missing", async () => {

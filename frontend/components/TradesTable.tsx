@@ -11,9 +11,9 @@ type Trade = [
     string,
     string,
     number,
+    number | null,
     number,
-    number,
-    number,
+    number | null,
     number,
     string,
     string
@@ -281,14 +281,16 @@ export default function TradesTable({
                                 <div className="text-right">
                                     <p
                                         className={
-                                            trade[6] > 0
+                                            trade[6] !== null && trade[6] > 0
                                                 ? "font-semibold text-emerald-600"
-                                                : trade[6] < 0
+                                                : trade[6] !== null && trade[6] < 0
                                                     ? "font-semibold text-rose-600"
                                                     : "font-semibold text-slate-500"
                                         }
                                     >
-                                        {trade[6]}R
+                                        {trade[6] === null
+                                            ? "—"
+                                            : `${trade[6]}R`}
                                     </p>
 
                                     <p
@@ -316,7 +318,7 @@ export default function TradesTable({
                                             {label}
                                         </p>
                                         <p className="mt-1 text-slate-700">
-                                            {value}
+                                            {value ?? "—"}
                                         </p>
                                     </div>
                                 ))}
@@ -538,14 +540,16 @@ export default function TradesTable({
                                         <td className="py-4 pr-6">
                                             <span
                                                 className={
-                                                    trade[6] > 0
+                                                    trade[6] !== null && trade[6] > 0
                                                         ? "font-medium text-emerald-600"
-                                                        : trade[6] < 0
+                                                        : trade[6] !== null && trade[6] < 0
                                                             ? "font-medium text-rose-600"
                                                             : "font-medium text-slate-500"
                                                 }
                                             >
-                                                {trade[6]}R
+                                                {trade[6] === null
+                                                    ? "—"
+                                                    : `${trade[6]}R`}
                                             </span>
                                         </td>
 
@@ -604,7 +608,7 @@ export default function TradesTable({
                                             {trade[3]}
                                         </td>
                                         <td className="py-4 pr-6">
-                                            {trade[4]}
+                                            {trade[4] ?? "—"}
                                         </td>
                                         <td className="py-4 pr-6">
                                             {trade[5]}
@@ -625,14 +629,16 @@ export default function TradesTable({
                                         <td className="py-4 pr-6">
                                             <span
                                                 className={
-                                                    trade[6] > 0
+                                                    trade[6] !== null && trade[6] > 0
                                                         ? "font-semibold text-emerald-600"
-                                                        : trade[6] < 0
+                                                        : trade[6] !== null && trade[6] < 0
                                                             ? "font-semibold text-rose-600"
                                                             : "font-semibold text-slate-500"
                                                 }
                                             >
-                                                {trade[6]}R
+                                                {trade[6] === null
+                                                    ? "—"
+                                                    : `${trade[6]}R`}
                                             </span>
                                         </td>
 

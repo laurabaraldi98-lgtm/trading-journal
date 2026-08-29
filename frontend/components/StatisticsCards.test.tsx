@@ -52,8 +52,12 @@ describe("StatisticsCards", () => {
         );
 
         expect(
-            screen.getAllByText("0.00R")
-        ).toHaveLength(2);
+            screen.getByText("0.00R")
+        ).toBeInTheDocument();
+
+        expect(
+            screen.getByText("—")
+        ).toBeInTheDocument();
 
         expect(
             screen.getByText("0.0%")
@@ -93,7 +97,7 @@ describe("StatisticsCards", () => {
         ).toBeInTheDocument();
 
         expect(
-            screen.getByText("33.3%")
+            screen.getByText("66.7%")
         ).toBeInTheDocument();
 
         expect(

@@ -30,9 +30,9 @@ type Trade = [
   string,
   string,
   number,
+  number | null,
   number,
-  number,
-  number,
+  number | null,
   number,
   string,
   string
@@ -381,7 +381,6 @@ export default function Home() {
       !symbol ||
       !direction ||
       !entry ||
-      !stop ||
       !exit ||
       !pnl ||
       !entryDatetime ||
@@ -423,7 +422,9 @@ export default function Home() {
         Number(entry),
 
       stop:
-        Number(stop),
+        stop === ""
+          ? null
+          : Number(stop),
 
       exit:
         Number(exit),
@@ -586,9 +587,9 @@ export default function Home() {
     );
 
     setStop(
-      String(
-        trade[4]
-      )
+      trade[4] === null
+        ? ""
+        : String(trade[4])
     );
 
     setExit(
@@ -639,7 +640,9 @@ export default function Home() {
         Number(entry),
 
       stop:
-        Number(stop),
+        stop === ""
+          ? null
+          : Number(stop),
 
       exit:
         Number(exit),

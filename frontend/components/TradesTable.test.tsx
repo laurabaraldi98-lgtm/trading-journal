@@ -20,9 +20,9 @@ type Trade = [
     string,
     string,
     number,
+    number | null,
     number,
-    number,
-    number,
+    number | null,
     number,
     string,
     string
@@ -30,11 +30,13 @@ type Trade = [
 
 function makeTrade({
     direction = "long",
+    stop = 1.14,
     result = 2,
     pnl = 150,
 }: {
     direction?: string;
-    result?: number;
+    stop?: number | null;
+    result?: number | null;
     pnl?: number;
 } = {}): Trade {
     return [
@@ -42,7 +44,7 @@ function makeTrade({
         "EURUSD",
         direction,
         1.15,
-        1.14,
+        stop,
         1.17,
         result,
         pnl,
@@ -129,6 +131,42 @@ describe("TradesTable", () => {
         expect(
             screen.getAllByText("2R")
         ).toHaveLength(2);
+    });
+
+    test("shows missing stop and R as unavailable", () => {
+        renderTable({
+            trades: [
+                makeTrade({
+                    stop: null,
+                    result: null,
+                }),
+            ],
+        });
+
+        expect(
+            screen.getAllByText("—")
+        ).toHaveLength(4);
+
+        expect(
+            screen.queryByText("R")
+        ).not.toBeInTheDocument();
+    });
+
+    test("shows unavailable R while editing", () => {
+        renderTable({
+            ...editingProps(),
+            trades: [
+                makeTrade({
+                    stop: null,
+                    result: null,
+                }),
+            ],
+            stop: "",
+        });
+
+        expect(
+            screen.getByText("—")
+        ).toBeInTheDocument();
     });
 
     test.each([

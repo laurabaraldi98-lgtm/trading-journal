@@ -12,9 +12,9 @@ export type Trade = [
     string,
     string,
     number,
+    number | null,
     number,
-    number,
-    number,
+    number | null,
     number,
     string | null,
     string | null
@@ -31,15 +31,20 @@ export default function StatisticsCards({
     startingBalance,
     currency,
 }: StatisticsCardsProps) {
-    const totalR = trades.reduce(
-        (total, trade) => total + trade[6],
+    const tradesWithR = trades.filter(
+        (trade) => trade[6] !== null
+    );
+
+    const totalR = tradesWithR.reduce(
+        (total, trade) =>
+            total + trade[6]!,
         0
     );
 
     const totalTrades = trades.length;
 
     const winningTrades = trades.filter(
-        (trade) => trade[6] > 0
+        (trade) => trade[7] > 0
     ).length;
 
     const winRate =
@@ -48,9 +53,9 @@ export default function StatisticsCards({
             : (winningTrades / totalTrades) * 100;
 
     const averageR =
-        totalTrades === 0
-            ? 0
-            : totalR / totalTrades;
+        tradesWithR.length === 0
+            ? null
+            : totalR / tradesWithR.length;
 
     const totalPnl = trades.reduce(
         (total, trade) => total + trade[7],
@@ -114,7 +119,9 @@ export default function StatisticsCards({
                         </p>
 
                         <p className="mt-1 text-2xl font-bold text-slate-900">
-                            {averageR.toFixed(2)}R
+                            {averageR === null
+                                ? "—"
+                                : `${averageR.toFixed(2)}R`}
                         </p>
                     </div>
                 </div>

@@ -12,9 +12,9 @@ type Trade = [
     string,
     string,
     number,
+    number | null,
     number,
-    number,
-    number,
+    number | null,
     number,
     string,
     string
@@ -101,7 +101,11 @@ function TradesPageContent() {
         setSymbol(trade[1]);
         setDirection(trade[2]);
         setEntry(String(trade[3]));
-        setStop(String(trade[4]));
+        setStop(
+            trade[4] === null
+                ? ""
+                : String(trade[4])
+        );
         setExit(String(trade[5]));
         setPnl(String(trade[7]));
         setEntryDatetime(trade[8].slice(0, 16));
@@ -132,7 +136,10 @@ function TradesPageContent() {
                 symbol,
                 direction,
                 entry: Number(entry),
-                stop: Number(stop),
+                stop:
+                    stop === ""
+                        ? null
+                        : Number(stop),
                 exit: Number(exit),
                 pnl: Number(pnl),
                 entry_datetime: entryDatetime,

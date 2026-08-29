@@ -16,9 +16,9 @@ type Trade = [
     string,
     string,
     number,
+    number | null,
     number,
-    number,
-    number,
+    number | null,
     number,
     string,
     string
@@ -49,9 +49,15 @@ export function buildCumulativeRData(
     const sortedTrades =
         sortTradesChronologically(trades);
 
-    return sortedTrades.map(
+    const tradesWithR =
+        sortedTrades.filter(
+            (trade) =>
+                trade[6] !== null
+        );
+
+    return tradesWithR.map(
         (trade, index) => {
-            cumulativeR += trade[6];
+            cumulativeR += trade[6]!;
 
             return {
                 tradeNumber:
