@@ -1,37 +1,19 @@
-import {
-    cleanup,
-    render,
-    screen,
-} from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, test } from "vitest";
 
-import {
-    afterEach,
-    describe,
-    expect,
-    test,
-} from "vitest";
-
-import StatisticsCards, {
-    type Trade,
-} from "./StatisticsCards";
-
+import StatisticsCards, { type Trade } from "./StatisticsCards";
 
 afterEach(() => {
     cleanup();
 });
 
-
-function makeTrade(
-    id: number,
-    result: number,
-    pnl: number
-): Trade {
+function makeTrade(id: number, result: number | null, pnl: number): Trade {
     return [
         id,
         "EURUSD",
         "long",
         100,
-        90,
+        result === null ? null : 90,
         120,
         result,
         pnl,
@@ -40,44 +22,21 @@ function makeTrade(
     ];
 }
 
-
 describe("StatisticsCards", () => {
-    test("shows zero statistics when there are no trades", () => {
+    test("shows unavailable R statistics when there are no trades", () => {
         render(
-            <StatisticsCards
-                trades={[]}
-                startingBalance={0}
-                currency=""
-            />
+            <StatisticsCards trades={[]} startingBalance={0} currency="" />
         );
 
-        expect(
-            screen.getByText("0.00R")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText("—")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText("0.0%")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getAllByText("0")
-        ).toHaveLength(3);
-
-        expect(
-            screen.getByText("P/L")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText("Balance")
-        ).toBeInTheDocument();
+        expect(screen.getAllByText("—")).toHaveLength(2);
+        expect(screen.getAllByText("No risk data")).toHaveLength(2);
+        expect(screen.getByText("0.0%")).toBeInTheDocument();
+        expect(screen.getAllByText("0")).toHaveLength(3);
+        expect(screen.getByText("P/L")).toBeInTheDocument();
+        expect(screen.getByText("Balance")).toBeInTheDocument();
     });
 
-
-    test("calculates statistics from trades", () => {
+    test("calculates complete statistics from trades", () => {
         const trades: Trade[] = [
             makeTrade(1, 2, 500),
             makeTrade(2, -1, -200),
@@ -92,31 +51,35 @@ describe("StatisticsCards", () => {
             />
         );
 
-        expect(
-            screen.getByText("1.00R")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText("66.7%")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText("0.33R")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText("3")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText("USD 400")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText("USD 100,400")
-        ).toBeInTheDocument();
+        expect(screen.getByText("1.00R")).toBeInTheDocument();
+        expect(screen.getByText("66.7%")).toBeInTheDocument();
+        expect(screen.getByText("0.33R")).toBeInTheDocument();
+        expect(screen.getByText("3")).toBeInTheDocument();
+        expect(screen.getByText("USD 400")).toBeInTheDocument();
+        expect(screen.getByText("USD 100,400")).toBeInTheDocument();
+        expect(screen.queryByText(/Based on/)).not.toBeInTheDocument();
     });
 
+    test("shows R coverage while keeping money statistics complete", () => {
+        const trades: Trade[] = [
+            makeTrade(1, 2, 500),
+            makeTrade(2, null, -200),
+        ];
+
+        render(
+            <StatisticsCards
+                trades={trades}
+                startingBalance={100000}
+                currency="USD"
+            />
+        );
+
+        expect(screen.getAllByText("2.00R")).toHaveLength(2);
+        expect(screen.getAllByText("Based on 1 of 2 trades")).toHaveLength(2);
+        expect(screen.getByText("50.0%")).toBeInTheDocument();
+        expect(screen.getByText("USD 300")).toBeInTheDocument();
+        expect(screen.getByText("USD 100,300")).toBeInTheDocument();
+    });
 
     test("shows negative R and P/L values correctly", () => {
         const trades: Trade[] = [
@@ -132,28 +95,12 @@ describe("StatisticsCards", () => {
             />
         );
 
-        expect(
-            screen.getByText("-3.00R")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText("0.0%")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText("-1.50R")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText("2")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText("EUR -750")
-        ).toBeInTheDocument();
-
-        expect(
-            screen.getByText("EUR 9,250")
-        ).toBeInTheDocument();
+        expect(screen.getByText("-3.00R")).toBeInTheDocument();
+        expect(screen.getByText("0.0%")).toBeInTheDocument();
+        expect(screen.getByText("-1.50R")).toBeInTheDocument();
+        expect(screen.getByText("2")).toBeInTheDocument();
+        expect(screen.getByText("EUR -750")).toBeInTheDocument();
+        expect(screen.getByText("EUR 9,250")).toBeInTheDocument();
     });
 });
+

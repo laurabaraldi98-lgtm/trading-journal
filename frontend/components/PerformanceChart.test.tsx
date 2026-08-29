@@ -1,111 +1,60 @@
-import {
-    cleanup,
-    fireEvent,
-    render,
-    screen,
-} from "@testing-library/react";
-
-import {
-    afterEach,
-    describe,
-    expect,
-    test,
-    vi,
-} from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import PerformanceChart, {
     buildCumulativePnlData,
     buildCumulativeRData,
 } from "./PerformanceChart";
 
-
 type Trade = [
     number,
     string,
     string,
     number,
+    number | null,
     number,
-    number,
-    number,
+    number | null,
     number,
     string,
     string
 ];
 
-
 vi.mock("recharts", () => ({
-    ResponsiveContainer: ({
-        children,
-    }: {
-        children: React.ReactNode;
-    }) => (
-        <div data-testid="responsive-container">
-            {children}
-        </div>
+    ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+        <div data-testid="responsive-container">{children}</div>
     ),
-
-    LineChart: ({
-        children,
-    }: {
-        children: React.ReactNode;
-    }) => (
-        <div data-testid="line-chart">
-            {children}
-        </div>
+    LineChart: ({ children }: { children: React.ReactNode }) => (
+        <div data-testid="line-chart">{children}</div>
     ),
-
-    CartesianGrid: () => (
-        <div data-testid="cartesian-grid" />
-    ),
-
-    XAxis: () => (
-        <div data-testid="x-axis" />
-    ),
-
+    CartesianGrid: () => <div data-testid="cartesian-grid" />,
+    XAxis: () => <div data-testid="x-axis" />,
     YAxis: ({
         tickFormatter,
     }: {
-        tickFormatter: (
-            value: number
-        ) => string;
+        tickFormatter: (value: number) => string;
     }) => (
-        <div data-testid="y-axis-value">
-            {tickFormatter(1500)}
-        </div>
+        <div data-testid="y-axis-value">{tickFormatter(1500)}</div>
     ),
-
     Tooltip: ({
         formatter,
     }: {
-        formatter: (
-            value: number
-        ) => [string, string];
+        formatter: (value: number) => [string, string];
     }) => {
-        const [value, label] =
-            formatter(1500);
+        const [value, label] = formatter(1500);
 
         return (
             <div>
-                <div data-testid="tooltip-value">
-                    {value}
-                </div>
-
-                <div data-testid="tooltip-label">
-                    {label}
-                </div>
+                <div data-testid="tooltip-value">{value}</div>
+                <div data-testid="tooltip-label">{label}</div>
             </div>
         );
     },
-
-    Line: () => (
-        <div data-testid="line" />
-    ),
+    Line: () => <div data-testid="line" />,
 }));
-
 
 function makeTrade(
     id: number,
-    result: number,
+    result: number | null,
     pnl: number,
     entryDatetime: string
 ): Trade {
@@ -114,7 +63,7 @@ function makeTrade(
         "EURUSD",
         "long",
         10,
-        8,
+        result === null ? null : 8,
         14,
         result,
         pnl,
@@ -123,340 +72,137 @@ function makeTrade(
     ];
 }
 
-
 const unsortedTrades: Trade[] = [
-    makeTrade(
-        3,
-        0.5,
-        50,
-        "2026-08-12T10:00"
-    ),
-    makeTrade(
-        1,
-        2,
-        200,
-        "2026-08-10T10:00"
-    ),
-    makeTrade(
-        2,
-        -1,
-        -100,
-        "2026-08-11T10:00"
-    ),
+    makeTrade(3, 0.5, 50, "2026-08-12T10:00"),
+    makeTrade(1, 2, 200, "2026-08-10T10:00"),
+    makeTrade(2, -1, -100, "2026-08-11T10:00"),
 ];
-
 
 afterEach(() => {
     cleanup();
 });
 
+describe("PerformanceChart data builders", () => {
+    test("calculates cumulative R in chronological order", () => {
+        expect(buildCumulativeRData(unsortedTrades)).toEqual([
+            { tradeNumber: 1, equity: 2 },
+            { tradeNumber: 2, equity: 1 },
+            { tradeNumber: 3, equity: 1.5 },
+        ]);
+    });
 
-describe(
-    "PerformanceChart data builders",
-    () => {
-        test(
-            "calculates cumulative R in chronological order",
-            () => {
-                expect(
-                    buildCumulativeRData(
-                        unsortedTrades
-                    )
-                ).toEqual([
-                    {
-                        tradeNumber: 1,
-                        equity: 2,
-                    },
-                    {
-                        tradeNumber: 2,
-                        equity: 1,
-                    },
-                    {
-                        tradeNumber: 3,
-                        equity: 1.5,
-                    },
-                ]);
-            }
-        );
+    test("excludes trades without R from cumulative R", () => {
+        const trades = [
+            ...unsortedTrades,
+            makeTrade(4, null, 300, "2026-08-13T10:00"),
+        ];
 
+        expect(buildCumulativeRData(trades)).toEqual([
+            { tradeNumber: 1, equity: 2 },
+            { tradeNumber: 2, equity: 1 },
+            { tradeNumber: 3, equity: 1.5 },
+        ]);
+    });
 
-        test(
-            "calculates cumulative P/L in chronological order",
-            () => {
-                expect(
-                    buildCumulativePnlData(
-                        unsortedTrades
-                    )
-                ).toEqual([
-                    {
-                        tradeNumber: 1,
-                        pnl: 200,
-                    },
-                    {
-                        tradeNumber: 2,
-                        pnl: 100,
-                    },
-                    {
-                        tradeNumber: 3,
-                        pnl: 150,
-                    },
-                ]);
-            }
-        );
+    test("calculates cumulative P/L in chronological order", () => {
+        expect(buildCumulativePnlData(unsortedTrades)).toEqual([
+            { tradeNumber: 1, pnl: 200 },
+            { tradeNumber: 2, pnl: 100 },
+            { tradeNumber: 3, pnl: 150 },
+        ]);
+    });
 
+    test.each([
+        ["R", buildCumulativeRData],
+        ["P/L", buildCumulativePnlData],
+    ])("does not mutate the original trades array when building %s data", (_metric, builder) => {
+        const trades = [...unsortedTrades];
+        const originalIds = trades.map((trade) => trade[0]);
 
-        test.each([
-            [
-                "R",
-                buildCumulativeRData,
-            ],
-            [
-                "P/L",
-                buildCumulativePnlData,
-            ],
-        ])(
-            "does not mutate the original trades array when building %s data",
-            (
-                _metric,
-                builder
-            ) => {
-                const trades =
-                    [...unsortedTrades];
+        builder(trades);
 
-                const originalIds =
-                    trades.map(
-                        (trade) =>
-                            trade[0]
-                    );
+        expect(trades.map((trade) => trade[0])).toEqual(originalIds);
+    });
+});
 
-                builder(trades);
+describe("PerformanceChart", () => {
+    test("shows an empty state when there are no trades", () => {
+        render(<PerformanceChart trades={[]} currency="USD" />);
 
-                expect(
-                    trades.map(
-                        (trade) =>
-                            trade[0]
-                    )
-                ).toEqual(
-                    originalIds
-                );
-            }
-        );
-    }
-);
+        expect(screen.getByText("No trades yet.")).toBeInTheDocument();
+        expect(screen.getByText("Cumulative R")).toBeInTheDocument();
+        expect(screen.queryByTestId("line-chart")).not.toBeInTheDocument();
+    });
 
+    test("renders cumulative R by default", () => {
+        render(<PerformanceChart trades={unsortedTrades} currency="USD" />);
 
-describe(
-    "PerformanceChart",
-    () => {
-        test(
-            "shows an empty state when there are no trades",
-            () => {
-                render(
-                    <PerformanceChart
-                        trades={[]}
-                        currency="USD"
-                    />
-                );
+        expect(screen.getByText("Cumulative R")).toBeInTheDocument();
+        expect(
+            screen.getByText("Trading performance by closed trade")
+        ).toBeInTheDocument();
+        expect(screen.getByTestId("line-chart")).toBeInTheDocument();
+        expect(screen.getByTestId("y-axis-value")).toHaveTextContent("1500.0");
+        expect(screen.getByTestId("tooltip-value")).toHaveTextContent("1500.00R");
+        expect(screen.getByTestId("tooltip-label")).toHaveTextContent("R");
+    });
 
-                expect(
-                    screen.getByText(
-                        "No trades yet."
-                    )
-                ).toBeInTheDocument();
+    test("shows partial R coverage", () => {
+        const trades = [
+            ...unsortedTrades,
+            makeTrade(4, null, 300, "2026-08-13T10:00"),
+        ];
 
-                expect(
-                    screen.getByText(
-                        "Cumulative R"
-                    )
-                ).toBeInTheDocument();
+        render(<PerformanceChart trades={trades} currency="USD" />);
 
-                expect(
-                    screen.queryByTestId(
-                        "line-chart"
-                    )
-                ).not.toBeInTheDocument();
-            }
-        );
+        expect(screen.getByText("Based on 3 of 4 trades")).toBeInTheDocument();
+        expect(screen.getByTestId("line-chart")).toBeInTheDocument();
+    });
 
+    test("shows no-risk state and still allows the P/L chart", () => {
+        const trades = [
+            makeTrade(1, null, 300, "2026-08-10T10:00"),
+        ];
 
-        test(
-            "renders cumulative R by default",
-            () => {
-                render(
-                    <PerformanceChart
-                        trades={
-                            unsortedTrades
-                        }
-                        currency="USD"
-                    />
-                );
+        render(<PerformanceChart trades={trades} currency="USD" />);
 
-                expect(
-                    screen.getByText(
-                        "Cumulative R"
-                    )
-                ).toBeInTheDocument();
+        expect(screen.getByText("No risk data available")).toBeInTheDocument();
+        expect(screen.getByText("No risk data available.")).toBeInTheDocument();
+        expect(screen.queryByTestId("line-chart")).not.toBeInTheDocument();
 
-                expect(
-                    screen.getByText(
-                        "Trading performance by closed trade"
-                    )
-                ).toBeInTheDocument();
+        fireEvent.click(screen.getByRole("button", { name: "P/L" }));
 
-                expect(
-                    screen.getByTestId(
-                        "line-chart"
-                    )
-                ).toBeInTheDocument();
+        expect(screen.getByText("Cumulative P/L")).toBeInTheDocument();
+        expect(screen.getByTestId("line-chart")).toBeInTheDocument();
+    });
 
-                expect(
-                    screen.getByTestId(
-                        "y-axis-value"
-                    )
-                ).toHaveTextContent(
-                    "1500.0"
-                );
+    test("switches to cumulative P/L", () => {
+        render(<PerformanceChart trades={unsortedTrades} currency="USD" />);
 
-                expect(
-                    screen.getByTestId(
-                        "tooltip-value"
-                    )
-                ).toHaveTextContent(
-                    "1500.00R"
-                );
+        fireEvent.click(screen.getByRole("button", { name: "P/L" }));
 
-                expect(
-                    screen.getByTestId(
-                        "tooltip-label"
-                    )
-                ).toHaveTextContent(
-                    "R"
-                );
-            }
-        );
+        expect(screen.getByText("Cumulative P/L")).toBeInTheDocument();
+        expect(
+            screen.getByText("Profit and loss by closed trade")
+        ).toBeInTheDocument();
+        expect(screen.getByText("USD")).toBeInTheDocument();
+        expect(screen.getByTestId("y-axis-value")).toHaveTextContent("1.5K");
+        expect(screen.getByTestId("tooltip-value")).toHaveTextContent("USD 1,500");
+        expect(screen.getByTestId("tooltip-label")).toHaveTextContent("P/L");
+    });
 
+    test("can switch from P/L back to R", () => {
+        render(<PerformanceChart trades={unsortedTrades} currency="EUR" />);
 
-        test(
-            "switches to cumulative P/L",
-            () => {
-                render(
-                    <PerformanceChart
-                        trades={
-                            unsortedTrades
-                        }
-                        currency="USD"
-                    />
-                );
+        const pnlButton = screen.getByRole("button", { name: "P/L" });
+        const rButton = screen.getByRole("button", { name: "R" });
 
-                fireEvent.click(
-                    screen.getByRole(
-                        "button",
-                        {
-                            name: "P/L",
-                        }
-                    )
-                );
+        fireEvent.click(pnlButton);
+        expect(screen.getByText("Cumulative P/L")).toBeInTheDocument();
 
-                expect(
-                    screen.getByText(
-                        "Cumulative P/L"
-                    )
-                ).toBeInTheDocument();
+        fireEvent.click(rButton);
+        expect(screen.getByText("Cumulative R")).toBeInTheDocument();
+        expect(screen.getByTestId("tooltip-label")).toHaveTextContent("R");
+    });
+});
 
-                expect(
-                    screen.getByText(
-                        "Profit and loss by closed trade"
-                    )
-                ).toBeInTheDocument();
-
-                expect(
-                    screen.getByText(
-                        "USD"
-                    )
-                ).toBeInTheDocument();
-
-                expect(
-                    screen.getByTestId(
-                        "y-axis-value"
-                    )
-                ).toHaveTextContent(
-                    "1.5K"
-                );
-
-                expect(
-                    screen.getByTestId(
-                        "tooltip-value"
-                    )
-                ).toHaveTextContent(
-                    "USD 1,500"
-                );
-
-                expect(
-                    screen.getByTestId(
-                        "tooltip-label"
-                    )
-                ).toHaveTextContent(
-                    "P/L"
-                );
-            }
-        );
-
-
-        test(
-            "can switch from P/L back to R",
-            () => {
-                render(
-                    <PerformanceChart
-                        trades={
-                            unsortedTrades
-                        }
-                        currency="EUR"
-                    />
-                );
-
-                const pnlButton =
-                    screen.getByRole(
-                        "button",
-                        {
-                            name: "P/L",
-                        }
-                    );
-
-                const rButton =
-                    screen.getByRole(
-                        "button",
-                        {
-                            name: "R",
-                        }
-                    );
-
-                fireEvent.click(
-                    pnlButton
-                );
-
-                expect(
-                    screen.getByText(
-                        "Cumulative P/L"
-                    )
-                ).toBeInTheDocument();
-
-                fireEvent.click(
-                    rButton
-                );
-
-                expect(
-                    screen.getByText(
-                        "Cumulative R"
-                    )
-                ).toBeInTheDocument();
-
-                expect(
-                    screen.getByTestId(
-                        "tooltip-label"
-                    )
-                ).toHaveTextContent(
-                    "R"
-                );
-            }
-        );
-    }
-);
