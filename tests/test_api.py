@@ -720,6 +720,13 @@ def test_preview_csv(authenticated_user):
                 "Open Price": "2350",
             },
         ],
+        "mapping": {
+            "symbol": "Instrument",
+            "direction": "Side",
+            "entry": "Open Price",
+        },
+        "ambiguous_fields": {},
+        "unmapped_headers": [],
     }
 
 

@@ -1,6 +1,8 @@
 import csv
 import io
 
+from imports.mapping import suggest_column_mapping
+
 
 class CsvPreviewError(Exception):
     pass
@@ -47,6 +49,9 @@ def build_csv_preview(
         raise CsvPreviewError(
             "CSV file must contain non-empty headers"
         )
+    mapping_result = suggest_column_mapping(
+        headers
+    )
 
     row_count = 0
     sample_rows = []
@@ -63,4 +68,11 @@ def build_csv_preview(
         "headers": headers,
         "row_count": row_count,
         "sample_rows": sample_rows,
+        "mapping": mapping_result["mapping"],
+        "ambiguous_fields": mapping_result[
+            "ambiguous_fields"
+        ],
+        "unmapped_headers": mapping_result[
+            "unmapped_headers"
+        ],
     }

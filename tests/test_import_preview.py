@@ -39,6 +39,13 @@ def test_builds_preview_from_comma_separated_csv():
                 "Open Price": "2350",
             },
         ],
+        "mapping": {
+            "symbol": "Instrument",
+            "direction": "Side",
+            "entry": "Open Price",
+        },
+        "ambiguous_fields": {},
+        "unmapped_headers": [],
     }
 
 
