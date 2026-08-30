@@ -1,26 +1,41 @@
-from fastapi import FastAPI, Depends, Request
+import os
+from datetime import datetime
+from typing import Literal
+
+from fastapi import (
+    Depends,
+    FastAPI,
+    File,
+    HTTPException,
+    Request,
+    UploadFile,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
-from typing import Literal
-import os
-from datetime import datetime
 
 from auth import get_current_user, get_demo_session
 from calculations import calculate_r
 from database import (
     DatabaseError,
-    load_trades_from_supabase,
-    save_trade_to_supabase,
-    delete_trade_from_supabase,
-    update_trade_in_supabase,
-    load_accounts_from_supabase,
-    save_account_to_supabase,
-    update_account_in_supabase,
-    delete_account_from_supabase,
-    account_belongs_to_user,
     ResourceNotFoundError,
+    account_belongs_to_user,
+    delete_account_from_supabase,
+    delete_trade_from_supabase,
+    load_accounts_from_supabase,
+    load_trades_from_supabase,
+    save_account_to_supabase,
+    save_trade_to_supabase,
+    update_account_in_supabase,
+    update_trade_in_supabase,
 )
+from imports.preview import (
+    CsvPreviewError,
+    build_csv_preview,
+)
+
+
+MAX_CSV_FILE_SIZE = 5 * 1024 * 1024
 
 
 class TradeBase(BaseModel):
@@ -40,10 +55,7 @@ class TradeBase(BaseModel):
                 "Exit datetime cannot be before entry datetime"
             )
 
-        if (
-            self.stop is not None
-            and self.entry == self.stop
-        ):
+        if self.stop is not None and self.entry == self.stop:
             raise ValueError(
                 "Entry and stop cannot be the same"
             )
@@ -98,9 +110,7 @@ async def resource_not_found_handler(
 ):
     return JSONResponse(
         status_code=404,
-        content={
-            "detail": str(exc)
-        },
+        content={"detail": str(exc)},
     )
 
 
@@ -126,6 +136,33 @@ def root():
 @app.post("/demo-login")
 def demo_login():
     return get_demo_session()
+
+
+@app.post("/imports/preview")
+async def preview_csv_import(
+    file: UploadFile = File(...),
+    _auth_data=Depends(get_current_user),
+):
+    content = await file.read(
+        MAX_CSV_FILE_SIZE + 1
+    )
+
+    if len(content) > MAX_CSV_FILE_SIZE:
+        raise HTTPException(
+            status_code=413,
+            detail="CSV file must not exceed 5 MB",
+        )
+
+    try:
+        return build_csv_preview(
+            file.filename,
+            content,
+        )
+    except CsvPreviewError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
 
 
 @app.get("/trades")
@@ -251,7 +288,9 @@ def update_trade(
 
 
 @app.get("/accounts")
-def get_accounts(auth_data=Depends(get_current_user)):
+def get_accounts(
+    auth_data=Depends(get_current_user),
+):
     user = auth_data["user"]
     token = auth_data["token"]
 

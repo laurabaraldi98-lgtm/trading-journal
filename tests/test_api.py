@@ -10,7 +10,7 @@ from database import (
 
 from fastapi.testclient import TestClient
 
-from api import app
+from api import MAX_CSV_FILE_SIZE, app
 from auth import get_current_user
 
 
@@ -678,3 +678,105 @@ def test_update_trade_without_stop(
 
     assert updated_trade["stop"] is None
     assert updated_trade["result"] is None
+
+
+def test_preview_csv(authenticated_user):
+    content = (
+        b"Instrument,Side,Open Price\n"
+        b"EURUSD,Buy,1.15\n"
+        b"XAUUSD,Sell,2350\n"
+    )
+
+    response = client.post(
+        "/imports/preview",
+        files={
+            "file": (
+                "trades.csv",
+                content,
+                "text/csv",
+            )
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "filename": "trades.csv",
+        "delimiter": ",",
+        "headers": [
+            "Instrument",
+            "Side",
+            "Open Price",
+        ],
+        "row_count": 2,
+        "sample_rows": [
+            {
+                "Instrument": "EURUSD",
+                "Side": "Buy",
+                "Open Price": "1.15",
+            },
+            {
+                "Instrument": "XAUUSD",
+                "Side": "Sell",
+                "Open Price": "2350",
+            },
+        ],
+    }
+
+
+def test_preview_csv_without_auth_returns_401():
+    response = client.post(
+        "/imports/preview",
+        files={
+            "file": (
+                "trades.csv",
+                b"symbol,direction\nEURUSD,long",
+                "text/csv",
+            )
+        },
+    )
+
+    assert response.status_code == 401
+
+
+def test_preview_csv_returns_400_for_invalid_file(
+    authenticated_user,
+):
+    response = client.post(
+        "/imports/preview",
+        files={
+            "file": (
+                "trades.txt",
+                b"symbol,direction\nEURUSD,long",
+                "text/plain",
+            )
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "Please upload a CSV file"
+    }
+
+
+def test_preview_csv_rejects_file_over_size_limit(
+    authenticated_user,
+):
+    oversized_content = b"a" * (
+        MAX_CSV_FILE_SIZE + 1
+    )
+
+    response = client.post(
+        "/imports/preview",
+        files={
+            "file": (
+                "trades.csv",
+                oversized_content,
+                "text/csv",
+            )
+        },
+    )
+
+    assert response.status_code == 413
+    assert response.json() == {
+        "detail": "CSV file must not exceed 5 MB"
+    }
