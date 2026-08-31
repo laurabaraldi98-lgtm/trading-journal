@@ -8,7 +8,7 @@ class CsvPreviewError(Exception):
     pass
 
 
-def build_csv_preview(
+def _create_csv_reader(
     filename: str | None,
     content: bytes,
 ):
@@ -39,7 +39,6 @@ def build_csv_preview(
         io.StringIO(text),
         dialect=dialect,
     )
-
     headers = reader.fieldnames
 
     if not headers or any(
@@ -49,6 +48,34 @@ def build_csv_preview(
         raise CsvPreviewError(
             "CSV file must contain non-empty headers"
         )
+
+    return reader, dialect.delimiter, headers
+
+
+def read_csv_rows(
+    filename: str | None,
+    content: bytes,
+):
+    reader, delimiter, headers = _create_csv_reader(
+        filename,
+        content,
+    )
+
+    return {
+        "delimiter": delimiter,
+        "headers": headers,
+        "rows": list(reader),
+    }
+
+
+def build_csv_preview(
+    filename: str | None,
+    content: bytes,
+):
+    reader, delimiter, headers = _create_csv_reader(
+        filename,
+        content,
+    )
     mapping_result = suggest_column_mapping(
         headers
     )
@@ -64,7 +91,7 @@ def build_csv_preview(
 
     return {
         "filename": filename,
-        "delimiter": dialect.delimiter,
+        "delimiter": delimiter,
         "headers": headers,
         "row_count": row_count,
         "sample_rows": sample_rows,

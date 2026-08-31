@@ -3,6 +3,7 @@ import pytest
 from imports.preview import (
     CsvPreviewError,
     build_csv_preview,
+    read_csv_rows,
 )
 
 
@@ -46,6 +47,39 @@ def test_builds_preview_from_comma_separated_csv():
         },
         "ambiguous_fields": {},
         "unmapped_headers": [],
+    }
+
+
+def test_reads_all_csv_rows():
+    content = (
+        b"Instrument,Side\n"
+        b"EURUSD,Buy\n"
+        b"XAUUSD,Sell\n"
+        b"GBPUSD,Buy\n"
+    )
+
+    result = read_csv_rows(
+        "trades.csv",
+        content,
+    )
+
+    assert result == {
+        "delimiter": ",",
+        "headers": ["Instrument", "Side"],
+        "rows": [
+            {
+                "Instrument": "EURUSD",
+                "Side": "Buy",
+            },
+            {
+                "Instrument": "XAUUSD",
+                "Side": "Sell",
+            },
+            {
+                "Instrument": "GBPUSD",
+                "Side": "Buy",
+            },
+        ],
     }
 
 

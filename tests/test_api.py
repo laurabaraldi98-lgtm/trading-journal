@@ -787,3 +787,139 @@ def test_preview_csv_rejects_file_over_size_limit(
     assert response.json() == {
         "detail": "CSV file must not exceed 5 MB"
     }
+
+
+def test_validate_csv_import(authenticated_user):
+    content = (
+        "Instrument;Side;Open Price;Stop Loss;"
+        "Close Price;Profit;Open Time;Close Time\n"
+        "EURUSD;Buy;1,1500;1,1400;"
+        "1,1700;€200,00;"
+        "30/08/2026 10:00;30/08/2026 11:00\n"
+    ).encode("utf-8")
+
+    response = client.post(
+        "/imports/validate",
+        files={
+            "file": (
+                "trades.csv",
+                content,
+                "text/csv",
+            )
+        },
+        data={
+            "mapping": (
+                '{"symbol":"Instrument",'
+                '"direction":"Side",'
+                '"entry":"Open Price",'
+                '"stop":"Stop Loss",'
+                '"exit":"Close Price",'
+                '"pnl":"Profit",'
+                '"entry_datetime":"Open Time",'
+                '"exit_datetime":"Close Time"}'
+            ),
+            "decimal_separator": ",",
+            "date_format": "%d/%m/%Y %H:%M",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "total_rows": 1,
+        "valid_count": 1,
+        "invalid_count": 0,
+        "valid_rows": [
+            {
+                "row": 2,
+                "trade": {
+                    "symbol": "EURUSD",
+                    "direction": "long",
+                    "entry": 1.15,
+                    "stop": 1.14,
+                    "exit": 1.17,
+                    "pnl": 200.0,
+                    "entry_datetime": "2026-08-30T10:00:00",
+                    "exit_datetime": "2026-08-30T11:00:00",
+                },
+            }
+        ],
+        "errors": [],
+    }
+
+
+def test_validate_csv_import_without_auth_returns_401():
+    response = client.post(
+        "/imports/validate",
+        files={
+            "file": (
+                "trades.csv",
+                b"symbol,direction\nEURUSD,long",
+                "text/csv",
+            )
+        },
+        data={
+            "mapping": "{}",
+            "decimal_separator": ".",
+        },
+    )
+
+    assert response.status_code == 401
+
+
+@pytest.mark.parametrize(
+    "mapping",
+    [
+        "not valid JSON",
+        '{"symbol": 123}',
+    ],
+)
+def test_validate_csv_import_rejects_invalid_mapping(
+    authenticated_user,
+    mapping,
+):
+    response = client.post(
+        "/imports/validate",
+        files={
+            "file": (
+                "trades.csv",
+                b"symbol,direction\nEURUSD,long",
+                "text/csv",
+            )
+        },
+        data={
+            "mapping": mapping,
+            "decimal_separator": ".",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": (
+            "Mapping must be a JSON object "
+            "containing string keys and values"
+        )
+    }
+
+
+def test_validate_csv_import_rejects_invalid_file(
+    authenticated_user,
+):
+    response = client.post(
+        "/imports/validate",
+        files={
+            "file": (
+                "trades.txt",
+                b"symbol,direction\nEURUSD,long",
+                "text/plain",
+            )
+        },
+        data={
+            "mapping": "{}",
+            "decimal_separator": ".",
+        },
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {
+        "detail": "Please upload a CSV file"
+    }
