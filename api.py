@@ -28,6 +28,7 @@ from database import (
     load_trades_from_supabase,
     save_account_to_supabase,
     save_trade_to_supabase,
+    save_trades_to_supabase,
     update_account_in_supabase,
     update_trade_in_supabase,
 )
@@ -226,6 +227,79 @@ async def validate_csv_import(
         decimal_separator,
         date_format or None,
     )
+
+
+@app.post("/imports")
+async def import_csv(
+    file: UploadFile = File(...),
+    account_id: int = Form(...),
+    mapping: str = Form(...),
+    decimal_separator: Literal[".", ","] = Form(...),
+    date_format: str | None = Form(None),
+    auth_data=Depends(get_current_user),
+):
+    user = auth_data["user"]
+    token = auth_data["token"]
+
+    if not account_belongs_to_user(account_id, user.id, token):
+        raise ResourceNotFoundError("Account not found")
+
+    parsed_mapping = _parse_column_mapping(mapping)
+    content = await _read_csv_upload(file)
+
+    try:
+        csv_data = read_csv_rows(file.filename, content)
+    except CsvPreviewError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    if not csv_data["rows"]:
+        raise HTTPException(
+            status_code=400, detail="CSV file contains no trades")
+
+    validation = validate_trade_rows(
+        csv_data["rows"],
+        parsed_mapping,
+        decimal_separator,
+        date_format or None,
+    )
+
+    if validation["invalid_count"]:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "CSV contains invalid rows",
+                "errors": validation["errors"],
+            },
+        )
+
+    trades = []
+
+    for valid_row in validation["valid_rows"]:
+        trade = valid_row["trade"]
+        result = None
+
+        if trade["stop"] is not None:
+            result = round(
+                calculate_r(
+                    trade["direction"],
+                    trade["entry"],
+                    trade["stop"],
+                    trade["exit"],
+                ),
+                2,
+            )
+
+        trades.append(
+            {
+                **trade,
+                "account_id": account_id,
+                "result": result,
+            }
+        )
+
+    saved_trades = save_trades_to_supabase(trades, user.id, token)
+
+    return {"imported_count": len(saved_trades)}
 
 
 @app.get("/trades")

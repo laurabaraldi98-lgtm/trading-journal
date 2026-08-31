@@ -923,3 +923,143 @@ def test_validate_csv_import_rejects_invalid_file(
     assert response.json() == {
         "detail": "Please upload a CSV file"
     }
+
+
+IMPORT_MAPPING = (
+    '{"symbol":"Instrument","direction":"Side","entry":"Open Price",'
+    '"stop":"Stop Loss","exit":"Close Price","pnl":"Profit",'
+    '"entry_datetime":"Open Time","exit_datetime":"Close Time"}'
+)
+
+VALID_IMPORT_CSV = (
+    "Instrument;Side;Open Price;Stop Loss;Close Price;Profit;"
+    "Open Time;Close Time\n"
+    "EURUSD;Buy;1,1500;1,1400;1,1700;€200,00;"
+    "30/08/2026 10:00;30/08/2026 11:00\n"
+).encode("utf-8")
+
+
+def _post_csv_import(content=VALID_IMPORT_CSV):
+    return client.post(
+        "/imports",
+        files={"file": ("trades.csv", content, "text/csv")},
+        data={
+            "account_id": "7",
+            "mapping": IMPORT_MAPPING,
+            "decimal_separator": ",",
+            "date_format": "%d/%m/%Y %H:%M",
+        },
+    )
+
+
+def test_imports_valid_csv(authenticated_user):
+    with (
+        patch("api.account_belongs_to_user", return_value=True),
+        patch(
+            "api.save_trades_to_supabase",
+            return_value=[{"id": 10}],
+        ) as mock_save,
+    ):
+        response = _post_csv_import()
+
+    assert response.status_code == 200
+    assert response.json() == {"imported_count": 1}
+
+    saved_trades = mock_save.call_args.args[0]
+    assert saved_trades == [
+        {
+            "account_id": 7,
+            "symbol": "EURUSD",
+            "direction": "long",
+            "entry": 1.15,
+            "stop": 1.14,
+            "exit": 1.17,
+            "result": 2.0,
+            "pnl": 200.0,
+            "entry_datetime": datetime(2026, 8, 30, 10, 0),
+            "exit_datetime": datetime(2026, 8, 30, 11, 0),
+        }
+    ]
+    assert mock_save.call_args.args[1:] == ("test-user", "fake-token")
+
+
+def test_import_rejects_account_not_owned_by_user(authenticated_user):
+    with (
+        patch("api.account_belongs_to_user", return_value=False),
+        patch("api.save_trades_to_supabase") as mock_save,
+    ):
+        response = _post_csv_import()
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Account not found"}
+    mock_save.assert_not_called()
+
+
+def test_import_rejects_invalid_rows(authenticated_user):
+    invalid_csv = VALID_IMPORT_CSV.replace(b"Buy", b"Hold")
+
+    with (
+        patch("api.account_belongs_to_user", return_value=True),
+        patch("api.save_trades_to_supabase") as mock_save,
+    ):
+        response = _post_csv_import(invalid_csv)
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["message"] == "CSV contains invalid rows"
+    assert response.json()["detail"]["errors"] == [
+        {
+            "row": 2,
+            "field": "direction",
+            "message": "Unsupported direction value: Hold",
+        }
+    ]
+    mock_save.assert_not_called()
+
+
+def test_import_rejects_csv_without_trades(authenticated_user):
+    empty_csv = (
+        "Instrument;Side;Open Price;Stop Loss;Close Price;Profit;"
+        "Open Time;Close Time\n"
+    ).encode("utf-8")
+
+    with (
+        patch("api.account_belongs_to_user", return_value=True),
+        patch("api.save_trades_to_supabase") as mock_save,
+    ):
+        response = _post_csv_import(empty_csv)
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "CSV file contains no trades"}
+    mock_save.assert_not_called()
+
+
+def test_import_without_auth_returns_401():
+    response = _post_csv_import()
+
+    assert response.status_code == 401
+
+
+def test_import_rejects_invalid_file(authenticated_user):
+    with (
+        patch("api.account_belongs_to_user", return_value=True),
+        patch("api.save_trades_to_supabase") as mock_save,
+    ):
+        response = client.post(
+            "/imports",
+            files={
+                "file": (
+                    "trades.txt",
+                    b"symbol,direction\nEURUSD,long",
+                    "text/plain",
+                )
+            },
+            data={
+                "account_id": "7",
+                "mapping": "{}",
+                "decimal_separator": ".",
+            },
+        )
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Please upload a CSV file"}
+    mock_save.assert_not_called()
