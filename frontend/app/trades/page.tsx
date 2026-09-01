@@ -12,9 +12,9 @@ type Trade = [
     string,
     string,
     number,
+    number | null,
     number,
-    number,
-    number,
+    number | null,
     number,
     string,
     string
@@ -101,7 +101,11 @@ function TradesPageContent() {
         setSymbol(trade[1]);
         setDirection(trade[2]);
         setEntry(String(trade[3]));
-        setStop(String(trade[4]));
+        setStop(
+            trade[4] === null
+                ? ""
+                : String(trade[4])
+        );
         setExit(String(trade[5]));
         setPnl(String(trade[7]));
         setEntryDatetime(trade[8].slice(0, 16));
@@ -132,7 +136,10 @@ function TradesPageContent() {
                 symbol,
                 direction,
                 entry: Number(entry),
-                stop: Number(stop),
+                stop:
+                    stop === ""
+                        ? null
+                        : Number(stop),
                 exit: Number(exit),
                 pnl: Number(pnl),
                 entry_datetime: entryDatetime,
@@ -247,7 +254,7 @@ function TradesPageContent() {
 
             <main className="min-w-0 flex-1 px-5 py-5 sm:px-6 md:px-8 md:py-8 xl:px-10">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-                    <div className="pl-14 sm:pl-0">
+                    <div className="pl-14 md:pl-0">
                         <h2 className="text-3xl font-bold tracking-tight text-slate-900">
                             Trades
                         </h2>

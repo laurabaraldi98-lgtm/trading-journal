@@ -76,9 +76,17 @@ def load_trades_from_supabase(
             trade["symbol"],
             trade["direction"],
             float(trade["entry"]),
-            float(trade["stop"]),
+            (
+                float(trade["stop"])
+                if trade["stop"] is not None
+                else None
+            ),
             float(trade["exit"]),
-            float(trade["result"]),
+            (
+                float(trade["result"])
+                if trade["result"] is not None
+                else None
+            ),
             float(trade["pnl"]),
             trade["entry_datetime"],
             trade["exit_datetime"],
@@ -89,14 +97,11 @@ def load_trades_from_supabase(
     return loaded_trades
 
 
-def save_trade_to_supabase(
+def _build_trade_data(
     trade,
     user_id: str,
-    token: str,
 ):
-    client = get_authenticated_client(token)
-
-    new_trade = {
+    return {
         "account_id": trade["account_id"],
         "symbol": trade["symbol"],
         "direction": trade["direction"],
@@ -118,6 +123,15 @@ def save_trade_to_supabase(
         "user_id": user_id,
     }
 
+
+def save_trade_to_supabase(
+    trade,
+    user_id: str,
+    token: str,
+):
+    client = get_authenticated_client(token)
+    new_trade = _build_trade_data(trade, user_id)
+
     response = execute_query(
         client
         .table("trades")
@@ -131,11 +145,39 @@ def save_trade_to_supabase(
         saved_trade["symbol"],
         saved_trade["direction"],
         float(saved_trade["entry"]),
-        float(saved_trade["stop"]),
+        (
+            float(saved_trade["stop"])
+            if saved_trade["stop"] is not None
+            else None
+        ),
         float(saved_trade["exit"]),
-        float(saved_trade["result"]),
+        (
+            float(saved_trade["result"])
+            if saved_trade["result"] is not None
+            else None
+        ),
         float(saved_trade["pnl"]),
     ]
+
+
+def save_trades_to_supabase(
+    trades,
+    user_id: str,
+    token: str,
+):
+    client = get_authenticated_client(token)
+    new_trades = [
+        _build_trade_data(trade, user_id)
+        for trade in trades
+    ]
+
+    response = execute_query(
+        client
+        .table("trades")
+        .insert(new_trades)
+    )
+
+    return response.data
 
 
 def delete_trade_from_supabase(

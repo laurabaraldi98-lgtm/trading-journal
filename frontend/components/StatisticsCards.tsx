@@ -1,9 +1,9 @@
 import {
-    TrendingUp,
-    Target,
     Activity,
-    ListChecks,
     BadgeDollarSign,
+    ListChecks,
+    Target,
+    TrendingUp,
     Wallet,
 } from "lucide-react";
 
@@ -12,9 +12,9 @@ export type Trade = [
     string,
     string,
     number,
+    number | null,
     number,
-    number,
-    number,
+    number | null,
     number,
     string | null,
     string | null
@@ -31,32 +31,28 @@ export default function StatisticsCards({
     startingBalance,
     currency,
 }: StatisticsCardsProps) {
-    const totalR = trades.reduce(
-        (total, trade) => total + trade[6],
-        0
-    );
+    const tradesWithR = trades.filter((trade) => trade[6] !== null);
+
+    const totalR = trades.reduce((total, trade) => {
+        const result = trade[6];
+        return result === null ? total : total + result;
+    }, 0);
 
     const totalTrades = trades.length;
+    const hasRData = tradesWithR.length > 0;
 
-    const winningTrades = trades.filter(
-        (trade) => trade[6] > 0
-    ).length;
+    let rCoverageText: string | null = null;
 
-    const winRate =
-        totalTrades === 0
-            ? 0
-            : (winningTrades / totalTrades) * 100;
+    if (!hasRData) {
+        rCoverageText = "No risk data";
+    } else if (tradesWithR.length < totalTrades) {
+        rCoverageText = `Based on ${tradesWithR.length} of ${totalTrades} trades`;
+    }
 
-    const averageR =
-        totalTrades === 0
-            ? 0
-            : totalR / totalTrades;
-
-    const totalPnl = trades.reduce(
-        (total, trade) => total + trade[7],
-        0
-    );
-
+    const winningTrades = trades.filter((trade) => trade[7] > 0).length;
+    const winRate = totalTrades === 0 ? 0 : (winningTrades / totalTrades) * 100;
+    const averageR = hasRData ? totalR / tradesWithR.length : null;
+    const totalPnl = trades.reduce((total, trade) => total + trade[7], 0);
     const balance = startingBalance + totalPnl;
 
     return (
@@ -64,22 +60,26 @@ export default function StatisticsCards({
             <div className="rounded-2xl border border-slate-200 bg-white p-5">
                 <div className="flex items-center gap-4">
                     <div
-                        className={`flex h-12 w-12 items-center justify-center rounded-xl ${totalR >= 0
-                            ? "bg-emerald-50 text-emerald-600"
-                            : "bg-rose-50 text-rose-600"
+                        className={`flex h-12 w-12 items-center justify-center rounded-xl ${!hasRData
+                            ? "bg-slate-100 text-slate-500"
+                            : totalR >= 0
+                                ? "bg-emerald-50 text-emerald-600"
+                                : "bg-rose-50 text-rose-600"
                             }`}
                     >
                         <TrendingUp size={23} />
                     </div>
 
                     <div>
-                        <p className="text-sm text-slate-500">
-                            Total R
-                        </p>
-
+                        <p className="text-sm text-slate-500">Total R</p>
                         <p className="mt-1 text-2xl font-bold text-slate-900">
-                            {totalR.toFixed(2)}R
+                            {hasRData ? `${totalR.toFixed(2)}R` : "—"}
                         </p>
+                        {rCoverageText && (
+                            <p className="mt-1 text-xs text-slate-400">
+                                {rCoverageText}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -91,10 +91,7 @@ export default function StatisticsCards({
                     </div>
 
                     <div>
-                        <p className="text-sm text-slate-500">
-                            Win Rate
-                        </p>
-
+                        <p className="text-sm text-slate-500">Win Rate</p>
                         <p className="mt-1 text-2xl font-bold text-slate-900">
                             {winRate.toFixed(1)}%
                         </p>
@@ -109,13 +106,15 @@ export default function StatisticsCards({
                     </div>
 
                     <div>
-                        <p className="text-sm text-slate-500">
-                            Average R
-                        </p>
-
+                        <p className="text-sm text-slate-500">Average R</p>
                         <p className="mt-1 text-2xl font-bold text-slate-900">
-                            {averageR.toFixed(2)}R
+                            {averageR === null ? "—" : `${averageR.toFixed(2)}R`}
                         </p>
+                        {rCoverageText && (
+                            <p className="mt-1 text-xs text-slate-400">
+                                {rCoverageText}
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
@@ -127,10 +126,7 @@ export default function StatisticsCards({
                     </div>
 
                     <div>
-                        <p className="text-sm text-slate-500">
-                            Total Trades
-                        </p>
-
+                        <p className="text-sm text-slate-500">Total Trades</p>
                         <p className="mt-1 text-2xl font-bold text-slate-900">
                             {totalTrades}
                         </p>
@@ -150,10 +146,7 @@ export default function StatisticsCards({
                     </div>
 
                     <div>
-                        <p className="text-sm text-slate-500">
-                            P/L
-                        </p>
-
+                        <p className="text-sm text-slate-500">P/L</p>
                         <p className="mt-1 text-2xl font-bold text-slate-900">
                             {`${currency} ${totalPnl.toLocaleString("en-US")}`}
                         </p>
@@ -168,10 +161,7 @@ export default function StatisticsCards({
                     </div>
 
                     <div>
-                        <p className="text-sm text-slate-500">
-                            Balance
-                        </p>
-
+                        <p className="text-sm text-slate-500">Balance</p>
                         <p className="mt-1 text-2xl font-bold text-slate-900">
                             {`${currency} ${balance.toLocaleString("en-US")}`}
                         </p>

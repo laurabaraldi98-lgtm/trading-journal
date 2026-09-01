@@ -24,9 +24,9 @@ type Trade = [
     string,
     string,
     number,
+    number | null,
     number,
-    number,
-    number,
+    number | null,
     number,
     string,
     string
@@ -74,6 +74,10 @@ const {
             | null,
 
         clearDates: null as
+            | (() => void)
+            | null,
+
+        clearStop: null as
             | (() => void)
             | null,
 
@@ -264,6 +268,11 @@ vi.mock("../components/TradeForm", () => ({
                 setExitDatetime("");
             };
 
+        formActions.clearStop =
+            () => {
+                setStop("");
+            };
+
         formActions.reverseDates =
             () => {
                 setEntryDatetime(
@@ -439,16 +448,18 @@ const account2: Account = {
 
 function makeTrade(
     id = 1,
-    symbol = "EURUSD"
+    symbol = "EURUSD",
+    stop: number | null = 1.14,
+    result: number | null = 2
 ): Trade {
     return [
         id,
         symbol,
         "long",
         1.15,
-        1.14,
+        stop,
         1.17,
-        2,
+        result,
         250,
         "2026-08-17T10:00",
         "2026-08-17T11:00",
@@ -702,6 +713,9 @@ describe(
                 null;
 
             formActions.clearDates =
+                null;
+
+            formActions.clearStop =
                 null;
 
             formActions.reverseDates =
@@ -1293,6 +1307,90 @@ describe(
 
 
         test(
+            "creates trade without stop",
+            async () => {
+                fetchMock
+                    .mockResolvedValueOnce(
+                        apiResponse([
+                            account1,
+                        ])
+                    )
+                    .mockResolvedValueOnce(
+                        apiResponse([])
+                    )
+                    .mockResolvedValueOnce(
+                        apiResponse({})
+                    )
+                    .mockResolvedValueOnce(
+                        apiResponse([
+                            makeTrade(
+                                1,
+                                "GBPUSD",
+                                null,
+                                null
+                            ),
+                        ])
+                    );
+
+                render(
+                    <Home />
+                );
+
+                await screen.findByRole(
+                    "heading",
+                    {
+                        name:
+                            "Dashboard",
+                    }
+                );
+
+                await waitFor(
+                    () => {
+                        expect(
+                            fetchMock
+                        ).toHaveBeenCalledTimes(
+                            2
+                        );
+                    }
+                );
+
+                await openForm();
+                await fillValidTrade();
+
+                await act(
+                    async () => {
+                        formActions
+                            .clearStop!();
+                    }
+                );
+
+                await saveTrade();
+
+                const createCall =
+                    fetchMock.mock.calls.find(
+                        ([
+                            url,
+                            options,
+                        ]) =>
+                            url ===
+                            "http://127.0.0.1:8000/trades" &&
+                            options?.method ===
+                            "POST"
+                    );
+
+                expect(
+                    JSON.parse(
+                        createCall![1]
+                            .body as string
+                    )
+                ).toMatchObject({
+                    stop: null,
+                });
+            }
+        );
+
+
+        test(
             "does not create trade without dates",
             async () => {
                 await renderDashboard();
@@ -1496,6 +1594,74 @@ describe(
                             "PATCH",
                     })
                 );
+            }
+        );
+
+
+        test(
+            "edits and updates trade without stop",
+            async () => {
+                const tradeWithoutStop =
+                    makeTrade(
+                        1,
+                        "EURUSD",
+                        null,
+                        null
+                    );
+
+                fetchMock
+                    .mockResolvedValueOnce(
+                        apiResponse([
+                            account1,
+                        ])
+                    )
+                    .mockResolvedValueOnce(
+                        apiResponse([
+                            tradeWithoutStop,
+                        ])
+                    )
+                    .mockResolvedValueOnce(
+                        apiResponse({})
+                    )
+                    .mockResolvedValueOnce(
+                        apiResponse([
+                            tradeWithoutStop,
+                        ])
+                    );
+
+                render(
+                    <Home />
+                );
+
+                await screen.findByText(
+                    "EURUSD"
+                );
+
+                await editTrade(
+                    tradeWithoutStop
+                );
+                await updateTrade();
+
+                const updateCall =
+                    fetchMock.mock.calls.find(
+                        ([
+                            url,
+                            options,
+                        ]) =>
+                            url ===
+                            "http://127.0.0.1:8000/trades/1" &&
+                            options?.method ===
+                            "PATCH"
+                    );
+
+                expect(
+                    JSON.parse(
+                        updateCall![1]
+                            .body as string
+                    )
+                ).toMatchObject({
+                    stop: null,
+                });
             }
         );
 

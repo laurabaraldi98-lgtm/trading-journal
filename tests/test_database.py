@@ -9,6 +9,7 @@ from database import (
     execute_query,
     load_trades_from_supabase,
     save_trade_to_supabase,
+    save_trades_to_supabase,
     delete_trade_from_supabase,
     update_trade_in_supabase,
     load_accounts_from_supabase,
@@ -39,9 +40,7 @@ def make_mock_client(mock_query):
 
 def test_execute_query_raises_database_error():
     mock_query = MagicMock()
-    mock_query.execute.side_effect = Exception(
-        "Supabase failed"
-    )
+    mock_query.execute.side_effect = Exception("Supabase failed")
 
     with pytest.raises(
         DatabaseError,
@@ -83,13 +82,9 @@ def test_load_trades_from_supabase():
             "fake-token",
         )
 
-    mock_get_client.assert_called_once_with(
-        "fake-token"
-    )
+    mock_get_client.assert_called_once_with("fake-token")
 
-    mock_client.table.assert_called_once_with(
-        "trades"
-    )
+    mock_client.table.assert_called_once_with("trades")
 
     assert trades == [
         [
@@ -105,6 +100,41 @@ def test_load_trades_from_supabase():
             "2026-08-12T11:00:00",
         ]
     ]
+
+
+def test_load_trade_without_stop_or_result():
+    fake_response = SimpleNamespace(
+        data=[
+            {
+                "id": 1,
+                "symbol": "EURUSD",
+                "direction": "long",
+                "entry": "1.15",
+                "stop": None,
+                "exit": "1.17",
+                "result": None,
+                "pnl": "400",
+                "entry_datetime": "2026-08-12T10:00:00",
+                "exit_datetime": "2026-08-12T11:00:00",
+            }
+        ]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.order.return_value = mock_query
+    mock_client = make_mock_client(mock_query)
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        trades = load_trades_from_supabase(
+            "user-123",
+            "fake-token",
+        )
+
+    assert trades[0][4] is None
+    assert trades[0][6] is None
 
 
 @pytest.mark.parametrize(
@@ -173,9 +203,7 @@ def test_save_trade_to_supabase(
             "fake-token",
         )
 
-    mock_get_client.assert_called_once_with(
-        "fake-token"
-    )
+    mock_get_client.assert_called_once_with("fake-token")
 
     expected_new_trade = {
         "account_id": 1,
@@ -191,9 +219,7 @@ def test_save_trade_to_supabase(
         "user_id": "user-123",
     }
 
-    mock_query.insert.assert_called_once_with(
-        expected_new_trade
-    )
+    mock_query.insert.assert_called_once_with(expected_new_trade)
 
     assert saved_trade == [
         10,
@@ -205,6 +231,53 @@ def test_save_trade_to_supabase(
         2.0,
         400.0,
     ]
+
+
+def test_save_trade_without_stop_or_result():
+    fake_response = SimpleNamespace(
+        data=[
+            {
+                "id": 10,
+                "symbol": "EURUSD",
+                "direction": "long",
+                "entry": "1.15",
+                "stop": None,
+                "exit": "1.17",
+                "result": None,
+                "pnl": "400",
+            }
+        ]
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.insert.return_value = mock_query
+    mock_client = make_mock_client(mock_query)
+
+    trade = {
+        "account_id": 1,
+        "symbol": "EURUSD",
+        "direction": "long",
+        "entry": 1.15,
+        "stop": None,
+        "exit": 1.17,
+        "result": None,
+        "pnl": 400,
+        "entry_datetime": datetime(2026, 8, 12, 10, 0),
+        "exit_datetime": datetime(2026, 8, 12, 11, 0),
+    }
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        saved_trade = save_trade_to_supabase(
+            trade,
+            "user-123",
+            "fake-token",
+        )
+
+    assert saved_trade[4] is None
+    assert saved_trade[6] is None
 
 
 def test_delete_trade_from_supabase():
@@ -225,9 +298,7 @@ def test_delete_trade_from_supabase():
             "fake-token",
         )
 
-    mock_get_client.assert_called_once_with(
-        "fake-token"
-    )
+    mock_get_client.assert_called_once_with("fake-token")
 
     mock_query.delete.assert_called_once()
 
@@ -245,9 +316,7 @@ def test_delete_trade_from_supabase():
 
 
 def test_delete_trade_not_found():
-    fake_response = SimpleNamespace(
-        data=[]
-    )
+    fake_response = SimpleNamespace(data=[])
 
     mock_query = make_mock_query(fake_response)
     mock_query.delete.return_value = mock_query
@@ -322,9 +391,7 @@ def test_update_trade_in_supabase(
             "fake-token",
         )
 
-    mock_get_client.assert_called_once_with(
-        "fake-token"
-    )
+    mock_get_client.assert_called_once_with("fake-token")
 
     expected_trade_data = {
         "symbol": "GBPUSD",
@@ -338,9 +405,7 @@ def test_update_trade_in_supabase(
         "exit_datetime": expected_exit_datetime,
     }
 
-    mock_query.update.assert_called_once_with(
-        expected_trade_data
-    )
+    mock_query.update.assert_called_once_with(expected_trade_data)
 
     mock_query.eq.assert_any_call(
         "id",
@@ -356,9 +421,7 @@ def test_update_trade_in_supabase(
 
 
 def test_update_trade_not_found():
-    fake_response = SimpleNamespace(
-        data=[]
-    )
+    fake_response = SimpleNamespace(data=[])
 
     mock_query = make_mock_query(fake_response)
     mock_query.update.return_value = mock_query
@@ -373,12 +436,8 @@ def test_update_trade_not_found():
         "exit": 1.12,
         "result": 2,
         "pnl": 200,
-        "entry_datetime": datetime(
-            2026, 8, 22, 10, 0
-        ),
-        "exit_datetime": datetime(
-            2026, 8, 22, 11, 0
-        ),
+        "entry_datetime": datetime(2026, 8, 22, 10, 0),
+        "exit_datetime": datetime(2026, 8, 22, 11, 0),
     }
 
     with patch(
@@ -426,13 +485,9 @@ def test_load_accounts_from_supabase():
             "fake-token",
         )
 
-    mock_get_client.assert_called_once_with(
-        "fake-token"
-    )
+    mock_get_client.assert_called_once_with("fake-token")
 
-    mock_client.table.assert_called_once_with(
-        "accounts"
-    )
+    mock_client.table.assert_called_once_with("accounts")
 
     mock_query.select.assert_called_once_with("*")
 
@@ -441,9 +496,7 @@ def test_load_accounts_from_supabase():
         "test-user",
     )
 
-    mock_query.order.assert_called_once_with(
-        "created_at"
-    )
+    mock_query.order.assert_called_once_with("created_at")
 
     assert result == fake_response.data
 
@@ -486,13 +539,9 @@ def test_save_account_to_supabase():
             "fake-token",
         )
 
-    mock_get_client.assert_called_once_with(
-        "fake-token"
-    )
+    mock_get_client.assert_called_once_with("fake-token")
 
-    mock_client.table.assert_called_once_with(
-        "accounts"
-    )
+    mock_client.table.assert_called_once_with("accounts")
 
     mock_query.insert.assert_called_once_with(
         {
@@ -557,13 +606,9 @@ def test_update_account_in_supabase(
             "fake-token",
         )
 
-    mock_get_client.assert_called_once_with(
-        "fake-token"
-    )
+    mock_get_client.assert_called_once_with("fake-token")
 
-    mock_client.table.assert_called_once_with(
-        "accounts"
-    )
+    mock_client.table.assert_called_once_with("accounts")
 
     mock_query.update.assert_called_once_with(
         {
@@ -589,9 +634,7 @@ def test_update_account_in_supabase(
 
 
 def test_update_account_not_found():
-    fake_response = SimpleNamespace(
-        data=[]
-    )
+    fake_response = SimpleNamespace(data=[])
 
     mock_query = make_mock_query(fake_response)
     mock_query.update.return_value = mock_query
@@ -648,13 +691,9 @@ def test_delete_account_from_supabase():
             "fake-token",
         )
 
-    mock_get_client.assert_called_once_with(
-        "fake-token"
-    )
+    mock_get_client.assert_called_once_with("fake-token")
 
-    mock_client.table.assert_called_once_with(
-        "accounts"
-    )
+    mock_client.table.assert_called_once_with("accounts")
 
     mock_query.delete.assert_called_once_with()
 
@@ -672,9 +711,7 @@ def test_delete_account_from_supabase():
 
 
 def test_delete_account_not_found():
-    fake_response = SimpleNamespace(
-        data=[]
-    )
+    fake_response = SimpleNamespace(data=[])
 
     mock_query = make_mock_query(fake_response)
     mock_query.delete.return_value = mock_query
@@ -741,17 +778,11 @@ def test_load_trades_from_supabase_filters_by_account():
 
 
 def test_account_belongs_to_user_returns_true():
-    fake_response = SimpleNamespace(
-        data=[{"id": 1}]
-    )
+    fake_response = SimpleNamespace(data=[{"id": 1}])
 
-    mock_query = make_mock_query(
-        fake_response
-    )
+    mock_query = make_mock_query(fake_response)
 
-    mock_client = make_mock_client(
-        mock_query
-    )
+    mock_client = make_mock_client(mock_query)
 
     with patch(
         "database.get_authenticated_client",
@@ -767,17 +798,11 @@ def test_account_belongs_to_user_returns_true():
 
 
 def test_account_belongs_to_user_returns_false():
-    fake_response = SimpleNamespace(
-        data=[]
-    )
+    fake_response = SimpleNamespace(data=[])
 
-    mock_query = make_mock_query(
-        fake_response
-    )
+    mock_query = make_mock_query(fake_response)
 
-    mock_client = make_mock_client(
-        mock_query
-    )
+    mock_client = make_mock_client(mock_query)
 
     with patch(
         "database.get_authenticated_client",
@@ -790,3 +815,78 @@ def test_account_belongs_to_user_returns_false():
         )
 
     assert result is False
+
+
+def test_save_trades_to_supabase():
+    fake_response = SimpleNamespace(data=[{"id": 10}, {"id": 11}])
+
+    mock_query = make_mock_query(fake_response)
+    mock_query.insert.return_value = mock_query
+    mock_client = make_mock_client(mock_query)
+
+    trades = [
+        {
+            "account_id": 7,
+            "symbol": "EURUSD",
+            "direction": "long",
+            "entry": 1.15,
+            "stop": 1.14,
+            "exit": 1.17,
+            "result": 2.0,
+            "pnl": 200.0,
+            "entry_datetime": datetime(2026, 8, 30, 10, 0),
+            "exit_datetime": datetime(2026, 8, 30, 11, 0),
+        },
+        {
+            "account_id": 7,
+            "symbol": "XAUUSD",
+            "direction": "short",
+            "entry": 2350.0,
+            "stop": None,
+            "exit": 2340.0,
+            "result": None,
+            "pnl": 300.0,
+            "entry_datetime": datetime(2026, 8, 30, 12, 0),
+            "exit_datetime": datetime(2026, 8, 30, 13, 0),
+        },
+    ]
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ) as mock_get_client:
+        result = save_trades_to_supabase(trades, "user-123", "fake-token")
+
+    mock_get_client.assert_called_once_with("fake-token")
+    mock_client.table.assert_called_once_with("trades")
+    mock_query.insert.assert_called_once_with(
+        [
+            {
+                "account_id": 7,
+                "symbol": "EURUSD",
+                "direction": "long",
+                "entry": 1.15,
+                "stop": 1.14,
+                "exit": 1.17,
+                "result": 2.0,
+                "pnl": 200.0,
+                "entry_datetime": "2026-08-30T10:00:00",
+                "exit_datetime": "2026-08-30T11:00:00",
+                "user_id": "user-123",
+            },
+            {
+                "account_id": 7,
+                "symbol": "XAUUSD",
+                "direction": "short",
+                "entry": 2350.0,
+                "stop": None,
+                "exit": 2340.0,
+                "result": None,
+                "pnl": 300.0,
+                "entry_datetime": "2026-08-30T12:00:00",
+                "exit_datetime": "2026-08-30T13:00:00",
+                "user_id": "user-123",
+            },
+        ]
+    )
+    assert result == fake_response.data
