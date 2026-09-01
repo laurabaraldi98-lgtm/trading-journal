@@ -187,16 +187,8 @@ def test_date_detection_ignores_missing_and_empty_values():
 
 
 def test_rejects_ambiguous_date_format():
-    rows = [
-        {
-            "Open Time": "08/09/2026 10:00",
-            "Close Time": "08/09/2026 11:00",
-        }
-    ]
-    mapping = {
-        "entry_datetime": "Open Time",
-        "exit_datetime": "Close Time",
-    }
+    rows = [{"Open Time": "08/09/2026 10:00", "Close Time": "09/08/2026 11:00"}]
+    mapping = {"entry_datetime": "Open Time", "exit_datetime": "Close Time"}
 
     with pytest.raises(
         CsvNormalizationError,
@@ -214,3 +206,10 @@ def test_rejects_unknown_date_format():
         match="Could not detect the CSV datetime format",
     ):
         detect_date_format(rows, mapping)
+
+
+def test_detects_consistent_date_format():
+    rows = [{"Open Time": "08/09/2026 10:00", "Close Time": "13/09/2026 11:00"}]
+    mapping = {"entry_datetime": "Open Time", "exit_datetime": "Close Time"}
+
+    assert detect_date_format(rows, mapping) == "%d/%m/%Y %H:%M"
