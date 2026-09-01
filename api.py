@@ -38,6 +38,23 @@ from imports.preview import (
     read_csv_rows,
 )
 from imports.validation import validate_trade_rows
+from imports.mapping import suggest_column_mapping
+from imports.normalization import (
+    CsvNormalizationError,
+    detect_date_format,
+    detect_decimal_separator,
+)
+
+
+REQUIRED_FIELDS = {
+    "symbol",
+    "direction",
+    "entry",
+    "exit",
+    "pnl",
+    "entry_datetime",
+    "exit_datetime",
+}
 
 
 MAX_CSV_FILE_SIZE = 5 * 1024 * 1024
@@ -233,9 +250,6 @@ async def validate_csv_import(
 async def import_csv(
     file: UploadFile = File(...),
     account_id: int = Form(...),
-    mapping: str = Form(...),
-    decimal_separator: Literal[".", ","] = Form(...),
-    date_format: str | None = Form(None),
     auth_data=Depends(get_current_user),
 ):
     user = auth_data["user"]
@@ -244,7 +258,6 @@ async def import_csv(
     if not account_belongs_to_user(account_id, user.id, token):
         raise ResourceNotFoundError("Account not found")
 
-    parsed_mapping = _parse_column_mapping(mapping)
     content = await _read_csv_upload(file)
 
     try:
@@ -256,11 +269,41 @@ async def import_csv(
         raise HTTPException(
             status_code=400, detail="CSV file contains no trades")
 
+    mapping_result = suggest_column_mapping(csv_data["headers"])
+    parsed_mapping = mapping_result["mapping"]
+    missing_fields = sorted(REQUIRED_FIELDS - parsed_mapping.keys())
+    ambiguous_fields = mapping_result["ambiguous_fields"]
+
+    if missing_fields or ambiguous_fields:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "message": "CSV columns could not be mapped automatically",
+                "missing_fields": missing_fields,
+                "ambiguous_fields": ambiguous_fields,
+            },
+        )
+
+    try:
+        decimal_separator = detect_decimal_separator(
+            csv_data["rows"],
+            parsed_mapping,
+        )
+        date_format = detect_date_format(
+            csv_data["rows"],
+            parsed_mapping,
+        )
+    except CsvNormalizationError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail=str(exc),
+        ) from exc
+
     validation = validate_trade_rows(
         csv_data["rows"],
         parsed_mapping,
         decimal_separator,
-        date_format or None,
+        date_format,
     )
 
     if validation["invalid_count"]:

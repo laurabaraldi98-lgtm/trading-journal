@@ -1063,3 +1063,97 @@ def test_import_rejects_invalid_file(authenticated_user):
     assert response.status_code == 400
     assert response.json() == {"detail": "Please upload a CSV file"}
     mock_save.assert_not_called()
+
+
+def test_imports_csv_automatically(authenticated_user):
+    with (
+        patch("api.account_belongs_to_user", return_value=True),
+        patch(
+            "api.save_trades_to_supabase",
+            return_value=[{"id": 10}],
+        ) as mock_save,
+    ):
+        response = client.post(
+            "/imports",
+            files={
+                "file": (
+                    "trades.csv",
+                    VALID_IMPORT_CSV,
+                    "text/csv",
+                )
+            },
+            data={"account_id": "7"},
+        )
+
+    assert response.status_code == 200
+    assert response.json() == {"imported_count": 1}
+    mock_save.assert_called_once()
+
+
+def test_automatic_import_rejects_missing_columns(authenticated_user):
+    content = (
+        b"Instrument,Side\n"
+        b"EURUSD,Buy\n"
+    )
+
+    with (
+        patch("api.account_belongs_to_user", return_value=True),
+        patch("api.save_trades_to_supabase") as mock_save,
+    ):
+        response = client.post(
+            "/imports",
+            files={
+                "file": (
+                    "trades.csv",
+                    content,
+                    "text/csv",
+                )
+            },
+            data={"account_id": "7"},
+        )
+
+    assert response.status_code == 422
+    assert response.json()["detail"]["message"] == (
+        "CSV columns could not be mapped automatically"
+    )
+    assert response.json()["detail"]["missing_fields"] == [
+        "entry",
+        "entry_datetime",
+        "exit",
+        "exit_datetime",
+        "pnl",
+    ]
+    mock_save.assert_not_called()
+
+
+def test_automatic_import_rejects_unknown_date_format(
+    authenticated_user,
+):
+    content = (
+        "Instrument;Side;Open Price;Stop Loss;Close Price;Profit;"
+        "Open Time;Close Time\n"
+        "EURUSD;Buy;1,1500;1,1400;1,1700;200,00;"
+        "August 30 2026 at 10;August 30 2026 at 11\n"
+    ).encode("utf-8")
+
+    with (
+        patch("api.account_belongs_to_user", return_value=True),
+        patch("api.save_trades_to_supabase") as mock_save,
+    ):
+        response = client.post(
+            "/imports",
+            files={
+                "file": (
+                    "trades.csv",
+                    content,
+                    "text/csv",
+                )
+            },
+            data={"account_id": "7"},
+        )
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": "Could not detect the CSV datetime format"
+    }
+    mock_save.assert_not_called()
