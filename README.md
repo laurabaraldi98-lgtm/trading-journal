@@ -34,6 +34,7 @@ Authenticated users can:
 
 - create and manage multiple trading accounts
 - record trades
+- import trades automatically from CSV files
 - edit and delete existing trades
 - calculate trade results in R
 - track profit and loss
@@ -53,6 +54,10 @@ The current application is the result of several iterations, gradually introduci
 - Multiple trading accounts
 - Account CRUD operations
 - Trade CRUD operations
+- Automatic CSV trade import
+- Automatic delimiter and column mapping
+- Numeric and datetime format normalisation
+- CSV row validation and bulk persistence
 - Long and short trades
 - Automatic R-multiple calculation
 - P/L tracking
@@ -234,6 +239,26 @@ The backend therefore does not rely on the frontend to provide valid data.
 
 ---
 
+# CSV Import
+
+Authenticated users can select an account and import trade history from a CSV file.
+
+The backend automatically:
+
+1. validates the file and detects its delimiter
+2. maps common broker column names to journal fields
+3. detects and normalises numeric and datetime formats
+4. validates every row and calculates R when a stop loss is present
+5. saves all validated trades in a bulk operation
+
+The importer supports dot and comma decimal separators, common currency symbols, ISO and broker datetime formats, mixed datetime formats and optional stop-loss values.
+
+If columns are missing or ambiguous, or if a row is invalid, the import is rejected before anything is saved. The API returns structured details identifying the affected column, row and field.
+
+The selected account is also checked against the authenticated user before persistence.
+
+---
+
 # Authentication and Data Isolation
 
 Authentication is handled by Supabase Auth.
@@ -322,6 +347,9 @@ Backend tests cover:
 - database error handling
 - demo dataset generation
 - demo reset behaviour
+- CSV parsing and automatic column mapping
+- numeric and datetime normalisation
+- CSV row validation and bulk persistence
 
 External dependencies are mocked for unit tests where appropriate.
 
@@ -350,6 +378,8 @@ Frontend tests cover:
 - chart behaviour
 - responsive components
 - reusable UI components
+- CSV import success, loading and error states
+- import navigation
 
 During development, the frontend and backend unit-test suites reached **100% code coverage**.
 
@@ -404,6 +434,9 @@ trading-journal/
 │
 ├── demo.py
 │   Demo dataset generation and reset logic
+│
+├── imports/
+│   CSV reading, mapping, normalisation and validation
 │
 ├── tests/
 │   Backend unit tests
@@ -641,6 +674,8 @@ RLS integration testing
 Deployment
     ↓
 Public demo system
+    ↓
+Automatic CSV import
 ```
 
 ## 1. Python CLI
@@ -791,6 +826,16 @@ The demo includes:
 
 ---
 
+## 11. Automatic CSV import
+
+The journal now accepts CSV exports from different brokers and trading platforms without requiring one fixed template.
+
+Dedicated backend modules handle file reading, column mapping, value normalisation and row validation. The authenticated frontend import page sends only the selected account and file; format detection and validation remain backend responsibilities.
+
+This added automatic format detection, optional stop-loss handling, account ownership checks, bulk persistence and complete backend and frontend test coverage.
+
+---
+
 # Legacy CLI
 
 The `legacy-cli/` directory contains the original command-line implementation.
@@ -913,6 +958,7 @@ The current version includes the main functionality required for a usable tradin
 - authentication
 - account management
 - trade management
+- automatic CSV trade import
 - performance statistics
 - charts
 - responsive layouts
@@ -938,7 +984,7 @@ Potential future iterations include:
 - additional filters
 - richer account statistics
 - improved dashboard visualisations
-- CSV import/export
+- CSV export
 - server-side pagination for larger datasets
 - refactoring larger frontend components into smaller reusable pieces
 - production observability and structured logging
