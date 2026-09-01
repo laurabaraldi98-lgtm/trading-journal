@@ -730,7 +730,7 @@ export default function Home() {
 
       <main className="min-w-0 flex-1 px-5 py-5 sm:px-6 md:px-8 md:py-8 xl:px-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="pl-14 sm:pl-0">
+          <div className="pl-14 md:pl-0">
             <h2 className="text-3xl font-bold tracking-tight text-slate-900">
               Dashboard
             </h2>

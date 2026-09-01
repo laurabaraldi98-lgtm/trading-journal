@@ -233,7 +233,7 @@ export default function AccountsPage() {
 
             <main className="min-w-0 flex-1 px-5 py-5 sm:px-6 md:px-8 md:py-8 xl:px-10">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="pl-14 sm:pl-0">
+                    <div className="pl-14 md:pl-0">
                         <h2 className="text-3xl font-bold tracking-tight text-slate-900">
                             Accounts
                         </h2>
