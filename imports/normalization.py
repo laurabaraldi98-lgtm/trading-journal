@@ -21,6 +21,16 @@ CURRENCY_SYMBOLS = {
     "¥",
 }
 
+DATE_FORMATS = (
+    "%d/%m/%Y %H:%M",
+    "%d/%m/%Y %H:%M:%S",
+    "%m/%d/%Y %H:%M",
+    "%m/%d/%Y %H:%M:%S",
+    "%d-%m-%Y %H:%M",
+    "%m-%d-%Y %H:%M",
+    "%Y.%m.%d %H:%M:%S",
+)
+
 
 class CsvNormalizationError(Exception):
     pass
@@ -97,20 +107,48 @@ def normalize_datetime(
             "Datetime value cannot be empty"
         )
 
-    try:
-        if date_format is not None:
+    if date_format is not None:
+        try:
             return datetime.strptime(
                 normalized,
                 date_format,
             )
+        except ValueError as exc:
+            raise CsvNormalizationError(
+                f"Invalid datetime value: {value}"
+            ) from exc
 
+    try:
         return datetime.fromisoformat(
             normalized.replace("Z", "+00:00")
         )
-    except ValueError as exc:
+    except ValueError:
+        pass
+
+    matches = []
+
+    for supported_format in DATE_FORMATS:
+        try:
+            matches.append(
+                datetime.strptime(
+                    normalized,
+                    supported_format,
+                )
+            )
+        except ValueError:
+            continue
+
+    if len(matches) == 1:
+        return matches[0]
+
+    if len(matches) > 1:
         raise CsvNormalizationError(
-            f"Invalid datetime value: {value}"
-        ) from exc
+            f"Ambiguous datetime value: {value}"
+        )
+
+    raise CsvNormalizationError(
+        f"Invalid datetime value: {value}"
+    )
 
 
 def detect_decimal_separator(
@@ -158,16 +196,6 @@ def detect_decimal_separator(
         return detected_separators.pop()
 
     return "."
-
-
-DATE_FORMATS = (
-    "%d/%m/%Y %H:%M",
-    "%d/%m/%Y %H:%M:%S",
-    "%m/%d/%Y %H:%M",
-    "%m/%d/%Y %H:%M:%S",
-    "%d-%m-%Y %H:%M",
-    "%m-%d-%Y %H:%M",
-)
 
 
 def detect_date_format(

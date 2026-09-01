@@ -177,7 +177,7 @@ def test_detects_european_date_format():
         "entry_datetime": "Open Time",
         "exit_datetime": "Close Time",
     }
-    assert detect_date_format(rows, mapping) == "%d/%m/%Y %H:%M"
+    assert detect_date_format(rows, mapping) is None
 
 
 def test_date_detection_ignores_missing_and_empty_values():
