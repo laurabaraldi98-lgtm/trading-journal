@@ -78,18 +78,82 @@ def test_get_trades(authenticated_user):
 
     with patch(
         "api.load_trades_from_supabase",
-        return_value=fake_trades,
+        return_value=(fake_trades, 45),
     ) as mock_load:
-        response = client.get("/trades")
+        response = client.get(
+            "/trades"
+            "?account_id=7"
+            "&page=2"
+            "&page_size=20"
+        )
 
     assert response.status_code == 200
-    assert response.json() == fake_trades
+
+    assert response.json() == {
+        "items": fake_trades,
+        "page": 2,
+        "page_size": 20,
+        "total": 45,
+        "total_pages": 3,
+    }
 
     mock_load.assert_called_once_with(
         "test-user",
         "fake-token",
-        None,
+        7,
+        2,
+        20,
     )
+
+
+def test_get_trades_uses_default_pagination(
+    authenticated_user,
+):
+    with patch(
+        "api.load_trades_from_supabase",
+        return_value=([], 0),
+    ) as mock_load:
+        response = client.get(
+            "/trades?account_id=7"
+        )
+
+    assert response.status_code == 200
+
+    assert response.json() == {
+        "items": [],
+        "page": 1,
+        "page_size": 20,
+        "total": 0,
+        "total_pages": 0,
+    }
+
+    mock_load.assert_called_once_with(
+        "test-user",
+        "fake-token",
+        7,
+        1,
+        20,
+    )
+
+
+@pytest.mark.parametrize(
+    "query_string",
+    [
+        "page=0",
+        "page=-1",
+        "page_size=0",
+        "page_size=101",
+    ],
+)
+def test_get_trades_rejects_invalid_pagination(
+    authenticated_user,
+    query_string,
+):
+    response = client.get(
+        f"/trades?{query_string}"
+    )
+
+    assert response.status_code == 422
 
 
 def test_get_trades_without_auth_returns_401():

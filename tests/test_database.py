@@ -25,6 +25,8 @@ def make_mock_query(fake_response):
 
     mock_query.select.return_value = mock_query
     mock_query.eq.return_value = mock_query
+    mock_query.order.return_value = mock_query
+    mock_query.range.return_value = mock_query
     mock_query.upsert.return_value = mock_query
     mock_query.execute.return_value = fake_response
 
@@ -65,20 +67,18 @@ def test_load_trades_from_supabase():
                 "entry_datetime": "2026-08-12T10:00:00",
                 "exit_datetime": "2026-08-12T11:00:00",
             }
-        ]
+        ],
+        count=1,
     )
 
     mock_query = make_mock_query(fake_response)
-    mock_query.select.return_value = mock_query
-    mock_query.order.return_value = mock_query
-
     mock_client = make_mock_client(mock_query)
 
     with patch(
         "database.get_authenticated_client",
         return_value=mock_client,
     ) as mock_get_client:
-        trades = load_trades_from_supabase(
+        trades, total = load_trades_from_supabase(
             "user-123",
             "fake-token",
         )
@@ -89,6 +89,16 @@ def test_load_trades_from_supabase():
 
     mock_client.table.assert_called_once_with(
         "trades"
+    )
+
+    mock_query.select.assert_called_once_with(
+        "*",
+        count="exact",
+    )
+
+    mock_query.range.assert_called_once_with(
+        0,
+        19,
     )
 
     assert trades == [
@@ -106,6 +116,8 @@ def test_load_trades_from_supabase():
         ]
     ]
 
+    assert total == 1
+
 
 def test_load_trade_without_stop_or_result():
     fake_response = SimpleNamespace(
@@ -122,24 +134,67 @@ def test_load_trade_without_stop_or_result():
                 "entry_datetime": "2026-08-12T10:00:00",
                 "exit_datetime": "2026-08-12T11:00:00",
             }
-        ]
+        ],
+        count=1,
     )
 
     mock_query = make_mock_query(fake_response)
-    mock_query.order.return_value = mock_query
     mock_client = make_mock_client(mock_query)
 
     with patch(
         "database.get_authenticated_client",
         return_value=mock_client,
     ):
-        trades = load_trades_from_supabase(
+        trades, total = load_trades_from_supabase(
             "user-123",
             "fake-token",
         )
 
     assert trades[0][4] is None
     assert trades[0][6] is None
+    assert total == 1
+
+
+@pytest.mark.parametrize(
+    "page, page_size, expected_start, expected_end",
+    [
+        (1, 20, 0, 19),
+        (2, 20, 20, 39),
+        (3, 10, 20, 29),
+    ],
+)
+def test_load_trades_applies_pagination(
+    page,
+    page_size,
+    expected_start,
+    expected_end,
+):
+    fake_response = SimpleNamespace(
+        data=[],
+        count=45,
+    )
+
+    mock_query = make_mock_query(fake_response)
+    mock_client = make_mock_client(mock_query)
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        trades, total = load_trades_from_supabase(
+            "user-123",
+            "fake-token",
+            page=page,
+            page_size=page_size,
+        )
+
+    mock_query.range.assert_called_once_with(
+        expected_start,
+        expected_end,
+    )
+
+    assert trades == []
+    assert total == 45
 
 
 @pytest.mark.parametrize(
@@ -793,7 +848,8 @@ def test_load_trades_from_supabase_filters_by_account():
                 "entry_datetime": "2026-08-12T10:00:00",
                 "exit_datetime": "2026-08-12T11:00:00",
             }
-        ]
+        ],
+        count=1,
     )
 
     mock_query = make_mock_query(fake_response)

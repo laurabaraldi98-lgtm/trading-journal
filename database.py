@@ -47,26 +47,32 @@ def load_trades_from_supabase(
     user_id: str,
     token: str,
     account_id: int | None = None,
+    page: int = 1,
+    page_size: int = 20,
 ):
     client = get_authenticated_client(token)
 
     query = (
         client
         .table("trades")
-        .select("*")
+        .select("*", count="exact")
         .eq("user_id", user_id)
     )
 
     if account_id is not None:
         query = query.eq("account_id", account_id)
 
-    response = execute_query(
-        query.order(
-            "entry_datetime",
-            desc=True,
-            nullsfirst=False,
-        )
+    query = query.order(
+        "entry_datetime",
+        desc=True,
+        nullsfirst=False,
     )
+
+    start = (page - 1) * page_size
+    end = start + page_size - 1
+    query = query.range(start, end)
+
+    response = execute_query(query)
 
     loaded_trades = []
 
@@ -94,7 +100,7 @@ def load_trades_from_supabase(
 
         loaded_trades.append(loaded_trade)
 
-    return loaded_trades
+    return loaded_trades, response.count or 0
 
 
 def save_trade_to_supabase(

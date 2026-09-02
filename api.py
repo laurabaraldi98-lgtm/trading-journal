@@ -1,4 +1,10 @@
-from fastapi import FastAPI, Depends, Request
+from fastapi import (
+    Depends,
+    FastAPI,
+    HTTPException,
+    Query,
+    Request,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
@@ -131,16 +137,36 @@ def demo_login():
 @app.get("/trades")
 def get_trades(
     account_id: int | None = None,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(
+        default=20,
+        ge=1,
+        le=100,
+    ),
     auth_data=Depends(get_current_user),
 ):
     user = auth_data["user"]
     token = auth_data["token"]
 
-    return load_trades_from_supabase(
+    trades, total = load_trades_from_supabase(
         user.id,
         token,
         account_id,
+        page,
+        page_size,
     )
+
+    total_pages = (
+        total + page_size - 1
+    ) // page_size
+
+    return {
+        "items": trades,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": total_pages,
+    }
 
 
 @app.post("/trades")
