@@ -103,6 +103,34 @@ def load_trades_from_supabase(
     return loaded_trades, response.count or 0
 
 
+def load_trade_metrics_batch_from_supabase(
+    user_id: str,
+    token: str,
+    account_id: int,
+    offset: int = 0,
+    batch_size: int = 1000,
+):
+    client = get_authenticated_client(token)
+    end = offset + batch_size - 1
+
+    query = (
+        client
+        .table("trades")
+        .select("pnl,result,entry_datetime")
+        .eq("user_id", user_id)
+        .eq("account_id", account_id)
+        .order(
+            "entry_datetime",
+            desc=False,
+            nullsfirst=False,
+        )
+        .range(offset, end)
+    )
+
+    response = execute_query(query)
+    return response.data
+
+
 def save_trade_to_supabase(
     trade,
     user_id: str,

@@ -2,7 +2,7 @@ import pytest
 
 from datetime import datetime
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import call, patch
 from database import (
     DatabaseError,
     ResourceNotFoundError,
@@ -742,3 +742,53 @@ def test_update_trade_without_stop(
 
     assert updated_trade["stop"] is None
     assert updated_trade["result"] is None
+
+
+def test_get_statistics_reads_all_batches(authenticated_user):
+    first_batch = [
+        {
+            "pnl": 1,
+            "result": 1,
+            "entry_datetime": "2026-08-12T10:00:00",
+        }
+    ] * 1000
+
+    second_batch = [
+        {
+            "pnl": -1,
+            "result": -1,
+            "entry_datetime": "2026-08-13T10:00:00",
+        }
+    ]
+
+    with patch(
+        "api.load_trade_metrics_batch_from_supabase",
+        side_effect=[first_batch, second_batch],
+    ) as mock_load:
+        response = client.get(
+            "/statistics?account_id=7"
+        )
+
+    assert response.status_code == 200
+    assert response.json()["total_trades"] == 1001
+    assert response.json()["winning_trades"] == 1000
+    assert response.json()["total_pnl"] == 999
+    assert response.json()["total_r"] == 999
+    assert response.json()["trades_with_r"] == 1001
+
+    assert mock_load.call_args_list == [
+        call(
+            "test-user",
+            "fake-token",
+            7,
+            offset=0,
+            batch_size=1000,
+        ),
+        call(
+            "test-user",
+            "fake-token",
+            7,
+            offset=1000,
+            batch_size=1000,
+        ),
+    ]

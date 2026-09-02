@@ -1,10 +1,4 @@
-from fastapi import (
-    Depends,
-    FastAPI,
-    HTTPException,
-    Query,
-    Request,
-)
+from fastapi import Depends, FastAPI, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
@@ -13,9 +7,10 @@ import os
 from datetime import datetime
 
 from auth import get_current_user, get_demo_session
-from calculations import calculate_r
+from calculations import calculate_dashboard_statistics, calculate_r
 from database import (
     DatabaseError,
+    load_trade_metrics_batch_from_supabase,
     load_trades_from_supabase,
     save_trade_to_supabase,
     delete_trade_from_supabase,
@@ -27,6 +22,9 @@ from database import (
     account_belongs_to_user,
     ResourceNotFoundError,
 )
+
+
+STATISTICS_BATCH_SIZE = 1000
 
 
 class TradeBase(BaseModel):
@@ -138,35 +136,51 @@ def demo_login():
 def get_trades(
     account_id: int | None = None,
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(
-        default=20,
-        ge=1,
-        le=100,
-    ),
+    page_size: int = Query(default=20, ge=1, le=100),
     auth_data=Depends(get_current_user),
 ):
     user = auth_data["user"]
     token = auth_data["token"]
 
     trades, total = load_trades_from_supabase(
-        user.id,
-        token,
-        account_id,
-        page,
-        page_size,
+        user.id, token, account_id, page, page_size,
     )
-
-    total_pages = (
-        total + page_size - 1
-    ) // page_size
 
     return {
         "items": trades,
         "page": page,
         "page_size": page_size,
         "total": total,
-        "total_pages": total_pages,
+        "total_pages": (total + page_size - 1) // page_size,
     }
+
+
+def iter_trade_metrics(user_id: str, token: str, account_id: int):
+    offset = 0
+
+    while True:
+        batch = load_trade_metrics_batch_from_supabase(
+            user_id, token, account_id,
+            offset=offset,
+            batch_size=STATISTICS_BATCH_SIZE,
+        )
+        yield from batch
+
+        if len(batch) < STATISTICS_BATCH_SIZE:
+            break
+
+        offset += STATISTICS_BATCH_SIZE
+
+
+@app.get("/statistics")
+def get_statistics(
+    account_id: int,
+    auth_data=Depends(get_current_user),
+):
+    user = auth_data["user"]
+    token = auth_data["token"]
+    metrics = iter_trade_metrics(user.id, token, account_id)
+    return calculate_dashboard_statistics(metrics)
 
 
 @app.post("/trades")
