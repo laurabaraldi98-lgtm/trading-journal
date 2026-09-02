@@ -213,8 +213,14 @@ function accountsResponse(accounts: Account[] = fakeAccounts, ok = true) {
     return response(accounts, ok);
 }
 
-function tradesResponse(trades: Trade[] = [], ok = true) {
-    return response(trades, ok);
+function tradesResponse(trades: Trade[] = [], ok = true, total = trades.length, page = 1, pageSize = 20) {
+    return response({
+        items: trades,
+        page,
+        page_size: pageSize,
+        total,
+        total_pages: Math.ceil(total / pageSize),
+    }, ok);
 }
 
 function queueInitialLoad(trades: Trade[], accounts: Account[] = fakeAccounts) {
@@ -274,7 +280,7 @@ describe("TradesPage", () => {
 
     test("loads trades for the selected account", async () => {
         await renderLoadedPage();
-        expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8000/trades?account_id=7", expect.objectContaining({
+        expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8000/trades?account_id=7&page=1&page_size=20", expect.objectContaining({
             headers: expect.objectContaining({
                 Authorization: "Bearer fake-token",
             }),
@@ -296,13 +302,13 @@ describe("TradesPage", () => {
                 symbol: "GBPUSD",
             }),
         ], accounts);
-        expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8000/trades?account_id=8", expect.anything());
+        expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8000/trades?account_id=8&page=1&page_size=20", expect.anything());
     });
 
     test("falls back to first account when URL account does not exist", async () => {
         mockUseSearchParams.mockReturnValue(new URLSearchParams("account_id=999"))
         await renderLoadedPage();
-        expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8000/trades?account_id=7", expect.anything());
+        expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8000/trades?account_id=7&page=1&page_size=20", expect.anything());
     });
 
     test("loads another account from account selector", async () => {
@@ -333,25 +339,43 @@ describe("TradesPage", () => {
             },
         });
         expect(await screen.findByText("GBPUSD")).toBeInTheDocument();
-        expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8000/trades?account_id=8", expect.anything());
+        expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8000/trades?account_id=8&page=1&page_size=20", expect.anything());
     });
 
     test("paginates trades 20 at a time", async () => {
-        await renderLoadedPage(makeTrades(21));
+        const firstPage = makeTrades(20);
+        const secondPage = [makeTrade({
+            id: 21,
+            symbol: "TRADE-21",
+        })];
+
+        fetchMock
+            .mockResolvedValueOnce(accountsResponse())
+            .mockResolvedValueOnce(tradesResponse(firstPage, true, 21))
+            .mockResolvedValueOnce(tradesResponse(secondPage, true, 21, 2))
+            .mockResolvedValueOnce(tradesResponse(firstPage, true, 21))
+            .mockResolvedValueOnce(tradesResponse(secondPage, true, 21, 2));
+
+        render(<TradesPage />);
+        await screen.findByText("TRADE-1");
         expect(screen.getByTestId("trade-count")).toHaveTextContent("20");
         expect(screen.queryByText("TRADE-21")).not.toBeInTheDocument();
+
         fireEvent.click(screen.getByRole("button", {
             name: "2",
         }));
-        expect(screen.getByText("TRADE-21")).toBeInTheDocument();
+        expect(await screen.findByText("TRADE-21")).toBeInTheDocument();
+        expect(fetchMock).toHaveBeenCalledWith("http://127.0.0.1:8000/trades?account_id=7&page=2&page_size=20", expect.anything());
+
         fireEvent.click(screen.getByRole("button", {
             name: "←",
         }));
-        expect(screen.getByText("TRADE-1")).toBeInTheDocument();
+        expect(await screen.findByText("TRADE-1")).toBeInTheDocument();
+
         fireEvent.click(screen.getByRole("button", {
             name: "→",
         }));
-        expect(screen.getByText("TRADE-21")).toBeInTheDocument();
+        expect(await screen.findByText("TRADE-21")).toBeInTheDocument();
     });
 
     test("does not show pagination for one page", async () => {
@@ -590,6 +614,39 @@ describe("TradesPage", () => {
             }));
         });
         expect(fetchMock).toHaveBeenCalledTimes(4);
+    });
+
+    test("moves to previous page after deleting the last trade", async () => {
+        const firstPage = makeTrades(20);
+        const secondPage = [makeTrade({
+            id: 21,
+            symbol: "TRADE-21",
+        })];
+
+        fetchMock
+            .mockResolvedValueOnce(accountsResponse())
+            .mockResolvedValueOnce(tradesResponse(firstPage, true, 21))
+            .mockResolvedValueOnce(tradesResponse(secondPage, true, 21, 2))
+            .mockResolvedValueOnce(response(null))
+            .mockResolvedValueOnce(tradesResponse(firstPage, true, 20));
+
+        render(<TradesPage />);
+        await screen.findByText("TRADE-1");
+
+        fireEvent.click(screen.getByRole("button", {
+            name: "2",
+        }));
+        await screen.findByText("TRADE-21");
+
+        fireEvent.click(screen.getByRole("button", {
+            name: "Delete trade 21",
+        }));
+
+        expect(await screen.findByText("TRADE-1")).toBeInTheDocument();
+        expect(fetchMock).toHaveBeenLastCalledWith(
+            "http://127.0.0.1:8000/trades?account_id=7&page=1&page_size=20",
+            expect.anything()
+        );
     });
 
     test("does not reload when delete fails", async () => {
