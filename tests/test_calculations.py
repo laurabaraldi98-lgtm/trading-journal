@@ -1,6 +1,7 @@
 import pytest
 
 from calculations import (
+    MAX_CHART_POINTS,
     calculate_dashboard_statistics,
     calculate_r,
 )
@@ -51,3 +52,36 @@ def test_calculate_dashboard_statistics():
     assert statistics["trades_with_r"] == 2
     assert statistics["win_rate"] == pytest.approx(66.67, abs=0.01)
     assert statistics["average_r"] == pytest.approx(0.5)
+    assert statistics["performance"] == {
+        "r": [
+            {"trade_number": 1, "value": 2},
+            {"trade_number": 2, "value": 1},
+        ],
+        "pnl": [
+            {"trade_number": 1, "value": 100},
+            {"trade_number": 2, "value": 50},
+            {"trade_number": 3, "value": 75},
+        ],
+    }
+
+
+def test_dashboard_performance_limits_chart_points():
+    trades = [
+        {"pnl": 1, "result": 1}
+        for _ in range(1000)
+    ]
+
+    statistics = calculate_dashboard_statistics(trades)
+    pnl_points = statistics["performance"]["pnl"]
+    r_points = statistics["performance"]["r"]
+
+    assert len(pnl_points) <= MAX_CHART_POINTS
+    assert len(r_points) <= MAX_CHART_POINTS
+    assert pnl_points[-1] == {
+        "trade_number": 1000,
+        "value": 1000,
+    }
+    assert r_points[-1] == {
+        "trade_number": 1000,
+        "value": 1000,
+    }
