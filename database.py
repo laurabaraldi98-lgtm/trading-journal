@@ -131,14 +131,11 @@ def load_trade_metrics_batch_from_supabase(
     return response.data
 
 
-def save_trade_to_supabase(
+def _build_trade_data(
     trade,
     user_id: str,
-    token: str,
 ):
-    client = get_authenticated_client(token)
-
-    new_trade = {
+    return {
         "account_id": trade["account_id"],
         "symbol": trade["symbol"],
         "direction": trade["direction"],
@@ -159,6 +156,15 @@ def save_trade_to_supabase(
         ),
         "user_id": user_id,
     }
+
+
+def save_trade_to_supabase(
+    trade,
+    user_id: str,
+    token: str,
+):
+    client = get_authenticated_client(token)
+    new_trade = _build_trade_data(trade, user_id)
 
     response = execute_query(
         client
@@ -186,6 +192,26 @@ def save_trade_to_supabase(
         ),
         float(saved_trade["pnl"]),
     ]
+
+
+def save_trades_to_supabase(
+    trades,
+    user_id: str,
+    token: str,
+):
+    client = get_authenticated_client(token)
+    new_trades = [
+        _build_trade_data(trade, user_id)
+        for trade in trades
+    ]
+
+    response = execute_query(
+        client
+        .table("trades")
+        .insert(new_trades)
+    )
+
+    return response.data
 
 
 def delete_trade_from_supabase(

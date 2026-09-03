@@ -10,6 +10,7 @@ dependencies = [
     "uvicorn",
     "httpx",
     "pytest-cov",
+    "python-multipart==0.0.32",
 ]
 
 [tool.vercel]

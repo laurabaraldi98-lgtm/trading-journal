@@ -137,19 +137,14 @@ export default function Sidebar({
                         Trades
                     </Link>
 
-                    <div
-                        className="flex cursor-not-allowed items-center justify-between rounded-xl px-4 py-3 font-medium text-slate-400"
-                        aria-disabled="true"
+                    <Link
+                        href="/import"
+                        className={linkClass("/import")}
+                        onClick={() => setIsOpen(false)}
                     >
-                        <div className="flex items-center gap-3">
-                            <Upload size={20} />
-                            Import CSV
-                        </div>
-
-                        <span className="text-xs font-medium text-slate-400">
-                            Coming soon
-                        </span>
-                    </div>
+                        <Upload size={20} />
+                        Import CSV
+                    </Link>
 
                     <Link
                         href="/accounts"

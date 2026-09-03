@@ -161,7 +161,7 @@ const fakeAccount = {
     starting_balance: 100000,
     currency: "USD",
     broker: "FTMO",
-    account_type: "Prop Firm",
+    account_type: "Personal Account",
 };
 
 function successfulResponse(data: unknown) {
@@ -353,7 +353,7 @@ describe("AccountsPage", () => {
             ).toHaveLength(2);
 
             expect(
-                screen.getAllByText("Prop Firm")
+                screen.getAllByText("Personal Account")
             ).toHaveLength(2);
         });
 

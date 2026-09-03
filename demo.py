@@ -16,7 +16,7 @@ DEMO_ACCOUNT = {
     "starting_balance": 100000,
     "currency": "USD",
     "broker": "Demo Broker",
-    "account_type": "Prop Firm",
+    "account_type": "Personal Account",
 }
 
 
