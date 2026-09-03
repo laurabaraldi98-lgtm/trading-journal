@@ -1,31 +1,37 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, test } from "vitest";
 
-import StatisticsCards, { type Trade } from "./StatisticsCards";
+import StatisticsCards, {
+    type DashboardStatistics,
+} from "./StatisticsCards";
 
 afterEach(() => {
     cleanup();
 });
 
-function makeTrade(id: number, result: number | null, pnl: number): Trade {
-    return [
-        id,
-        "EURUSD",
-        "long",
-        100,
-        result === null ? null : 90,
-        120,
-        result,
-        pnl,
-        null,
-        null,
-    ];
+function makeStatistics(
+    overrides: Partial<DashboardStatistics> = {}
+): DashboardStatistics {
+    return {
+        total_trades: 0,
+        winning_trades: 0,
+        total_pnl: 0,
+        total_r: null,
+        trades_with_r: 0,
+        win_rate: 0,
+        average_r: null,
+        ...overrides,
+    };
 }
 
 describe("StatisticsCards", () => {
     test("shows unavailable R statistics when there are no trades", () => {
         render(
-            <StatisticsCards trades={[]} startingBalance={0} currency="" />
+            <StatisticsCards
+                statistics={makeStatistics()}
+                startingBalance={0}
+                currency=""
+            />
         );
 
         expect(screen.getAllByText("—")).toHaveLength(2);
@@ -36,16 +42,18 @@ describe("StatisticsCards", () => {
         expect(screen.getByText("Balance")).toBeInTheDocument();
     });
 
-    test("calculates complete statistics from trades", () => {
-        const trades: Trade[] = [
-            makeTrade(1, 2, 500),
-            makeTrade(2, -1, -200),
-            makeTrade(3, 0, 100),
-        ];
-
+    test("shows complete statistics from backend", () => {
         render(
             <StatisticsCards
-                trades={trades}
+                statistics={makeStatistics({
+                    total_trades: 3,
+                    winning_trades: 2,
+                    total_pnl: 400,
+                    total_r: 1,
+                    trades_with_r: 3,
+                    win_rate: 66.6666666667,
+                    average_r: 0.3333333333,
+                })}
                 startingBalance={100000}
                 currency="USD"
             />
@@ -61,14 +69,17 @@ describe("StatisticsCards", () => {
     });
 
     test("shows R coverage while keeping money statistics complete", () => {
-        const trades: Trade[] = [
-            makeTrade(1, 2, 500),
-            makeTrade(2, null, -200),
-        ];
-
         render(
             <StatisticsCards
-                trades={trades}
+                statistics={makeStatistics({
+                    total_trades: 2,
+                    winning_trades: 1,
+                    total_pnl: 300,
+                    total_r: 2,
+                    trades_with_r: 1,
+                    win_rate: 50,
+                    average_r: 2,
+                })}
                 startingBalance={100000}
                 currency="USD"
             />
@@ -82,14 +93,15 @@ describe("StatisticsCards", () => {
     });
 
     test("shows negative R and P/L values correctly", () => {
-        const trades: Trade[] = [
-            makeTrade(1, -2, -500),
-            makeTrade(2, -1, -250),
-        ];
-
         render(
             <StatisticsCards
-                trades={trades}
+                statistics={makeStatistics({
+                    total_trades: 2,
+                    total_pnl: -750,
+                    total_r: -3,
+                    trades_with_r: 2,
+                    average_r: -1.5,
+                })}
                 startingBalance={10000}
                 currency="EUR"
             />
@@ -103,4 +115,3 @@ describe("StatisticsCards", () => {
         expect(screen.getByText("EUR 9,250")).toBeInTheDocument();
     });
 });
-
