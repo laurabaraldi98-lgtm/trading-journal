@@ -1,6 +1,6 @@
 import pytest
 
-from datetime import datetime
+from datetime import date, datetime
 from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
@@ -27,6 +27,8 @@ def make_mock_query(fake_response):
 
     mock_query.select.return_value = mock_query
     mock_query.eq.return_value = mock_query
+    mock_query.gte.return_value = mock_query
+    mock_query.lt.return_value = mock_query
     mock_query.order.return_value = mock_query
     mock_query.range.return_value = mock_query
     mock_query.upsert.return_value = mock_query
@@ -193,6 +195,32 @@ def test_load_trades_applies_pagination(
     assert total == 45
 
 
+def test_load_trades_applies_date_filters():
+    fake_response = SimpleNamespace(data=[], count=0)
+    mock_query = make_mock_query(fake_response)
+    mock_client = make_mock_client(mock_query)
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        load_trades_from_supabase(
+            "user-123",
+            "fake-token",
+            date_from=date(2026, 8, 1),
+            date_to=date(2026, 8, 31),
+        )
+
+    mock_query.gte.assert_called_once_with(
+        "entry_datetime",
+        "2026-08-01",
+    )
+    mock_query.lt.assert_called_once_with(
+        "entry_datetime",
+        "2026-09-01",
+    )
+
+
 def test_load_trade_metrics_batch_from_supabase():
     fake_metrics = [
         {
@@ -229,6 +257,33 @@ def test_load_trade_metrics_batch_from_supabase():
     )
     mock_query.range.assert_called_once_with(1000, 1499)
     assert metrics == fake_metrics
+
+
+def test_load_trade_metrics_batch_applies_date_filters():
+    fake_response = SimpleNamespace(data=[])
+    mock_query = make_mock_query(fake_response)
+    mock_client = make_mock_client(mock_query)
+
+    with patch(
+        "database.get_authenticated_client",
+        return_value=mock_client,
+    ):
+        load_trade_metrics_batch_from_supabase(
+            "user-123",
+            "fake-token",
+            account_id=7,
+            date_from=date(2026, 8, 1),
+            date_to=date(2026, 8, 31),
+        )
+
+    mock_query.gte.assert_called_once_with(
+        "entry_datetime",
+        "2026-08-01",
+    )
+    mock_query.lt.assert_called_once_with(
+        "entry_datetime",
+        "2026-09-01",
+    )
 
 
 @pytest.mark.parametrize(

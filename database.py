@@ -1,5 +1,6 @@
 import os
 
+from datetime import date, timedelta
 from dotenv import load_dotenv
 from supabase import create_client
 
@@ -49,6 +50,8 @@ def load_trades_from_supabase(
     account_id: int | None = None,
     page: int = 1,
     page_size: int = 20,
+    date_from: date | None = None,
+    date_to: date | None = None,
 ):
     client = get_authenticated_client(token)
 
@@ -62,6 +65,19 @@ def load_trades_from_supabase(
     if account_id is not None:
         query = query.eq("account_id", account_id)
 
+    if date_from is not None:
+        query = query.gte(
+            "entry_datetime",
+            date_from.isoformat(),
+        )
+
+    if date_to is not None:
+        day_after = date_to + timedelta(days=1)
+        query = query.lt(
+            "entry_datetime",
+            day_after.isoformat(),
+        )
+
     query = query.order(
         "entry_datetime",
         desc=True,
@@ -73,7 +89,6 @@ def load_trades_from_supabase(
     query = query.range(start, end)
 
     response = execute_query(query)
-
     loaded_trades = []
 
     for trade in response.data:
@@ -82,22 +97,13 @@ def load_trades_from_supabase(
             trade["symbol"],
             trade["direction"],
             float(trade["entry"]),
-            (
-                float(trade["stop"])
-                if trade["stop"] is not None
-                else None
-            ),
+            float(trade["stop"]) if trade["stop"] is not None else None,
             float(trade["exit"]),
-            (
-                float(trade["result"])
-                if trade["result"] is not None
-                else None
-            ),
+            float(trade["result"]) if trade["result"] is not None else None,
             float(trade["pnl"]),
             trade["entry_datetime"],
             trade["exit_datetime"],
         ]
-
         loaded_trades.append(loaded_trade)
 
     return loaded_trades, response.count or 0
@@ -109,9 +115,10 @@ def load_trade_metrics_batch_from_supabase(
     account_id: int,
     offset: int = 0,
     batch_size: int = 1000,
+    date_from: date | None = None,
+    date_to: date | None = None,
 ):
     client = get_authenticated_client(token)
-    end = offset + batch_size - 1
 
     query = (
         client
@@ -119,6 +126,24 @@ def load_trade_metrics_batch_from_supabase(
         .select("pnl,result,entry_datetime")
         .eq("user_id", user_id)
         .eq("account_id", account_id)
+    )
+
+    if date_from is not None:
+        query = query.gte(
+            "entry_datetime",
+            date_from.isoformat(),
+        )
+
+    if date_to is not None:
+        day_after = date_to + timedelta(days=1)
+        query = query.lt(
+            "entry_datetime",
+            day_after.isoformat(),
+        )
+
+    end = offset + batch_size - 1
+    query = (
+        query
         .order(
             "entry_datetime",
             desc=False,
