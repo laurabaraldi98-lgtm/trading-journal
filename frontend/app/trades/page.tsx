@@ -20,6 +20,14 @@ type Trade = [
     string
 ];
 
+type PaginatedTradesResponse = {
+    items: Trade[];
+    page: number;
+    page_size: number;
+    total: number;
+    total_pages: number;
+};
+
 type Account = {
     id: number;
     user_id: string;
@@ -42,6 +50,7 @@ function TradesPageContent() {
     const [accounts, setAccounts] = useState<Account[]>([]);
     const [selectedAccountId, setSelectedAccountId] = useState<number | null>(null);
     const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
     const [editingTradeId, setEditingTradeId] = useState<number | null>(null);
 
     const [symbol, setSymbol] = useState("");
@@ -58,7 +67,7 @@ function TradesPageContent() {
     const [authLoading, setAuthLoading] = useState(true);
 
     const loadTrades = useCallback(
-        async (accountId: number) => {
+        async (accountId: number, page: number) => {
             const {
                 data: { session },
             } = await supabase.auth.getSession();
@@ -68,7 +77,7 @@ function TradesPageContent() {
                 return;
             }
 
-            const response = await fetch(`${API_URL}/trades?account_id=${accountId}`, {
+            const response = await fetch(`${API_URL}/trades?account_id=${accountId}&page=${page}&page_size=20`, {
                 cache: "no-store",
                 headers: {
                     Authorization: `Bearer ${session.access_token}`,
@@ -81,11 +90,11 @@ function TradesPageContent() {
                 return;
             }
 
-            const data: Trade[] = await response.json();
+            const data: PaginatedTradesResponse = await response.json();
 
-            setTrades(data);
+            setTrades(data.items);
+            setTotalPages(data.total_pages);
             setTradesError(null);
-            setCurrentPage(1);
             setAuthLoading(false);
         },
         [router]
@@ -149,7 +158,7 @@ function TradesPageContent() {
 
         if (response.ok) {
             if (selectedAccountId !== null) {
-                await loadTrades(selectedAccountId);
+                await loadTrades(selectedAccountId, currentPage);
             }
 
             setEditingTradeId(null);
@@ -174,7 +183,11 @@ function TradesPageContent() {
         });
 
         if (response.ok && selectedAccountId !== null) {
-            await loadTrades(selectedAccountId);
+            if (trades.length === 1 && currentPage > 1) {
+                setCurrentPage((page) => page - 1);
+            } else {
+                await loadTrades(selectedAccountId, currentPage);
+            }
         }
     }
 
@@ -209,6 +222,7 @@ function TradesPageContent() {
 
             if (data.length === 0) {
                 setTrades([]);
+                setTotalPages(0);
                 setSelectedAccountId(null);
                 setAuthLoading(false);
                 return;
@@ -218,6 +232,7 @@ function TradesPageContent() {
                 (account) => account.id === accountIdFromUrl
             );
 
+            setCurrentPage(1);
             setSelectedAccountId(
                 accountFromUrl ? accountFromUrl.id : data[0].id
             );
@@ -232,17 +247,18 @@ function TradesPageContent() {
         }
 
         async function fetchTrades() {
-            await loadTrades(selectedAccountId!);
+            await loadTrades(selectedAccountId!, currentPage);
         }
 
         fetchTrades();
-    }, [selectedAccountId, loadTrades]);
+    }, [selectedAccountId, currentPage, loadTrades]);
 
-    const tradesPerPage = 20;
-    const totalPages = Math.ceil(trades.length / tradesPerPage);
-    const startIndex = (currentPage - 1) * tradesPerPage;
-    const endIndex = startIndex + tradesPerPage;
-    const paginatedTrades = trades.slice(startIndex, endIndex);
+    const visiblePageCount = Math.min(5, totalPages);
+    const firstVisiblePage = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+    const visiblePages = Array.from(
+        { length: visiblePageCount },
+        (_, index) => firstVisiblePage + index
+    );
 
     if (authLoading) {
         return null;
@@ -275,9 +291,10 @@ function TradesPageContent() {
                         <select
                             id="account-select"
                             value={selectedAccountId ?? ""}
-                            onChange={(event) =>
-                                setSelectedAccountId(Number(event.target.value))
-                            }
+                            onChange={(event) => {
+                                setCurrentPage(1);
+                                setSelectedAccountId(Number(event.target.value));
+                            }}
                             className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                         >
                             {accounts.map((account) => (
@@ -296,7 +313,7 @@ function TradesPageContent() {
                 )}
 
                 <TradesTable
-                    trades={paginatedTrades}
+                    trades={trades}
                     editingTradeId={editingTradeId}
                     symbol={symbol}
                     direction={direction}
@@ -330,24 +347,20 @@ function TradesPageContent() {
                             ←
                         </button>
 
-                        {Array.from({ length: totalPages }, (_, index) => {
-                            const pageNumber = index + 1;
-
-                            return (
-                                <button
-                                    key={pageNumber}
-                                    type="button"
-                                    onClick={() => setCurrentPage(pageNumber)}
-                                    className={
-                                        currentPage === pageNumber
-                                            ? "h-9 min-w-9 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white"
-                                            : "h-9 min-w-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
-                                    }
-                                >
-                                    {pageNumber}
-                                </button>
-                            );
-                        })}
+                        {visiblePages.map((pageNumber) => (
+                            <button
+                                key={pageNumber}
+                                type="button"
+                                onClick={() => setCurrentPage(pageNumber)}
+                                className={
+                                    currentPage === pageNumber
+                                        ? "h-9 min-w-9 rounded-lg bg-blue-600 px-3 text-sm font-semibold text-white"
+                                        : "h-9 min-w-9 rounded-lg border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 transition hover:bg-slate-50"
+                                }
+                            >
+                                {pageNumber}
+                            </button>
+                        ))}
 
                         <button
                             type="button"

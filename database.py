@@ -47,26 +47,32 @@ def load_trades_from_supabase(
     user_id: str,
     token: str,
     account_id: int | None = None,
+    page: int = 1,
+    page_size: int = 20,
 ):
     client = get_authenticated_client(token)
 
     query = (
         client
         .table("trades")
-        .select("*")
+        .select("*", count="exact")
         .eq("user_id", user_id)
     )
 
     if account_id is not None:
         query = query.eq("account_id", account_id)
 
-    response = execute_query(
-        query.order(
-            "entry_datetime",
-            desc=True,
-            nullsfirst=False,
-        )
+    query = query.order(
+        "entry_datetime",
+        desc=True,
+        nullsfirst=False,
     )
+
+    start = (page - 1) * page_size
+    end = start + page_size - 1
+    query = query.range(start, end)
+
+    response = execute_query(query)
 
     loaded_trades = []
 
@@ -94,7 +100,35 @@ def load_trades_from_supabase(
 
         loaded_trades.append(loaded_trade)
 
-    return loaded_trades
+    return loaded_trades, response.count or 0
+
+
+def load_trade_metrics_batch_from_supabase(
+    user_id: str,
+    token: str,
+    account_id: int,
+    offset: int = 0,
+    batch_size: int = 1000,
+):
+    client = get_authenticated_client(token)
+    end = offset + batch_size - 1
+
+    query = (
+        client
+        .table("trades")
+        .select("pnl,result,entry_datetime")
+        .eq("user_id", user_id)
+        .eq("account_id", account_id)
+        .order(
+            "entry_datetime",
+            desc=False,
+            nullsfirst=False,
+        )
+        .range(offset, end)
+    )
+
+    response = execute_query(query)
+    return response.data
 
 
 def _build_trade_data(

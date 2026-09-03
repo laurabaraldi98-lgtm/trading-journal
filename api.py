@@ -9,6 +9,7 @@ from fastapi import (
     File,
     Form,
     HTTPException,
+    Query,
     Request,
     UploadFile,
 )
@@ -17,7 +18,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, model_validator
 
 from auth import get_current_user, get_demo_session
-from calculations import calculate_r
+from calculations import calculate_dashboard_statistics, calculate_r
 from database import (
     DatabaseError,
     ResourceNotFoundError,
@@ -25,6 +26,7 @@ from database import (
     delete_account_from_supabase,
     delete_trade_from_supabase,
     load_accounts_from_supabase,
+    load_trade_metrics_batch_from_supabase,
     load_trades_from_supabase,
     save_account_to_supabase,
     save_trade_to_supabase,
@@ -62,6 +64,9 @@ INVALID_MAPPING_MESSAGE = (
     "Mapping must be a JSON object "
     "containing string keys and values"
 )
+
+
+STATISTICS_BATCH_SIZE = 1000
 
 
 class TradeBase(BaseModel):
@@ -348,16 +353,52 @@ async def import_csv(
 @app.get("/trades")
 def get_trades(
     account_id: int | None = None,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
     auth_data=Depends(get_current_user),
 ):
     user = auth_data["user"]
     token = auth_data["token"]
 
-    return load_trades_from_supabase(
-        user.id,
-        token,
-        account_id,
+    trades, total = load_trades_from_supabase(
+        user.id, token, account_id, page, page_size,
     )
+
+    return {
+        "items": trades,
+        "page": page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": (total + page_size - 1) // page_size,
+    }
+
+
+def iter_trade_metrics(user_id: str, token: str, account_id: int):
+    offset = 0
+
+    while True:
+        batch = load_trade_metrics_batch_from_supabase(
+            user_id, token, account_id,
+            offset=offset,
+            batch_size=STATISTICS_BATCH_SIZE,
+        )
+        yield from batch
+
+        if len(batch) < STATISTICS_BATCH_SIZE:
+            break
+
+        offset += STATISTICS_BATCH_SIZE
+
+
+@app.get("/statistics")
+def get_statistics(
+    account_id: int,
+    auth_data=Depends(get_current_user),
+):
+    user = auth_data["user"]
+    token = auth_data["token"]
+    metrics = iter_trade_metrics(user.id, token, account_id)
+    return calculate_dashboard_statistics(metrics)
 
 
 @app.post("/trades")

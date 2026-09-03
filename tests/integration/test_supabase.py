@@ -38,9 +38,12 @@ def get_test_user():
 def test_load_trades_from_supabase():
     user_id, token = get_test_user()
 
-    trades = load_trades_from_supabase(
+    trades, total = load_trades_from_supabase(
         user_id,
         token,
     )
 
     assert isinstance(trades, list)
+    assert isinstance(total, int)
+    assert len(trades) <= 20
+    assert total >= len(trades)

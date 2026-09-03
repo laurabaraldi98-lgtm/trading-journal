@@ -2,7 +2,7 @@ import pytest
 
 from datetime import datetime
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import call, patch
 from database import (
     DatabaseError,
     ResourceNotFoundError,
@@ -78,18 +78,82 @@ def test_get_trades(authenticated_user):
 
     with patch(
         "api.load_trades_from_supabase",
-        return_value=fake_trades,
+        return_value=(fake_trades, 45),
     ) as mock_load:
-        response = client.get("/trades")
+        response = client.get(
+            "/trades"
+            "?account_id=7"
+            "&page=2"
+            "&page_size=20"
+        )
 
     assert response.status_code == 200
-    assert response.json() == fake_trades
+
+    assert response.json() == {
+        "items": fake_trades,
+        "page": 2,
+        "page_size": 20,
+        "total": 45,
+        "total_pages": 3,
+    }
 
     mock_load.assert_called_once_with(
         "test-user",
         "fake-token",
-        None,
+        7,
+        2,
+        20,
     )
+
+
+def test_get_trades_uses_default_pagination(
+    authenticated_user,
+):
+    with patch(
+        "api.load_trades_from_supabase",
+        return_value=([], 0),
+    ) as mock_load:
+        response = client.get(
+            "/trades?account_id=7"
+        )
+
+    assert response.status_code == 200
+
+    assert response.json() == {
+        "items": [],
+        "page": 1,
+        "page_size": 20,
+        "total": 0,
+        "total_pages": 0,
+    }
+
+    mock_load.assert_called_once_with(
+        "test-user",
+        "fake-token",
+        7,
+        1,
+        20,
+    )
+
+
+@pytest.mark.parametrize(
+    "query_string",
+    [
+        "page=0",
+        "page=-1",
+        "page_size=0",
+        "page_size=101",
+    ],
+)
+def test_get_trades_rejects_invalid_pagination(
+    authenticated_user,
+    query_string,
+):
+    response = client.get(
+        f"/trades?{query_string}"
+    )
+
+    assert response.status_code == 422
 
 
 def test_get_trades_without_auth_returns_401():
@@ -678,6 +742,56 @@ def test_update_trade_without_stop(
 
     assert updated_trade["stop"] is None
     assert updated_trade["result"] is None
+
+
+def test_get_statistics_reads_all_batches(authenticated_user):
+    first_batch = [
+        {
+            "pnl": 1,
+            "result": 1,
+            "entry_datetime": "2026-08-12T10:00:00",
+        }
+    ] * 1000
+
+    second_batch = [
+        {
+            "pnl": -1,
+            "result": -1,
+            "entry_datetime": "2026-08-13T10:00:00",
+        }
+    ]
+
+    with patch(
+        "api.load_trade_metrics_batch_from_supabase",
+        side_effect=[first_batch, second_batch],
+    ) as mock_load:
+        response = client.get(
+            "/statistics?account_id=7"
+        )
+
+    assert response.status_code == 200
+    assert response.json()["total_trades"] == 1001
+    assert response.json()["winning_trades"] == 1000
+    assert response.json()["total_pnl"] == 999
+    assert response.json()["total_r"] == 999
+    assert response.json()["trades_with_r"] == 1001
+
+    assert mock_load.call_args_list == [
+        call(
+            "test-user",
+            "fake-token",
+            7,
+            offset=0,
+            batch_size=1000,
+        ),
+        call(
+            "test-user",
+            "fake-token",
+            7,
+            offset=1000,
+            batch_size=1000,
+        ),
+    ]
 
 
 def test_preview_csv(authenticated_user):
