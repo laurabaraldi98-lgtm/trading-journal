@@ -572,6 +572,70 @@ describe("dashboard page", () => {
         expect(screen.getByText("EURUSD")).toBeInTheDocument();
     });
 
+    test("filters dashboard with date presets", async () => {
+        await renderDashboard();
+
+        fireEvent.click(screen.getByRole("button", { name: "Last 30 days" }));
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5));
+
+        const thirtyDayUrl = new URL(String(fetchMock.mock.calls[3][0]));
+        const thirtyDayFrom = new Date(thirtyDayUrl.searchParams.get("date_from")!);
+        const thirtyDayTo = new Date(thirtyDayUrl.searchParams.get("date_to")!);
+        expect((thirtyDayTo.getTime() - thirtyDayFrom.getTime()) / 86_400_000).toBe(29);
+        expect(String(fetchMock.mock.calls[4][0])).toContain(
+            `date_from=${thirtyDayUrl.searchParams.get("date_from")}&date_to=${thirtyDayUrl.searchParams.get("date_to")}`
+        );
+
+        fireEvent.click(screen.getByRole("button", { name: "Last 90 days" }));
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(7));
+
+        const ninetyDayUrl = new URL(String(fetchMock.mock.calls[5][0]));
+        const ninetyDayFrom = new Date(ninetyDayUrl.searchParams.get("date_from")!);
+        const ninetyDayTo = new Date(ninetyDayUrl.searchParams.get("date_to")!);
+        expect((ninetyDayTo.getTime() - ninetyDayFrom.getTime()) / 86_400_000).toBe(89);
+
+        fireEvent.click(screen.getByRole("button", { name: "All time" }));
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(9));
+        expect(fetchMock.mock.calls[7][0]).toBe(
+            "http://127.0.0.1:8000/trades?account_id=7&page=1&page_size=5"
+        );
+        expect(fetchMock.mock.calls[8][0]).toBe(
+            "http://127.0.0.1:8000/statistics?account_id=7"
+        );
+    });
+
+    test("waits for a complete valid custom date range", async () => {
+        await renderDashboard();
+        expect(fetchMock).toHaveBeenCalledTimes(3);
+
+        fireEvent.click(screen.getByRole("button", { name: "Custom" }));
+        fireEvent.change(screen.getByLabelText("From"), {
+            target: { value: "2026-08-01" },
+        });
+        expect(fetchMock).toHaveBeenCalledTimes(3);
+
+        fireEvent.change(screen.getByLabelText("To"), {
+            target: { value: "2026-08-31" },
+        });
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5));
+        expect(fetchMock).toHaveBeenCalledWith(
+            "http://127.0.0.1:8000/trades?account_id=7&page=1&page_size=5&date_from=2026-08-01&date_to=2026-08-31",
+            expect.anything()
+        );
+        expect(fetchMock).toHaveBeenCalledWith(
+            "http://127.0.0.1:8000/statistics?account_id=7&date_from=2026-08-01&date_to=2026-08-31",
+            expect.anything()
+        );
+
+        fireEvent.change(screen.getByLabelText("From"), {
+            target: { value: "2026-09-05" },
+        });
+        expect(screen.getByRole("alert")).toHaveTextContent(
+            "Start date cannot be after end date."
+        );
+        expect(fetchMock).toHaveBeenCalledTimes(5);
+    });
+
     test("logs out", async () => {
         await renderDashboard();
         fireEvent.click(screen.getByRole("button", { name: "Logout" }));
