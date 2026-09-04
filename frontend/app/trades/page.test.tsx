@@ -696,6 +696,85 @@ describe("TradesPage", () => {
         expect(fetchMock).toHaveBeenCalledTimes(4);
     });
 
+    test("filters trades with date presets and resets pagination", async () => {
+        const firstPage = makeTrades(20);
+        const secondPage = [makeTrade({
+            id: 21,
+            symbol: "TRADE-21",
+        })];
+
+        fetchMock
+            .mockResolvedValueOnce(accountsResponse())
+            .mockResolvedValueOnce(tradesResponse(firstPage, true, 21))
+            .mockResolvedValueOnce(tradesResponse(secondPage, true, 21, 2))
+            .mockResolvedValueOnce(tradesResponse([]))
+            .mockResolvedValueOnce(tradesResponse([]))
+            .mockResolvedValueOnce(tradesResponse(firstPage, true, 21));
+
+        render(<TradesPage />);
+        await screen.findByText("TRADE-1");
+
+        fireEvent.click(screen.getByRole("button", { name: "2" }));
+        await screen.findByText("TRADE-21");
+
+        fireEvent.click(screen.getByRole("button", { name: "Last 30 days" }));
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(4));
+
+        const thirtyDayUrl = new URL(String(fetchMock.mock.calls[3][0]));
+        const thirtyDayFrom = new Date(thirtyDayUrl.searchParams.get("date_from")!);
+        const thirtyDayTo = new Date(thirtyDayUrl.searchParams.get("date_to")!);
+        expect(thirtyDayUrl.searchParams.get("page")).toBe("1");
+        expect((thirtyDayTo.getTime() - thirtyDayFrom.getTime()) / 86_400_000).toBe(29);
+
+        fireEvent.click(screen.getByRole("button", { name: "Last 90 days" }));
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(5));
+
+        const ninetyDayUrl = new URL(String(fetchMock.mock.calls[4][0]));
+        const ninetyDayFrom = new Date(ninetyDayUrl.searchParams.get("date_from")!);
+        const ninetyDayTo = new Date(ninetyDayUrl.searchParams.get("date_to")!);
+        expect((ninetyDayTo.getTime() - ninetyDayFrom.getTime()) / 86_400_000).toBe(89);
+
+        fireEvent.click(screen.getByRole("button", { name: "All time" }));
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(6));
+        expect(fetchMock.mock.calls[5][0]).toBe(
+            "http://127.0.0.1:8000/trades?account_id=7&page=1&page_size=20"
+        );
+    });
+
+    test("waits for a complete valid custom date range", async () => {
+        fetchMock
+            .mockResolvedValueOnce(accountsResponse())
+            .mockResolvedValueOnce(tradesResponse([makeTrade()]))
+            .mockResolvedValueOnce(tradesResponse([]));
+
+        render(<TradesPage />);
+        await screen.findByText("EURUSD");
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+
+        fireEvent.click(screen.getByRole("button", { name: "Custom" }));
+        fireEvent.change(screen.getByLabelText("From"), {
+            target: { value: "2026-08-01" },
+        });
+        expect(fetchMock).toHaveBeenCalledTimes(2);
+
+        fireEvent.change(screen.getByLabelText("To"), {
+            target: { value: "2026-08-31" },
+        });
+        await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(3));
+        expect(fetchMock).toHaveBeenLastCalledWith(
+            "http://127.0.0.1:8000/trades?account_id=7&page=1&page_size=20&date_from=2026-08-01&date_to=2026-08-31",
+            expect.anything()
+        );
+
+        fireEvent.change(screen.getByLabelText("From"), {
+            target: { value: "2026-09-05" },
+        });
+        expect(screen.getByRole("alert")).toHaveTextContent(
+            "Start date cannot be after end date."
+        );
+        expect(fetchMock).toHaveBeenCalledTimes(3);
+    });
+
     test("logs out", async () => {
         await renderLoadedPage();
         fireEvent.click(screen.getByRole("button", {
