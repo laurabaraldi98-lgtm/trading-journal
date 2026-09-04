@@ -36,10 +36,12 @@ Authenticated users can:
 - record trades
 - import trades automatically from CSV files
 - edit and delete existing trades
+- browse large trade histories with server-side pagination
 - calculate trade results in R
 - track profit and loss
 - view aggregate trading statistics
 - visualise performance over time
+- filter trade history and analytics using preset or custom date ranges
 - keep data isolated between users
 - access the application from desktop and mobile devices
 
@@ -54,6 +56,7 @@ The current application is the result of several iterations, gradually introduci
 - Multiple trading accounts
 - Account CRUD operations
 - Trade CRUD operations
+- Server-side trade pagination
 - Automatic CSV trade import
 - Automatic delimiter and column mapping
 - Numeric and datetime format normalisation
@@ -65,6 +68,8 @@ The current application is the result of several iterations, gradually introduci
 - Trade date validation
 - Trading statistics
 - Performance chart
+- Backend aggregation across complete filtered datasets
+- Preset and custom date-range filtering
 - Responsive mobile and desktop interface
 - User-scoped database queries
 - PostgreSQL Row Level Security
@@ -299,6 +304,12 @@ Using R makes trades with different monetary values and position sizes comparabl
 
 The application also provides aggregate statistics and a chronological performance chart.
 
+Dashboard statistics are calculated by the backend across every trade belonging to the selected account, rather than only the five recent trades displayed in the dashboard table. The backend reads the required metrics in bounded batches so analytics remain complete without transferring an entire large trade history to the browser.
+
+Users can analyse all available data, the last 30 days, the last 90 days or a custom date range. The selected range is applied consistently to aggregate statistics, the performance chart, recent dashboard trades and the full trade-history page.
+
+Trade history is paginated on the server with 20 records per page. Changing the account or date range resets pagination to the first page, while incomplete or reversed custom ranges are rejected before a request is sent.
+
 ---
 
 # API Error Handling
@@ -350,6 +361,9 @@ Backend tests cover:
 - CSV parsing and automatic column mapping
 - numeric and datetime normalisation
 - CSV row validation and bulk persistence
+- server-side trade pagination
+- date-range query validation and filtering
+- complete dashboard aggregation across batched trade metrics
 
 External dependencies are mocked for unit tests where appropriate.
 
@@ -380,6 +394,9 @@ Frontend tests cover:
 - reusable UI components
 - CSV import success, loading and error states
 - import navigation
+- date preset and custom-range interactions
+- filtered dashboard and trade-history requests
+- pagination reset when filters change
 
 During development, the frontend and backend unit-test suites reached **100% code coverage**.
 
@@ -676,6 +693,8 @@ Deployment
 Public demo system
     ↓
 Automatic CSV import
+    ↓
+Server-side pagination and date filters
 ```
 
 ## 1. Python CLI
@@ -836,6 +855,16 @@ This added automatic format detection, optional stop-loss handling, account owne
 
 ---
 
+## 12. Server-side pagination and date filtering
+
+As trade histories grow, sending every record to the browser becomes inefficient. The trade-history endpoint now returns 20 records per page together with the total record and page counts.
+
+Dashboard analytics remain based on the complete selected dataset. The backend loads only the fields required for statistics in bounded batches, calculates the results centrally and returns the finished aggregate values and performance series to the frontend.
+
+Date filtering is implemented across the database, API and frontend layers. Users can select all time, the last 30 days, the last 90 days or a custom range, and the same boundaries are applied to dashboard statistics, chart data, recent trades and paginated trade history.
+
+---
+
 # Legacy CLI
 
 The `legacy-cli/` directory contains the original command-line implementation.
@@ -959,6 +988,9 @@ The current version includes the main functionality required for a usable tradin
 - account management
 - trade management
 - automatic CSV trade import
+- server-side trade pagination
+- preset and custom date-range filtering
+- backend statistics across complete filtered datasets
 - performance statistics
 - charts
 - responsive layouts
@@ -980,12 +1012,11 @@ The project can continue to evolve, but the current version represents a complet
 Potential future iterations include:
 
 - more advanced trading analytics
-- date-range analysis
 - additional filters
+- calendar-based trading review
 - richer account statistics
 - improved dashboard visualisations
 - CSV export
-- server-side pagination for larger datasets
 - refactoring larger frontend components into smaller reusable pieces
 - production observability and structured logging
 - additional end-to-end testing
