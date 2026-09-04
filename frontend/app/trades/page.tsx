@@ -6,6 +6,7 @@ import { supabase } from "../../lib/supabase";
 import { API_URL } from "../../lib/api";
 import Sidebar from "../../components/Sidebar";
 import TradesTable from "../../components/TradesTable";
+import DateRangeFilter, { type DateRangePreset } from "../../components/DateRangeFilter";
 
 type Trade = [
     number,
@@ -39,6 +40,13 @@ type Account = {
     created_at?: string;
 };
 
+function formatDate(date: Date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
 function TradesPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -52,6 +60,9 @@ function TradesPageContent() {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [editingTradeId, setEditingTradeId] = useState<number | null>(null);
+    const [datePreset, setDatePreset] = useState<DateRangePreset>("all");
+    const [dateFrom, setDateFrom] = useState("");
+    const [dateTo, setDateTo] = useState("");
 
     const [symbol, setSymbol] = useState("");
     const [direction, setDirection] = useState("");
@@ -68,6 +79,13 @@ function TradesPageContent() {
 
     const loadTrades = useCallback(
         async (accountId: number, page: number) => {
+            const incompleteCustomRange =
+                datePreset === "custom" && (!dateFrom || !dateTo);
+            const invalidCustomRange =
+                datePreset === "custom" && dateFrom > dateTo;
+
+            if (incompleteCustomRange || invalidCustomRange) return;
+
             const {
                 data: { session },
             } = await supabase.auth.getSession();
@@ -77,7 +95,16 @@ function TradesPageContent() {
                 return;
             }
 
-            const response = await fetch(`${API_URL}/trades?account_id=${accountId}&page=${page}&page_size=20`, {
+            const params = new URLSearchParams({
+                account_id: String(accountId),
+                page: String(page),
+                page_size: "20",
+            });
+
+            if (dateFrom) params.set("date_from", dateFrom);
+            if (dateTo) params.set("date_to", dateTo);
+
+            const response = await fetch(`${API_URL}/trades?${params}`, {
                 cache: "no-store",
                 headers: {
                     Authorization: `Bearer ${session.access_token}`,
@@ -97,8 +124,37 @@ function TradesPageContent() {
             setTradesError(null);
             setAuthLoading(false);
         },
-        [router]
+        [dateFrom, datePreset, dateTo, router]
     );
+
+    function handleDatePresetChange(preset: DateRangePreset) {
+        setDatePreset(preset);
+        setCurrentPage(1);
+
+        if (preset === "all") {
+            setDateFrom("");
+            setDateTo("");
+            return;
+        }
+
+        if (preset === "custom") return;
+
+        const today = new Date();
+        const firstDay = new Date(today);
+        firstDay.setDate(today.getDate() - (preset === "30d" ? 29 : 89));
+        setDateFrom(formatDate(firstDay));
+        setDateTo(formatDate(today));
+    }
+
+    function handleDateFromChange(value: string) {
+        setCurrentPage(1);
+        setDateFrom(value);
+    }
+
+    function handleDateToChange(value: string) {
+        setCurrentPage(1);
+        setDateTo(value);
+    }
 
     async function handleLogout() {
         await supabase.auth.signOut();
@@ -305,6 +361,15 @@ function TradesPageContent() {
                         </select>
                     </div>
                 </div>
+
+                <DateRangeFilter
+                    preset={datePreset}
+                    dateFrom={dateFrom}
+                    dateTo={dateTo}
+                    onPresetChange={handleDatePresetChange}
+                    onDateFromChange={handleDateFromChange}
+                    onDateToChange={handleDateToChange}
+                />
 
                 {tradesError && (
                     <p className="mt-4 text-sm font-medium text-red-600">

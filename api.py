@@ -1,6 +1,6 @@
 import json
 import os
-from datetime import datetime
+from datetime import date, datetime
 from typing import Literal
 
 from fastapi import (
@@ -355,13 +355,31 @@ def get_trades(
     account_id: int | None = None,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
+    date_from: date | None = None,
+    date_to: date | None = None,
     auth_data=Depends(get_current_user),
 ):
+    if (
+        date_from is not None
+        and date_to is not None
+        and date_from > date_to
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="date_from cannot be after date_to",
+        )
+
     user = auth_data["user"]
     token = auth_data["token"]
 
     trades, total = load_trades_from_supabase(
-        user.id, token, account_id, page, page_size,
+        user.id,
+        token,
+        account_id,
+        page,
+        page_size,
+        date_from,
+        date_to,
     )
 
     return {
@@ -373,7 +391,13 @@ def get_trades(
     }
 
 
-def iter_trade_metrics(user_id: str, token: str, account_id: int):
+def iter_trade_metrics(
+    user_id: str,
+    token: str,
+    account_id: int,
+    date_from: date | None = None,
+    date_to: date | None = None,
+):
     offset = 0
 
     while True:
@@ -381,6 +405,8 @@ def iter_trade_metrics(user_id: str, token: str, account_id: int):
             user_id, token, account_id,
             offset=offset,
             batch_size=STATISTICS_BATCH_SIZE,
+            date_from=date_from,
+            date_to=date_to,
         )
         yield from batch
 
@@ -393,11 +419,29 @@ def iter_trade_metrics(user_id: str, token: str, account_id: int):
 @app.get("/statistics")
 def get_statistics(
     account_id: int,
+    date_from: date | None = None,
+    date_to: date | None = None,
     auth_data=Depends(get_current_user),
 ):
+    if (
+        date_from is not None
+        and date_to is not None
+        and date_from > date_to
+    ):
+        raise HTTPException(
+            status_code=422,
+            detail="date_from cannot be after date_to",
+        )
+
     user = auth_data["user"]
     token = auth_data["token"]
-    metrics = iter_trade_metrics(user.id, token, account_id)
+    metrics = iter_trade_metrics(
+        user.id,
+        token,
+        account_id,
+        date_from,
+        date_to,
+    )
     return calculate_dashboard_statistics(metrics)
 
 

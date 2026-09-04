@@ -10,6 +10,7 @@ import TradeForm from "../components/TradeForm";
 import TradesTable from "../components/TradesTable";
 import StatisticsCards, { type DashboardStatistics } from "../components/StatisticsCards";
 import PerformanceChart, { type DashboardPerformance } from "../components/PerformanceChart";
+import DateRangeFilter, { type DateRangePreset } from "../components/DateRangeFilter";
 
 type Trade = [number, string, string, number, number | null, number, number | null, number, string, string];
 type Account = {
@@ -42,6 +43,13 @@ const EMPTY_DASHBOARD_DATA: DashboardData = {
   performance: { r: [], pnl: [] },
 };
 
+function formatDate(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 export default function Home() {
   const router = useRouter();
   const [showForm, setShowForm] = useState(false);
@@ -64,17 +72,45 @@ export default function Home() {
   const [authLoading, setAuthLoading] = useState(true);
   const [session, setSession] = useState<Session | null>(null);
   const [dashboardLoading, setDashboardLoading] = useState(true);
+  const [datePreset, setDatePreset] = useState<DateRangePreset>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const selectedAccount = accounts.find((account) => account.id === selectedAccountId) ?? null;
 
   const loadDashboardData = useCallback(async (accessToken: string, accountId: number) => {
+    const incompleteCustomRange =
+      datePreset === "custom" && (!dateFrom || !dateTo);
+
+    const invalidCustomRange =
+      datePreset === "custom" && dateFrom > dateTo;
+
+    if (incompleteCustomRange || invalidCustomRange) return;
+
     const requestOptions = {
       cache: "no-store" as RequestCache,
       headers: { Authorization: `Bearer ${accessToken}` },
     };
+    const tradesParams = new URLSearchParams({
+      account_id: String(accountId),
+      page: "1",
+      page_size: "5",
+    });
+    const statisticsParams = new URLSearchParams({ account_id: String(accountId) });
+
+    if (dateFrom) {
+      tradesParams.set("date_from", dateFrom);
+      statisticsParams.set("date_from", dateFrom);
+    }
+
+    if (dateTo) {
+      tradesParams.set("date_to", dateTo);
+      statisticsParams.set("date_to", dateTo);
+    }
+
     const [tradesResponse, statisticsResponse] = await Promise.all([
-      fetch(`${API_URL}/trades?account_id=${accountId}&page=1&page_size=5`, requestOptions),
-      fetch(`${API_URL}/statistics?account_id=${accountId}`, requestOptions),
+      fetch(`${API_URL}/trades?${tradesParams}`, requestOptions),
+      fetch(`${API_URL}/statistics?${statisticsParams}`, requestOptions),
     ]);
 
     if (!tradesResponse.ok || !statisticsResponse.ok) return;
@@ -83,7 +119,25 @@ export default function Home() {
     const statisticsData: DashboardData = await statisticsResponse.json();
     setTrades(tradesData.items);
     setDashboardData(statisticsData);
-  }, []);
+  }, [datePreset, dateFrom, dateTo]);
+
+  function handleDatePresetChange(preset: DateRangePreset) {
+    setDatePreset(preset);
+
+    if (preset === "all") {
+      setDateFrom("");
+      setDateTo("");
+      return;
+    }
+
+    if (preset === "custom") return;
+
+    const today = new Date();
+    const firstDay = new Date(today);
+    firstDay.setDate(today.getDate() - (preset === "30d" ? 29 : 89));
+    setDateFrom(formatDate(firstDay));
+    setDateTo(formatDate(today));
+  }
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -320,6 +374,15 @@ export default function Home() {
             </button>
           </div>
         </div>
+
+        <DateRangeFilter
+          preset={datePreset}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+          onPresetChange={handleDatePresetChange}
+          onDateFromChange={setDateFrom}
+          onDateToChange={setDateTo}
+        />
 
         {!dashboardLoading && accounts.length === 0 && (
           <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">

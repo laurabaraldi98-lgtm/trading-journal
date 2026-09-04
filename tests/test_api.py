@@ -1,6 +1,6 @@
 import pytest
 
-from datetime import datetime
+from datetime import date, datetime
 from types import SimpleNamespace
 from unittest.mock import call, patch
 from database import (
@@ -103,6 +103,8 @@ def test_get_trades(authenticated_user):
         7,
         2,
         20,
+        None,
+        None,
     )
 
 
@@ -133,7 +135,53 @@ def test_get_trades_uses_default_pagination(
         7,
         1,
         20,
+        None,
+        None,
     )
+
+
+def test_get_trades_passes_date_filters(authenticated_user):
+    with patch(
+        "api.load_trades_from_supabase",
+        return_value=([], 0),
+    ) as mock_load:
+        response = client.get(
+            "/trades"
+            "?account_id=7"
+            "&date_from=2026-08-01"
+            "&date_to=2026-08-31"
+        )
+
+    assert response.status_code == 200
+    mock_load.assert_called_once_with(
+        "test-user",
+        "fake-token",
+        7,
+        1,
+        20,
+        date(2026, 8, 1),
+        date(2026, 8, 31),
+    )
+
+
+def test_get_trades_rejects_reversed_date_range(
+    authenticated_user,
+):
+    with patch(
+        "api.load_trades_from_supabase",
+    ) as mock_load:
+        response = client.get(
+            "/trades"
+            "?account_id=7"
+            "&date_from=2026-08-31"
+            "&date_to=2026-08-01"
+        )
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": "date_from cannot be after date_to"
+    }
+    mock_load.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -783,6 +831,8 @@ def test_get_statistics_reads_all_batches(authenticated_user):
             7,
             offset=0,
             batch_size=1000,
+            date_from=None,
+            date_to=None,
         ),
         call(
             "test-user",
@@ -790,8 +840,54 @@ def test_get_statistics_reads_all_batches(authenticated_user):
             7,
             offset=1000,
             batch_size=1000,
+            date_from=None,
+            date_to=None,
         ),
     ]
+
+
+def test_get_statistics_passes_date_filters(authenticated_user):
+    with patch(
+        "api.load_trade_metrics_batch_from_supabase",
+        return_value=[],
+    ) as mock_load:
+        response = client.get(
+            "/statistics"
+            "?account_id=7"
+            "&date_from=2026-08-01"
+            "&date_to=2026-08-31"
+        )
+
+    assert response.status_code == 200
+    mock_load.assert_called_once_with(
+        "test-user",
+        "fake-token",
+        7,
+        offset=0,
+        batch_size=1000,
+        date_from=date(2026, 8, 1),
+        date_to=date(2026, 8, 31),
+    )
+
+
+def test_get_statistics_rejects_reversed_date_range(
+    authenticated_user,
+):
+    with patch(
+        "api.load_trade_metrics_batch_from_supabase",
+    ) as mock_load:
+        response = client.get(
+            "/statistics"
+            "?account_id=7"
+            "&date_from=2026-08-31"
+            "&date_to=2026-08-01"
+        )
+
+    assert response.status_code == 422
+    assert response.json() == {
+        "detail": "date_from cannot be after date_to"
+    }
+    mock_load.assert_not_called()
 
 
 def test_preview_csv(authenticated_user):
