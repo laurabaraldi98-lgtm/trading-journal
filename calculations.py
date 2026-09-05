@@ -99,7 +99,7 @@ def calculate_calendar_statistics(trades):
     trades_with_r = 0
 
     for trade in trades:
-        trade_date = trade["exit_datetime"][:10]
+        trade_date = trade["entry_datetime"][:10]
         pnl = float(trade["pnl"])
         result = trade["result"]
 

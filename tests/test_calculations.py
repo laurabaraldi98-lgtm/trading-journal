@@ -93,17 +93,17 @@ def test_calculate_calendar_statistics():
         {
             "pnl": "25",
             "result": None,
-            "exit_datetime": "2026-09-02T12:00:00",
+            "entry_datetime": "2026-09-02T12:00:00",
         },
         {
             "pnl": "100",
             "result": "2",
-            "exit_datetime": "2026-09-01T11:00:00",
+            "entry_datetime": "2026-09-01T11:00:00",
         },
         {
             "pnl": "-50",
             "result": "-1",
-            "exit_datetime": "2026-09-01T15:00:00",
+            "entry_datetime": "2026-09-01T15:00:00",
         },
     ]
 
