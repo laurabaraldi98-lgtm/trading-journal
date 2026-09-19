@@ -30,6 +30,7 @@ from database import (
     delete_account_from_supabase,
     delete_trade_from_supabase,
     load_accounts_from_supabase,
+    load_calendar_metrics_batch_from_supabase,
     load_trade_metrics_batch_from_supabase,
     load_trades_from_supabase,
     save_account_to_supabase,
@@ -37,7 +38,12 @@ from database import (
     save_trades_to_supabase,
     update_account_in_supabase,
     update_trade_in_supabase,
-    load_calendar_metrics_batch_from_supabase,
+)
+from imports.mapping import suggest_column_mapping
+from imports.normalization import (
+    CsvNormalizationError,
+    detect_date_format,
+    detect_decimal_separator,
 )
 from imports.preview import (
     CsvPreviewError,
@@ -45,12 +51,6 @@ from imports.preview import (
     read_csv_rows,
 )
 from imports.validation import validate_trade_rows
-from imports.mapping import suggest_column_mapping
-from imports.normalization import (
-    CsvNormalizationError,
-    detect_date_format,
-    detect_decimal_separator,
-)
 
 
 REQUIRED_FIELDS = {
@@ -63,13 +63,11 @@ REQUIRED_FIELDS = {
     "exit_datetime",
 }
 
-
 MAX_CSV_FILE_SIZE = 5 * 1024 * 1024
 INVALID_MAPPING_MESSAGE = (
     "Mapping must be a JSON object "
     "containing string keys and values"
 )
-
 
 STATISTICS_BATCH_SIZE = 1000
 CALENDAR_BATCH_SIZE = 1000
@@ -88,14 +86,10 @@ class TradeBase(BaseModel):
     @model_validator(mode="after")
     def validate_trade(self):
         if self.exit_datetime < self.entry_datetime:
-            raise ValueError(
-                "Exit datetime cannot be before entry datetime"
-            )
+            raise ValueError("Exit datetime cannot be before entry datetime")
 
         if self.stop is not None and self.entry == self.stop:
-            raise ValueError(
-                "Entry and stop cannot be the same"
-            )
+            raise ValueError("Entry and stop cannot be the same")
 
         return self
 
@@ -106,6 +100,28 @@ class TradeCreate(TradeBase):
 
 class TradeUpdate(TradeBase):
     pass
+
+
+class TradeResponse(BaseModel):
+    id: int
+    account_id: int
+    symbol: str
+    direction: Literal["long", "short"]
+    entry: float
+    stop: float | None = None
+    exit: float
+    result: float | None = None
+    pnl: float
+    entry_datetime: datetime
+    exit_datetime: datetime
+
+
+class PaginatedTradesResponse(BaseModel):
+    items: list[TradeResponse]
+    page: int
+    page_size: int
+    total: int
+    total_pages: int
 
 
 class AccountBase(BaseModel):
@@ -128,23 +144,15 @@ app = FastAPI()
 
 
 @app.exception_handler(DatabaseError)
-async def database_error_handler(
-    request: Request,
-    exc: DatabaseError,
-):
+async def database_error_handler(request: Request, exc: DatabaseError):
     return JSONResponse(
         status_code=503,
-        content={
-            "detail": "Database service unavailable"
-        },
+        content={"detail": "Database service unavailable"},
     )
 
 
 @app.exception_handler(ResourceNotFoundError)
-async def resource_not_found_handler(
-    request: Request,
-    exc: ResourceNotFoundError,
-):
+async def resource_not_found_handler(request: Request, exc: ResourceNotFoundError):
     return JSONResponse(
         status_code=404,
         content={"detail": str(exc)},
@@ -278,7 +286,9 @@ async def import_csv(
 
     if not csv_data["rows"]:
         raise HTTPException(
-            status_code=400, detail="CSV file contains no trades")
+            status_code=400,
+            detail="CSV file contains no trades",
+        )
 
     mapping_result = suggest_column_mapping(csv_data["headers"])
     parsed_mapping = mapping_result["mapping"]
@@ -356,7 +366,7 @@ async def import_csv(
     return {"imported_count": len(saved_trades)}
 
 
-@app.get("/trades")
+@app.get("/trades", response_model=PaginatedTradesResponse)
 def get_trades(
     account_id: int | None = None,
     page: int = Query(default=1, ge=1),
@@ -408,12 +418,15 @@ def iter_trade_metrics(
 
     while True:
         batch = load_trade_metrics_batch_from_supabase(
-            user_id, token, account_id,
+            user_id,
+            token,
+            account_id,
             offset=offset,
             batch_size=STATISTICS_BATCH_SIZE,
             date_from=date_from,
             date_to=date_to,
         )
+
         yield from batch
 
         if len(batch) < STATISTICS_BATCH_SIZE:
@@ -441,6 +454,7 @@ def get_statistics(
 
     user = auth_data["user"]
     token = auth_data["token"]
+
     metrics = iter_trade_metrics(
         user.id,
         token,
@@ -448,6 +462,7 @@ def get_statistics(
         date_from,
         date_to,
     )
+
     return calculate_dashboard_statistics(metrics)
 
 
@@ -507,7 +522,7 @@ def get_calendar(
     return calculate_calendar_statistics(metrics)
 
 
-@app.post("/trades")
+@app.post("/trades", response_model=TradeResponse)
 def create_trade(
     trade: TradeCreate,
     auth_data=Depends(get_current_user),
@@ -520,9 +535,7 @@ def create_trade(
         user.id,
         token,
     ):
-        raise ResourceNotFoundError(
-            "Account not found"
-        )
+        raise ResourceNotFoundError("Account not found")
 
     result = None
 
@@ -572,7 +585,7 @@ def delete_trade(
     )
 
 
-@app.patch("/trades/{trade_id}")
+@app.patch("/trades/{trade_id}", response_model=TradeResponse)
 def update_trade(
     trade_id: int,
     trade: TradeUpdate,

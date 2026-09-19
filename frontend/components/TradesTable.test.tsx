@@ -1,32 +1,8 @@
-import {
-    cleanup,
-    fireEvent,
-    render,
-    screen,
-} from "@testing-library/react";
-
-import {
-    afterEach,
-    describe,
-    expect,
-    test,
-    vi,
-} from "vitest";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, test, vi } from "vitest";
 
 import TradesTable from "./TradesTable";
-
-type Trade = [
-    number,
-    string,
-    string,
-    number,
-    number | null,
-    number,
-    number | null,
-    number,
-    string,
-    string
-];
+import type { Trade } from "../types/trade";
 
 function makeTrade({
     direction = "long",
@@ -34,32 +10,27 @@ function makeTrade({
     result = 2,
     pnl = 150,
 }: {
-    direction?: string;
+    direction?: "long" | "short";
     stop?: number | null;
     result?: number | null;
     pnl?: number;
 } = {}): Trade {
-    return [
-        1,
-        "EURUSD",
+    return {
+        id: 1,
+        account_id: 7,
+        symbol: "EURUSD",
         direction,
-        1.15,
+        entry: 1.15,
         stop,
-        1.17,
+        exit: 1.17,
         result,
         pnl,
-        "2026-08-12T10:00",
-        "2026-08-12T11:00",
-    ];
+        entry_datetime: "2026-08-12T10:00",
+        exit_datetime: "2026-08-12T11:00",
+    };
 }
 
-function renderTable(
-    overrides: Partial<
-        React.ComponentProps<
-            typeof TradesTable
-        >
-    > = {}
-) {
+function renderTable(overrides: Partial<React.ComponentProps<typeof TradesTable>> = {}) {
     const props = {
         trades: [makeTrade()],
         editingTradeId: null,
@@ -89,9 +60,7 @@ function renderTable(
         ...overrides,
     };
 
-    render(
-        <TradesTable {...props} />
-    );
+    render(<TradesTable {...props} />);
 
     return props;
 }
@@ -105,10 +74,8 @@ function editingProps() {
         stop: "1.14",
         exit: "1.17",
         pnl: "150",
-        entryDatetime:
-            "2026-08-12T10:00",
-        exitDatetime:
-            "2026-08-12T11:00",
+        entryDatetime: "2026-08-12T10:00",
+        exitDatetime: "2026-08-12T11:00",
     };
 }
 
@@ -120,17 +87,9 @@ describe("TradesTable", () => {
     test("shows trade data in both layouts", () => {
         renderTable();
 
-        expect(
-            screen.getAllByText("EURUSD")
-        ).toHaveLength(2);
-
-        expect(
-            screen.getAllByText("Long ↑")
-        ).toHaveLength(2);
-
-        expect(
-            screen.getAllByText("2R")
-        ).toHaveLength(2);
+        expect(screen.getAllByText("EURUSD")).toHaveLength(2);
+        expect(screen.getAllByText("Long ↑")).toHaveLength(2);
+        expect(screen.getAllByText("2R")).toHaveLength(2);
     });
 
     test("shows missing stop and R as unavailable", () => {
@@ -143,13 +102,8 @@ describe("TradesTable", () => {
             ],
         });
 
-        expect(
-            screen.getAllByText("—")
-        ).toHaveLength(4);
-
-        expect(
-            screen.queryByText("R")
-        ).not.toBeInTheDocument();
+        expect(screen.getAllByText("—")).toHaveLength(4);
+        expect(screen.queryByText("R")).not.toBeInTheDocument();
     });
 
     test("shows unavailable R while editing", () => {
@@ -164,35 +118,15 @@ describe("TradesTable", () => {
             stop: "",
         });
 
-        expect(
-            screen.getByText("—")
-        ).toBeInTheDocument();
+        expect(screen.getByText("—")).toBeInTheDocument();
     });
 
     test.each([
-        [
-            "short",
-            -1,
-            -100,
-            "Short ↓",
-            "-1R",
-        ],
-        [
-            "long",
-            0,
-            0,
-            "Long ↑",
-            "0R",
-        ],
-    ])(
+        ["short", -1, -100, "Short ↓", "-1R"],
+        ["long", 0, 0, "Long ↑", "0R"],
+    ] as const)(
         "shows %s trade with result %s",
-        (
-            direction,
-            result,
-            pnl,
-            expectedDirection,
-            expectedResult
-        ) => {
+        (direction, result, pnl, expectedDirection, expectedResult) => {
             renderTable({
                 trades: [
                     makeTrade({
@@ -203,18 +137,9 @@ describe("TradesTable", () => {
                 ],
             });
 
-            expect(
-                screen.getAllByText(
-                    expectedDirection
-                )
-            ).toHaveLength(2);
-
-            expect(
-                screen.getAllByText(
-                    expectedResult
-                )
-            ).toHaveLength(2);
-        }
+            expect(screen.getAllByText(expectedDirection)).toHaveLength(2);
+            expect(screen.getAllByText(expectedResult)).toHaveLength(2);
+        },
     );
 
     test("calls onEdit from both layouts", () => {
@@ -224,207 +149,80 @@ describe("TradesTable", () => {
             trades: [trade],
         });
 
-        screen
-            .getAllByRole("button", {
-                name: "Edit trade",
-            })
-            .forEach((button) => {
-                fireEvent.click(button);
-            });
+        screen.getAllByRole("button", { name: "Edit trade" }).forEach((button) => {
+            fireEvent.click(button);
+        });
 
-        expect(
-            props.onEdit
-        ).toHaveBeenCalledTimes(2);
-
-        expect(
-            props.onEdit
-        ).toHaveBeenNthCalledWith(
-            1,
-            trade
-        );
-
-        expect(
-            props.onEdit
-        ).toHaveBeenNthCalledWith(
-            2,
-            trade
-        );
+        expect(props.onEdit).toHaveBeenCalledTimes(2);
+        expect(props.onEdit).toHaveBeenNthCalledWith(1, trade);
+        expect(props.onEdit).toHaveBeenNthCalledWith(2, trade);
     });
 
     test("confirms delete from both layouts", () => {
         const props = renderTable();
 
         fireEvent.click(
-            screen.getAllByRole(
-                "button",
-                {
-                    name: "Delete trade",
-                }
-            )[0]
+            screen.getAllByRole("button", { name: "Delete trade" })[0],
         );
 
-        expect(
-            props.onDelete
-        ).not.toHaveBeenCalled();
+        expect(props.onDelete).not.toHaveBeenCalled();
 
         fireEvent.click(
-            screen.getByRole(
-                "button",
-                {
-                    name: "Cancel",
-                }
-            )
+            screen.getByRole("button", { name: "Cancel" }),
         );
 
-        expect(
-            props.onDelete
-        ).not.toHaveBeenCalled();
+        expect(props.onDelete).not.toHaveBeenCalled();
 
         fireEvent.click(
-            screen.getAllByRole(
-                "button",
-                {
-                    name: "Delete trade",
-                }
-            )[1]
+            screen.getAllByRole("button", { name: "Delete trade" })[1],
         );
 
         fireEvent.click(
-            screen.getByRole(
-                "button",
-                {
-                    name: "Delete permanently",
-                }
-            )
+            screen.getByRole("button", { name: "Delete permanently" }),
         );
 
-        expect(
-            props.onDelete
-        ).toHaveBeenCalledOnce();
-
-        expect(
-            props.onDelete
-        ).toHaveBeenCalledWith(
-            1
-        );
+        expect(props.onDelete).toHaveBeenCalledOnce();
+        expect(props.onDelete).toHaveBeenCalledWith(1);
     });
 
     test("calls onUpdate from both layouts", () => {
-        const props = renderTable(
-            editingProps()
-        );
+        const props = renderTable(editingProps());
 
-        screen
-            .getAllByRole("button", {
-                name: "Save trade",
-            })
-            .forEach((button) => {
-                fireEvent.click(button);
-            });
+        screen.getAllByRole("button", { name: "Save trade" }).forEach((button) => {
+            fireEvent.click(button);
+        });
 
-        expect(
-            props.onUpdate
-        ).toHaveBeenCalledTimes(2);
-
-        expect(
-            props.onUpdate
-        ).toHaveBeenNthCalledWith(
-            1,
-            1
-        );
-
-        expect(
-            props.onUpdate
-        ).toHaveBeenNthCalledWith(
-            2,
-            1
-        );
+        expect(props.onUpdate).toHaveBeenCalledTimes(2);
+        expect(props.onUpdate).toHaveBeenNthCalledWith(1, 1);
+        expect(props.onUpdate).toHaveBeenNthCalledWith(2, 1);
     });
 
     test.each([
-        [
-            "Edit symbol",
-            "GBPUSD",
-            "setSymbol",
-        ],
-        [
-            "Edit direction",
-            "short",
-            "setDirection",
-        ],
-        [
-            "Edit entry",
-            "1.20",
-            "setEntry",
-        ],
-        [
-            "Edit stop",
-            "1.18",
-            "setStop",
-        ],
-        [
-            "Edit exit",
-            "1.25",
-            "setExit",
-        ],
-        [
-            "Edit P/L",
-            "200",
-            "setPnl",
-        ],
-        [
-            "Edit entry datetime",
-            "2026-08-12T12:00",
-            "setEntryDatetime",
-        ],
-        [
-            "Edit exit datetime",
-            "2026-08-12T13:00",
-            "setExitDatetime",
-        ],
+        ["Edit symbol", "GBPUSD", "setSymbol"],
+        ["Edit direction", "short", "setDirection"],
+        ["Edit entry", "1.20", "setEntry"],
+        ["Edit stop", "1.18", "setStop"],
+        ["Edit exit", "1.25", "setExit"],
+        ["Edit P/L", "200", "setPnl"],
+        ["Edit entry datetime", "2026-08-12T12:00", "setEntryDatetime"],
+        ["Edit exit datetime", "2026-08-12T13:00", "setExitDatetime"],
     ] as const)(
         "updates %s in both layouts",
-        (
-            label,
-            value,
-            setterName
-        ) => {
-            const props =
-                renderTable(
-                    editingProps()
-                );
+        (label, value, setterName) => {
+            const props = renderTable(editingProps());
 
-            screen
-                .getAllByLabelText(label)
-                .forEach((input) => {
-                    fireEvent.change(
-                        input,
-                        {
-                            target: {
-                                value,
-                            },
-                        }
-                    );
+            screen.getAllByLabelText(label).forEach((input) => {
+                fireEvent.change(input, {
+                    target: {
+                        value,
+                    },
                 });
+            });
 
-            expect(
-                props[setterName]
-            ).toHaveBeenCalledTimes(2);
-
-            expect(
-                props[setterName]
-            ).toHaveBeenNthCalledWith(
-                1,
-                value
-            );
-
-            expect(
-                props[setterName]
-            ).toHaveBeenNthCalledWith(
-                2,
-                value
-            );
-        }
+            expect(props[setterName]).toHaveBeenCalledTimes(2);
+            expect(props[setterName]).toHaveBeenNthCalledWith(1, value);
+            expect(props[setterName]).toHaveBeenNthCalledWith(2, value);
+        },
     );
 
     test.each([
@@ -432,10 +230,7 @@ describe("TradesTable", () => {
         [0, "0R"],
     ])(
         "shows result %s while editing",
-        (
-            result,
-            expectedText
-        ) => {
+        (result, expectedText) => {
             renderTable({
                 ...editingProps(),
                 trades: [
@@ -445,45 +240,28 @@ describe("TradesTable", () => {
                 ],
             });
 
-            expect(
-                screen.getByText(
-                    expectedText
-                )
-            ).toBeInTheDocument();
-        }
+            expect(screen.getByText(expectedText)).toBeInTheDocument();
+        },
     );
 
-    test(
-        "does not show View all trades by default",
-        () => {
-            renderTable({
-                trades: [],
-            });
+    test("does not show View all trades by default", () => {
+        renderTable({
+            trades: [],
+        });
 
-            expect(
-                screen.queryByRole(
-                    "link",
-                    {
-                        name:
-                            "View all trades →",
-                    }
-                )
-            ).not.toBeInTheDocument();
-        }
-    );
+        expect(
+            screen.queryByRole("link", {
+                name: "View all trades →",
+            }),
+        ).not.toBeInTheDocument();
+    });
 
     test.each([
         [null, "/trades"],
-        [
-            7,
-            "/trades?account_id=7",
-        ],
+        [7, "/trades?account_id=7"],
     ])(
         "uses the correct View all trades link",
-        (
-            selectedAccountId,
-            expectedHref
-        ) => {
+        (selectedAccountId, expectedHref) => {
             renderTable({
                 trades: [],
                 showViewAll: true,
@@ -491,17 +269,10 @@ describe("TradesTable", () => {
             });
 
             expect(
-                screen.getByRole(
-                    "link",
-                    {
-                        name:
-                            "View all trades →",
-                    }
-                )
-            ).toHaveAttribute(
-                "href",
-                expectedHref
-            );
-        }
+                screen.getByRole("link", {
+                    name: "View all trades →",
+                }),
+            ).toHaveAttribute("href", expectedHref);
+        },
     );
 });

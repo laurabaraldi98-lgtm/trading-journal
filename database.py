@@ -1,6 +1,6 @@
 import os
-
 from datetime import date, timedelta
+
 from dotenv import load_dotenv
 from supabase import create_client
 
@@ -10,20 +10,12 @@ load_dotenv()
 supabase_url = os.getenv("SUPABASE_URL")
 supabase_key = os.getenv("SUPABASE_KEY")
 
-supabase = create_client(
-    supabase_url,
-    supabase_key,
-)
+supabase = create_client(supabase_url, supabase_key)
 
 
 def get_authenticated_client(token: str):
-    client = create_client(
-        supabase_url,
-        supabase_key,
-    )
-
+    client = create_client(supabase_url, supabase_key)
     client.postgrest.auth(token)
-
     return client
 
 
@@ -39,9 +31,23 @@ def execute_query(query):
     try:
         return query.execute()
     except Exception as error:
-        raise DatabaseError(
-            "Database request failed"
-        ) from error
+        raise DatabaseError("Database request failed") from error
+
+
+def _format_trade(trade):
+    return {
+        "id": trade["id"],
+        "account_id": trade["account_id"],
+        "symbol": trade["symbol"],
+        "direction": trade["direction"],
+        "entry": float(trade["entry"]),
+        "stop": float(trade["stop"]) if trade["stop"] is not None else None,
+        "exit": float(trade["exit"]),
+        "result": float(trade["result"]) if trade["result"] is not None else None,
+        "pnl": float(trade["pnl"]),
+        "entry_datetime": trade["entry_datetime"],
+        "exit_datetime": trade["exit_datetime"],
+    }
 
 
 def load_trades_from_supabase(
@@ -55,58 +61,28 @@ def load_trades_from_supabase(
 ):
     client = get_authenticated_client(token)
 
-    query = (
-        client
-        .table("trades")
-        .select("*", count="exact")
-        .eq("user_id", user_id)
-    )
+    query = client.table("trades").select(
+        "*", count="exact").eq("user_id", user_id)
 
     if account_id is not None:
         query = query.eq("account_id", account_id)
 
     if date_from is not None:
-        query = query.gte(
-            "entry_datetime",
-            date_from.isoformat(),
-        )
+        query = query.gte("entry_datetime", date_from.isoformat())
 
     if date_to is not None:
         day_after = date_to + timedelta(days=1)
-        query = query.lt(
-            "entry_datetime",
-            day_after.isoformat(),
-        )
+        query = query.lt("entry_datetime", day_after.isoformat())
 
-    query = query.order(
-        "entry_datetime",
-        desc=True,
-        nullsfirst=False,
-    )
+    query = query.order("entry_datetime", desc=True, nullsfirst=False)
 
     start = (page - 1) * page_size
     end = start + page_size - 1
     query = query.range(start, end)
 
     response = execute_query(query)
-    loaded_trades = []
 
-    for trade in response.data:
-        loaded_trade = [
-            trade["id"],
-            trade["symbol"],
-            trade["direction"],
-            float(trade["entry"]),
-            float(trade["stop"]) if trade["stop"] is not None else None,
-            float(trade["exit"]),
-            float(trade["result"]) if trade["result"] is not None else None,
-            float(trade["pnl"]),
-            trade["entry_datetime"],
-            trade["exit_datetime"],
-        ]
-        loaded_trades.append(loaded_trade)
-
-    return loaded_trades, response.count or 0
+    return [_format_trade(trade) for trade in response.data], response.count or 0
 
 
 def load_trade_metrics_batch_from_supabase(
@@ -129,37 +105,26 @@ def load_trade_metrics_batch_from_supabase(
     )
 
     if date_from is not None:
-        query = query.gte(
-            "entry_datetime",
-            date_from.isoformat(),
-        )
+        query = query.gte("entry_datetime", date_from.isoformat())
 
     if date_to is not None:
         day_after = date_to + timedelta(days=1)
-        query = query.lt(
-            "entry_datetime",
-            day_after.isoformat(),
-        )
+        query = query.lt("entry_datetime", day_after.isoformat())
 
     end = offset + batch_size - 1
+
     query = (
         query
-        .order(
-            "entry_datetime",
-            desc=False,
-            nullsfirst=False,
-        )
+        .order("entry_datetime", desc=False, nullsfirst=False)
         .range(offset, end)
     )
 
     response = execute_query(query)
+
     return response.data
 
 
-def _build_trade_data(
-    trade,
-    user_id: str,
-):
+def _build_trade_data(trade, user_id: str):
     return {
         "account_id": trade["account_id"],
         "symbol": trade["symbol"],
@@ -169,16 +134,8 @@ def _build_trade_data(
         "exit": trade["exit"],
         "result": trade["result"],
         "pnl": trade["pnl"],
-        "entry_datetime": (
-            trade["entry_datetime"].isoformat()
-            if trade["entry_datetime"]
-            else None
-        ),
-        "exit_datetime": (
-            trade["exit_datetime"].isoformat()
-            if trade["exit_datetime"]
-            else None
-        ),
+        "entry_datetime": trade["entry_datetime"].isoformat() if trade["entry_datetime"] else None,
+        "exit_datetime": trade["exit_datetime"].isoformat() if trade["exit_datetime"] else None,
         "user_id": user_id,
     }
 
@@ -203,23 +160,16 @@ def load_calendar_metrics_batch_from_supabase(
         .eq("account_id", account_id)
         .gte("entry_datetime", month_start.isoformat())
         .lt("entry_datetime", next_month_start.isoformat())
-        .order(
-            "entry_datetime",
-            desc=False,
-            nullsfirst=False,
-        )
+        .order("entry_datetime", desc=False, nullsfirst=False)
         .range(offset, end)
     )
 
     response = execute_query(query)
+
     return response.data
 
 
-def save_trade_to_supabase(
-    trade,
-    user_id: str,
-    token: str,
-):
+def save_trade_to_supabase(trade, user_id: str, token: str):
     client = get_authenticated_client(token)
     new_trade = _build_trade_data(trade, user_id)
 
@@ -229,34 +179,12 @@ def save_trade_to_supabase(
         .insert(new_trade)
     )
 
-    saved_trade = response.data[0]
-
-    return [
-        saved_trade["id"],
-        saved_trade["symbol"],
-        saved_trade["direction"],
-        float(saved_trade["entry"]),
-        (
-            float(saved_trade["stop"])
-            if saved_trade["stop"] is not None
-            else None
-        ),
-        float(saved_trade["exit"]),
-        (
-            float(saved_trade["result"])
-            if saved_trade["result"] is not None
-            else None
-        ),
-        float(saved_trade["pnl"]),
-    ]
+    return _format_trade(response.data[0])
 
 
-def save_trades_to_supabase(
-    trades,
-    user_id: str,
-    token: str,
-):
+def save_trades_to_supabase(trades, user_id: str, token: str):
     client = get_authenticated_client(token)
+
     new_trades = [
         _build_trade_data(trade, user_id)
         for trade in trades
@@ -268,14 +196,10 @@ def save_trades_to_supabase(
         .insert(new_trades)
     )
 
-    return response.data
+    return [_format_trade(trade) for trade in response.data]
 
 
-def delete_trade_from_supabase(
-    trade_id,
-    user_id: str,
-    token: str,
-):
+def delete_trade_from_supabase(trade_id, user_id: str, token: str):
     client = get_authenticated_client(token)
 
     response = execute_query(
@@ -287,9 +211,7 @@ def delete_trade_from_supabase(
     )
 
     if not response.data:
-        raise ResourceNotFoundError(
-            "Trade not found"
-        )
+        raise ResourceNotFoundError("Trade not found")
 
     return response
 
@@ -310,16 +232,8 @@ def update_trade_in_supabase(
         "exit": updated_trade["exit"],
         "result": updated_trade["result"],
         "pnl": updated_trade["pnl"],
-        "entry_datetime": (
-            updated_trade["entry_datetime"].isoformat()
-            if updated_trade["entry_datetime"]
-            else None
-        ),
-        "exit_datetime": (
-            updated_trade["exit_datetime"].isoformat()
-            if updated_trade["exit_datetime"]
-            else None
-        ),
+        "entry_datetime": updated_trade["entry_datetime"].isoformat() if updated_trade["entry_datetime"] else None,
+        "exit_datetime": updated_trade["exit_datetime"].isoformat() if updated_trade["exit_datetime"] else None,
     }
 
     response = execute_query(
@@ -331,17 +245,12 @@ def update_trade_in_supabase(
     )
 
     if not response.data:
-        raise ResourceNotFoundError(
-            "Trade not found"
-        )
+        raise ResourceNotFoundError("Trade not found")
 
-    return response
+    return _format_trade(response.data[0])
 
 
-def load_accounts_from_supabase(
-    user_id: str,
-    token: str,
-):
+def load_accounts_from_supabase(user_id: str, token: str):
     client = get_authenticated_client(token)
 
     response = execute_query(
@@ -355,11 +264,7 @@ def load_accounts_from_supabase(
     return response.data
 
 
-def account_belongs_to_user(
-    account_id: int,
-    user_id: str,
-    token: str,
-):
+def account_belongs_to_user(account_id: int, user_id: str, token: str):
     client = get_authenticated_client(token)
 
     response = execute_query(
@@ -373,11 +278,7 @@ def account_belongs_to_user(
     return bool(response.data)
 
 
-def save_account_to_supabase(
-    account,
-    user_id: str,
-    token: str,
-):
+def save_account_to_supabase(account, user_id: str, token: str):
     client = get_authenticated_client(token)
 
     data = {
@@ -423,9 +324,7 @@ def update_account_in_supabase(
     )
 
     if not response.data:
-        raise ResourceNotFoundError(
-            "Account not found"
-        )
+        raise ResourceNotFoundError("Account not found")
 
     return response.data
 
@@ -446,8 +345,6 @@ def delete_account_from_supabase(
     )
 
     if not response.data:
-        raise ResourceNotFoundError(
-            "Account not found"
-        )
+        raise ResourceNotFoundError("Account not found")
 
     return response.data

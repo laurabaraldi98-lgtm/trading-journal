@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Session } from "@supabase/supabase-js";
+
 import { supabase } from "../lib/supabase";
 import { API_URL } from "../lib/api";
 import Sidebar from "../components/Sidebar";
@@ -12,8 +13,7 @@ import StatisticsCards, { type DashboardStatistics } from "../components/Statist
 import PerformanceChart, { type DashboardPerformance } from "../components/PerformanceChart";
 import DateRangeFilter, { type DateRangePreset } from "../components/DateRangeFilter";
 import TradingCalendar, { type TradingCalendarDay } from "../components/TradingCalendar";
-
-type Trade = [number, string, string, number, number | null, number, number | null, number, string, string];
+import type { Trade } from "../types/trade";
 
 type Account = {
   id: number;
@@ -62,11 +62,13 @@ function formatDate(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
   const day = String(date.getDate()).padStart(2, "0");
+
   return `${year}-${month}-${day}`;
 }
 
 export default function Home() {
   const router = useRouter();
+
   const [showForm, setShowForm] = useState(false);
   const [symbol, setSymbol] = useState("");
   const [direction, setDirection] = useState("");
@@ -91,8 +93,10 @@ export default function Home() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [calendarDays, setCalendarDays] = useState<TradingCalendarDay[]>([]);
+
   const [calendarPeriod, setCalendarPeriod] = useState(() => {
     const today = new Date();
+
     return {
       year: today.getFullYear(),
       month: today.getMonth() + 1,
@@ -132,22 +136,24 @@ export default function Home() {
   }, []);
 
   const loadDashboardData = useCallback(async (accessToken: string, accountId: number) => {
-    const incompleteCustomRange =
-      datePreset === "custom" && (!dateFrom || !dateTo);
-    const invalidCustomRange =
-      datePreset === "custom" && dateFrom > dateTo;
+    const incompleteCustomRange = datePreset === "custom" && (!dateFrom || !dateTo);
+    const invalidCustomRange = datePreset === "custom" && dateFrom > dateTo;
 
     if (incompleteCustomRange || invalidCustomRange) return;
 
     const requestOptions = {
       cache: "no-store" as RequestCache,
-      headers: { Authorization: `Bearer ${accessToken}` },
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+      },
     };
+
     const tradesParams = new URLSearchParams({
       account_id: String(accountId),
       page: "1",
       page_size: "5",
     });
+
     const statisticsParams = new URLSearchParams({
       account_id: String(accountId),
     });
@@ -171,6 +177,7 @@ export default function Home() {
 
     const tradesData: PaginatedTradesResponse = await tradesResponse.json();
     const statisticsData: DashboardData = await statisticsResponse.json();
+
     setTrades(tradesData.items);
     setDashboardData(statisticsData);
   }, [datePreset, dateFrom, dateTo]);
@@ -189,9 +196,7 @@ export default function Home() {
     const today = new Date();
     const firstDay = new Date(today);
 
-    firstDay.setDate(
-      today.getDate() - (preset === "30d" ? 29 : 89),
-    );
+    firstDay.setDate(today.getDate() - (preset === "30d" ? 29 : 89));
 
     setDateFrom(formatDate(firstDay));
     setDateTo(formatDate(today));
@@ -221,17 +226,15 @@ export default function Home() {
 
     loadUser();
 
-    const { data } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
-        if (!session) {
-          router.push("/login");
-          return;
-        }
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        router.push("/login");
+        return;
+      }
 
-        setSession(session);
-        setUserEmail(session.user.email ?? null);
-      },
-    );
+      setSession(session);
+      setUserEmail(session.user.email ?? null);
+    });
 
     return () => data.subscription.unsubscribe();
   }, [router]);
@@ -262,8 +265,7 @@ export default function Home() {
 
       if (data.length > 0) {
         setSelectedAccountId((current) =>
-          current !== null
-            && data.some((account) => account.id === current)
+          current !== null && data.some((account) => account.id === current)
             ? current
             : data[0].id,
         );
@@ -285,10 +287,7 @@ export default function Home() {
     async function fetchDashboardData() {
       setDashboardLoading(true);
 
-      await loadDashboardData(
-        session!.access_token,
-        selectedAccountId!,
-      );
+      await loadDashboardData(session!.access_token, selectedAccountId!);
 
       setDashboardLoading(false);
     }
@@ -425,15 +424,15 @@ export default function Home() {
 
   function handleEditTrade(trade: Trade) {
     setShowForm(false);
-    setEditingTradeId(trade[0]);
-    setSymbol(trade[1]);
-    setDirection(trade[2]);
-    setEntry(String(trade[3]));
-    setStop(trade[4] === null ? "" : String(trade[4]));
-    setExit(String(trade[5]));
-    setPnl(String(trade[7]));
-    setEntryDatetime(trade[8].slice(0, 16));
-    setExitDatetime(trade[9].slice(0, 16));
+    setEditingTradeId(trade.id);
+    setSymbol(trade.symbol);
+    setDirection(trade.direction);
+    setEntry(String(trade.entry));
+    setStop(trade.stop === null ? "" : String(trade.stop));
+    setExit(String(trade.exit));
+    setPnl(String(trade.pnl));
+    setEntryDatetime(trade.entry_datetime.slice(0, 16));
+    setExitDatetime(trade.exit_datetime.slice(0, 16));
   }
 
   async function handleUpdateTrade(tradeId: number) {
@@ -487,10 +486,7 @@ export default function Home() {
 
   return (
     <div className="flex min-h-screen bg-slate-50">
-      <Sidebar
-        userEmail={userEmail}
-        onLogout={handleLogout}
-      />
+      <Sidebar userEmail={userEmail} onLogout={handleLogout} />
 
       <main className="min-w-0 flex-1 px-5 py-5 sm:px-6 md:px-8 md:py-8 xl:px-10">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -514,10 +510,7 @@ export default function Home() {
                 className="rounded-lg border border-slate-300 bg-white px-4 py-3 font-medium text-slate-900"
               >
                 {accounts.map((account) => (
-                  <option
-                    key={account.id}
-                    value={account.id}
-                  >
+                  <option key={account.id} value={account.id}>
                     {account.name}
                   </option>
                 ))}
