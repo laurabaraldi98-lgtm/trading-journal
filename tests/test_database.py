@@ -20,6 +20,9 @@ from database import (
     ResourceNotFoundError,
     load_trade_metrics_batch_from_supabase,
     load_calendar_metrics_batch_from_supabase,
+    get_authenticated_client,
+    supabase_url,
+    supabase_key,
 )
 
 
@@ -44,6 +47,29 @@ def make_mock_client(mock_query):
     return mock_client
 
 
+def test_get_authenticated_client():
+    mock_client = MagicMock()
+
+    with patch(
+        "database.create_client",
+        return_value=mock_client,
+    ) as mock_create_client:
+        client = get_authenticated_client(
+            "fake-token"
+        )
+
+    mock_create_client.assert_called_once_with(
+        supabase_url,
+        supabase_key,
+    )
+
+    mock_client.postgrest.auth.assert_called_once_with(
+        "fake-token"
+    )
+
+    assert client == mock_client
+
+
 def test_execute_query_raises_database_error():
     mock_query = MagicMock()
     mock_query.execute.side_effect = Exception("Supabase failed")
@@ -56,21 +82,21 @@ def test_execute_query_raises_database_error():
 
 
 def test_load_trades_from_supabase():
+    fake_trade = {
+        "id": 1,
+        "symbol": "EURUSD",
+        "direction": "long",
+        "entry": "1.15",
+        "stop": "1.14",
+        "exit": "1.17",
+        "result": "2",
+        "pnl": "400",
+        "entry_datetime": "2026-08-12T10:00:00",
+        "exit_datetime": "2026-08-12T11:00:00",
+    }
+
     fake_response = SimpleNamespace(
-        data=[
-            {
-                "id": 1,
-                "symbol": "EURUSD",
-                "direction": "long",
-                "entry": "1.15",
-                "stop": "1.14",
-                "exit": "1.17",
-                "result": "2",
-                "pnl": "400",
-                "entry_datetime": "2026-08-12T10:00:00",
-                "exit_datetime": "2026-08-12T11:00:00",
-            }
-        ],
+        data=[fake_trade],
         count=1,
     )
 
@@ -100,20 +126,11 @@ def test_load_trades_from_supabase():
         19,
     )
 
-    assert trades == [
-        [
-            1,
-            "EURUSD",
-            "long",
-            1.15,
-            1.14,
-            1.17,
-            2.0,
-            400.0,
-            "2026-08-12T10:00:00",
-            "2026-08-12T11:00:00",
-        ]
-    ]
+    assert trades == [fake_trade]
+    assert isinstance(trades[0], dict)
+    assert trades[0]["id"] == 1
+    assert trades[0]["symbol"] == "EURUSD"
+    assert trades[0]["pnl"] == "400"
 
     assert total == 1
 
@@ -149,8 +166,8 @@ def test_load_trade_without_stop_or_result():
             "fake-token",
         )
 
-    assert trades[0][4] is None
-    assert trades[0][6] is None
+    assert trades[0]["stop"] is None
+    assert trades[0]["result"] is None
     assert total == 1
 
 
@@ -310,19 +327,23 @@ def test_save_trade_to_supabase(
     expected_entry_datetime,
     expected_exit_datetime,
 ):
+    saved_trade_record = {
+        "id": 10,
+        "account_id": 1,
+        "user_id": "user-123",
+        "symbol": "EURUSD",
+        "direction": "long",
+        "entry": "1.15",
+        "stop": "1.14",
+        "exit": "1.17",
+        "result": "2",
+        "pnl": "400",
+        "entry_datetime": expected_entry_datetime,
+        "exit_datetime": expected_exit_datetime,
+    }
+
     fake_response = SimpleNamespace(
-        data=[
-            {
-                "id": 10,
-                "symbol": "EURUSD",
-                "direction": "long",
-                "entry": "1.15",
-                "stop": "1.14",
-                "exit": "1.17",
-                "result": "2",
-                "pnl": "400",
-            }
-        ]
+        data=[saved_trade_record]
     )
 
     mock_query = make_mock_query(fake_response)
@@ -371,16 +392,10 @@ def test_save_trade_to_supabase(
 
     mock_query.insert.assert_called_once_with(expected_new_trade)
 
-    assert saved_trade == [
-        10,
-        "EURUSD",
-        "long",
-        1.15,
-        1.14,
-        1.17,
-        2.0,
-        400.0,
-    ]
+    assert saved_trade == saved_trade_record
+    assert isinstance(saved_trade, dict)
+    assert saved_trade["id"] == 10
+    assert saved_trade["symbol"] == "EURUSD"
 
 
 def test_save_trade_without_stop_or_result():
@@ -388,6 +403,8 @@ def test_save_trade_without_stop_or_result():
         data=[
             {
                 "id": 10,
+                "account_id": 1,
+                "user_id": "user-123",
                 "symbol": "EURUSD",
                 "direction": "long",
                 "entry": "1.15",
@@ -395,6 +412,8 @@ def test_save_trade_without_stop_or_result():
                 "exit": "1.17",
                 "result": None,
                 "pnl": "400",
+                "entry_datetime": "2026-08-12T10:00:00",
+                "exit_datetime": "2026-08-12T11:00:00",
             }
         ]
     )
@@ -426,8 +445,8 @@ def test_save_trade_without_stop_or_result():
             "fake-token",
         )
 
-    assert saved_trade[4] is None
-    assert saved_trade[6] is None
+    assert saved_trade["stop"] is None
+    assert saved_trade["result"] is None
 
 
 def test_delete_trade_from_supabase():
@@ -1006,7 +1025,11 @@ def test_save_trades_to_supabase():
         "database.get_authenticated_client",
         return_value=mock_client,
     ) as mock_get_client:
-        result = save_trades_to_supabase(trades, "user-123", "fake-token")
+        result = save_trades_to_supabase(
+            trades,
+            "user-123",
+            "fake-token",
+        )
 
     mock_get_client.assert_called_once_with("fake-token")
     mock_client.table.assert_called_once_with("trades")
@@ -1088,4 +1111,5 @@ def test_load_calendar_metrics_batch_from_supabase():
         nullsfirst=False,
     )
     mock_query.range.assert_called_once_with(1000, 1499)
+
     assert metrics == fake_metrics

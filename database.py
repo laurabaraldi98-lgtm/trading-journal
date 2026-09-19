@@ -89,24 +89,8 @@ def load_trades_from_supabase(
     query = query.range(start, end)
 
     response = execute_query(query)
-    loaded_trades = []
 
-    for trade in response.data:
-        loaded_trade = [
-            trade["id"],
-            trade["symbol"],
-            trade["direction"],
-            float(trade["entry"]),
-            float(trade["stop"]) if trade["stop"] is not None else None,
-            float(trade["exit"]),
-            float(trade["result"]) if trade["result"] is not None else None,
-            float(trade["pnl"]),
-            trade["entry_datetime"],
-            trade["exit_datetime"],
-        ]
-        loaded_trades.append(loaded_trade)
-
-    return loaded_trades, response.count or 0
+    return response.data, response.count or 0
 
 
 def load_trade_metrics_batch_from_supabase(
@@ -229,26 +213,7 @@ def save_trade_to_supabase(
         .insert(new_trade)
     )
 
-    saved_trade = response.data[0]
-
-    return [
-        saved_trade["id"],
-        saved_trade["symbol"],
-        saved_trade["direction"],
-        float(saved_trade["entry"]),
-        (
-            float(saved_trade["stop"])
-            if saved_trade["stop"] is not None
-            else None
-        ),
-        float(saved_trade["exit"]),
-        (
-            float(saved_trade["result"])
-            if saved_trade["result"] is not None
-            else None
-        ),
-        float(saved_trade["pnl"]),
-    ]
+    return response.data[0]
 
 
 def save_trades_to_supabase(
