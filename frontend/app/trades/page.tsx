@@ -7,19 +7,7 @@ import { API_URL } from "../../lib/api";
 import Sidebar from "../../components/Sidebar";
 import TradesTable from "../../components/TradesTable";
 import DateRangeFilter, { type DateRangePreset } from "../../components/DateRangeFilter";
-
-type Trade = [
-    number,
-    string,
-    string,
-    number,
-    number | null,
-    number,
-    number | null,
-    number,
-    string,
-    string
-];
+import type { Trade } from "../../types/trade";
 
 type PaginatedTradesResponse = {
     items: Trade[];
@@ -77,55 +65,50 @@ function TradesPageContent() {
     const [userEmail, setUserEmail] = useState<string | null>(null);
     const [authLoading, setAuthLoading] = useState(true);
 
-    const loadTrades = useCallback(
-        async (accountId: number, page: number) => {
-            const incompleteCustomRange =
-                datePreset === "custom" && (!dateFrom || !dateTo);
-            const invalidCustomRange =
-                datePreset === "custom" && dateFrom > dateTo;
+    const loadTrades = useCallback(async (accountId: number, page: number) => {
+        const incompleteCustomRange = datePreset === "custom" && (!dateFrom || !dateTo);
+        const invalidCustomRange = datePreset === "custom" && dateFrom > dateTo;
 
-            if (incompleteCustomRange || invalidCustomRange) return;
+        if (incompleteCustomRange || invalidCustomRange) return;
 
-            const {
-                data: { session },
-            } = await supabase.auth.getSession();
+        const {
+            data: { session },
+        } = await supabase.auth.getSession();
 
-            if (!session) {
-                router.push("/login");
-                return;
-            }
+        if (!session) {
+            router.push("/login");
+            return;
+        }
 
-            const params = new URLSearchParams({
-                account_id: String(accountId),
-                page: String(page),
-                page_size: "20",
-            });
+        const params = new URLSearchParams({
+            account_id: String(accountId),
+            page: String(page),
+            page_size: "20",
+        });
 
-            if (dateFrom) params.set("date_from", dateFrom);
-            if (dateTo) params.set("date_to", dateTo);
+        if (dateFrom) params.set("date_from", dateFrom);
+        if (dateTo) params.set("date_to", dateTo);
 
-            const response = await fetch(`${API_URL}/trades?${params}`, {
-                cache: "no-store",
-                headers: {
-                    Authorization: `Bearer ${session.access_token}`,
-                },
-            });
+        const response = await fetch(`${API_URL}/trades?${params}`, {
+            cache: "no-store",
+            headers: {
+                Authorization: `Bearer ${session.access_token}`,
+            },
+        });
 
-            if (!response.ok) {
-                setTradesError("Unable to load trades.");
-                setAuthLoading(false);
-                return;
-            }
-
-            const data: PaginatedTradesResponse = await response.json();
-
-            setTrades(data.items);
-            setTotalPages(data.total_pages);
-            setTradesError(null);
+        if (!response.ok) {
+            setTradesError("Unable to load trades.");
             setAuthLoading(false);
-        },
-        [dateFrom, datePreset, dateTo, router]
-    );
+            return;
+        }
+
+        const data: PaginatedTradesResponse = await response.json();
+
+        setTrades(data.items);
+        setTotalPages(data.total_pages);
+        setTradesError(null);
+        setAuthLoading(false);
+    }, [dateFrom, datePreset, dateTo, router]);
 
     function handleDatePresetChange(preset: DateRangePreset) {
         setDatePreset(preset);
@@ -141,7 +124,9 @@ function TradesPageContent() {
 
         const today = new Date();
         const firstDay = new Date(today);
+
         firstDay.setDate(today.getDate() - (preset === "30d" ? 29 : 89));
+
         setDateFrom(formatDate(firstDay));
         setDateTo(formatDate(today));
     }
@@ -162,25 +147,19 @@ function TradesPageContent() {
     }
 
     function handleEditTrade(trade: Trade) {
-        setEditingTradeId(trade[0]);
-        setSymbol(trade[1]);
-        setDirection(trade[2]);
-        setEntry(String(trade[3]));
-        setStop(
-            trade[4] === null
-                ? ""
-                : String(trade[4])
-        );
-        setExit(String(trade[5]));
-        setPnl(String(trade[7]));
-        setEntryDatetime(trade[8].slice(0, 16));
-        setExitDatetime(trade[9].slice(0, 16));
+        setEditingTradeId(trade.id);
+        setSymbol(trade.symbol);
+        setDirection(trade.direction);
+        setEntry(String(trade.entry));
+        setStop(trade.stop === null ? "" : String(trade.stop));
+        setExit(String(trade.exit));
+        setPnl(String(trade.pnl));
+        setEntryDatetime(trade.entry_datetime.slice(0, 16));
+        setExitDatetime(trade.exit_datetime.slice(0, 16));
     }
 
     async function handleUpdateTrade(tradeId: number) {
-        if (!entryDatetime || !exitDatetime) {
-            return;
-        }
+        if (!entryDatetime || !exitDatetime) return;
 
         const {
             data: { session },
@@ -201,10 +180,7 @@ function TradesPageContent() {
                 symbol,
                 direction,
                 entry: Number(entry),
-                stop:
-                    stop === ""
-                        ? null
-                        : Number(stop),
+                stop: stop === "" ? null : Number(stop),
                 exit: Number(exit),
                 pnl: Number(pnl),
                 entry_datetime: entryDatetime,
@@ -285,22 +261,18 @@ function TradesPageContent() {
             }
 
             const accountFromUrl = data.find(
-                (account) => account.id === accountIdFromUrl
+                (account) => account.id === accountIdFromUrl,
             );
 
             setCurrentPage(1);
-            setSelectedAccountId(
-                accountFromUrl ? accountFromUrl.id : data[0].id
-            );
+            setSelectedAccountId(accountFromUrl ? accountFromUrl.id : data[0].id);
         }
 
         fetchAccounts();
     }, [accountIdFromUrl, router]);
 
     useEffect(() => {
-        if (selectedAccountId === null) {
-            return;
-        }
+        if (selectedAccountId === null) return;
 
         async function fetchTrades() {
             await loadTrades(selectedAccountId!, currentPage);
@@ -311,14 +283,13 @@ function TradesPageContent() {
 
     const visiblePageCount = Math.min(5, totalPages);
     const firstVisiblePage = Math.max(1, Math.min(currentPage - 2, totalPages - 4));
+
     const visiblePages = Array.from(
         { length: visiblePageCount },
-        (_, index) => firstVisiblePage + index
+        (_, index) => firstVisiblePage + index,
     );
 
-    if (authLoading) {
-        return null;
-    }
+    if (authLoading) return null;
 
     return (
         <div className="flex min-h-screen bg-slate-50">
