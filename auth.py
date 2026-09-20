@@ -1,6 +1,6 @@
 import os
 
-from fastapi import Header, HTTPException, Depends
+from fastapi import Header, HTTPException, Depends, Request
 from supabase import create_client
 from supabase_auth.errors import AuthApiError
 from database import supabase_url, supabase_key
@@ -77,8 +77,14 @@ def update_demo_activity(user, token):
         return
 
 
-def get_current_user(token: str = Depends(get_bearer_token)):
+def get_current_user(
+    request: Request,
+    token: str = Depends(get_bearer_token),
+):
     user = get_user_from_token(token)
+
+    # Store the authenticated user ID so rate limiting can be applied per user.
+    request.state.user_id = user.id
 
     update_demo_activity(
         user,

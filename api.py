@@ -11,8 +11,22 @@ from routes.analytics import router as analytics_router
 from routes.csv_imports import router as csv_imports_router
 from routes.trades import router as trades_router
 
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
+
+from rate_limit import limiter
+
 
 app = FastAPI()
+
+
+app.state.limiter = limiter
+app.add_exception_handler(
+    RateLimitExceeded,
+    _rate_limit_exceeded_handler,
+)
+app.add_middleware(SlowAPIMiddleware)
 
 
 @app.exception_handler(DatabaseError)
@@ -56,5 +70,6 @@ def root():
 
 
 @app.post("/demo-login")
-def demo_login():
+@limiter.limit("5/minute")
+def demo_login(request: Request):
     return get_demo_session()
