@@ -59,3 +59,41 @@ def test_trades_is_rate_limited_per_user():
         )
 
         assert response.status_code == 429
+
+
+def test_different_users_have_separate_rate_limits():
+    limiter.reset()
+
+    user_a = Mock()
+    user_a.id = "user-a"
+
+    user_b = Mock()
+    user_b.id = "user-b"
+
+    with patch(
+        "auth.get_user_from_token",
+        side_effect=[user_a] * 61 + [user_b],
+    ), patch(
+        "auth.update_demo_activity",
+    ), patch(
+        "routes.trades.load_trades_from_supabase",
+        return_value=([], 0),
+    ):
+        for _ in range(60):
+            response = client.get(
+                "/trades",
+                headers={"Authorization": "Bearer token-a"},
+            )
+            assert response.status_code == 200
+
+        response = client.get(
+            "/trades",
+            headers={"Authorization": "Bearer token-a"},
+        )
+        assert response.status_code == 429
+
+        response = client.get(
+            "/trades",
+            headers={"Authorization": "Bearer token-b"},
+        )
+        assert response.status_code == 200
