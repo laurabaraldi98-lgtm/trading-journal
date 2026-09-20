@@ -225,6 +225,10 @@ def test_get_current_user_returns_user_and_token():
         email="user@example.com",
     )
 
+    fake_request = SimpleNamespace(
+        state=SimpleNamespace()
+    )
+
     with (
         patch(
             "auth.get_user_from_token",
@@ -235,18 +239,21 @@ def test_get_current_user_returns_user_and_token():
         ) as mock_update_demo_activity,
     ):
         auth_data = get_current_user(
-            "abc123"
+            fake_request,
+            "abc123",
         )
-
-    mock_update_demo_activity.assert_called_once_with(
-        fake_user,
-        "abc123",
-    )
 
     assert auth_data == {
         "user": fake_user,
         "token": "abc123",
     }
+
+    assert fake_request.state.user_id == "user-123"
+
+    mock_update_demo_activity.assert_called_once_with(
+        fake_user,
+        "abc123",
+    )
 
 
 def test_get_demo_session_returns_tokens():

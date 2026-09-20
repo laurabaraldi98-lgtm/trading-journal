@@ -1,6 +1,8 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
+
+from rate_limit import limiter
 
 from auth import get_current_user
 from calculations import calculate_r
@@ -19,7 +21,9 @@ router = APIRouter()
 
 
 @router.get("/trades", response_model=PaginatedTradesResponse)
+@limiter.limit("60/minute")
 def get_trades(
+    request: Request,
     account_id: int | None = None,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
