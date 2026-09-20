@@ -4,20 +4,16 @@ from datetime import date
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field
 
 from auth import get_current_user, get_demo_session
 from calculations import calculate_calendar_statistics, calculate_dashboard_statistics
 from database import (
     DatabaseError,
     ResourceNotFoundError,
-    delete_account_from_supabase,
-    load_accounts_from_supabase,
     load_calendar_metrics_batch_from_supabase,
     load_trade_metrics_batch_from_supabase,
-    save_account_to_supabase,
-    update_account_in_supabase,
 )
+from routes.accounts import router as accounts_router
 from routes.csv_imports import router as csv_imports_router
 from routes.trades import router as trades_router
 
@@ -26,36 +22,29 @@ STATISTICS_BATCH_SIZE = 1000
 CALENDAR_BATCH_SIZE = 1000
 
 
-class AccountBase(BaseModel):
-    name: str = Field(min_length=1)
-    starting_balance: float
-    currency: str = Field(min_length=1)
-    broker: str | None = None
-    account_type: str | None = None
-
-
-class AccountCreate(AccountBase):
-    pass
-
-
-class AccountUpdate(AccountBase):
-    pass
-
-
 app = FastAPI()
 
 
 @app.exception_handler(DatabaseError)
 async def database_error_handler(request: Request, exc: DatabaseError):
-    return JSONResponse(status_code=503, content={"detail": "Database service unavailable"})
+    return JSONResponse(
+        status_code=503,
+        content={"detail": "Database service unavailable"},
+    )
 
 
 @app.exception_handler(ResourceNotFoundError)
 async def resource_not_found_handler(request: Request, exc: ResourceNotFoundError):
-    return JSONResponse(status_code=404, content={"detail": str(exc)})
+    return JSONResponse(
+        status_code=404,
+        content={"detail": str(exc)},
+    )
 
 
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+cors_origins = os.getenv(
+    "CORS_ORIGINS",
+    "http://localhost:3000",
+).split(",")
 
 app.add_middleware(
     CORSMiddleware,
@@ -65,6 +54,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(accounts_router)
 app.include_router(csv_imports_router)
 app.include_router(trades_router)
 
@@ -116,7 +106,9 @@ def get_statistics(
 ):
     if date_from is not None and date_to is not None and date_from > date_to:
         raise HTTPException(
-            status_code=422, detail="date_from cannot be after date_to")
+            status_code=422,
+            detail="date_from cannot be after date_to",
+        )
 
     user = auth_data["user"]
     token = auth_data["token"]
@@ -186,60 +178,3 @@ def get_calendar(
     )
 
     return calculate_calendar_statistics(metrics)
-
-
-@app.get("/accounts")
-def get_accounts(auth_data=Depends(get_current_user)):
-    user = auth_data["user"]
-    token = auth_data["token"]
-
-    return load_accounts_from_supabase(user.id, token)
-
-
-@app.post("/accounts")
-def create_account(account: AccountCreate, auth_data=Depends(get_current_user)):
-    user = auth_data["user"]
-    token = auth_data["token"]
-
-    account_data = {
-        "name": account.name,
-        "starting_balance": account.starting_balance,
-        "currency": account.currency,
-        "broker": account.broker,
-        "account_type": account.account_type,
-    }
-
-    return save_account_to_supabase(account_data, user.id, token)
-
-
-@app.patch("/accounts/{account_id}")
-def update_account(
-    account_id: int,
-    account: AccountUpdate,
-    auth_data=Depends(get_current_user),
-):
-    user = auth_data["user"]
-    token = auth_data["token"]
-
-    account_data = {
-        "name": account.name,
-        "starting_balance": account.starting_balance,
-        "currency": account.currency,
-        "broker": account.broker,
-        "account_type": account.account_type,
-    }
-
-    return update_account_in_supabase(
-        account_id,
-        account_data,
-        user.id,
-        token,
-    )
-
-
-@app.delete("/accounts/{account_id}")
-def delete_account(account_id: int, auth_data=Depends(get_current_user)):
-    user = auth_data["user"]
-    token = auth_data["token"]
-
-    return delete_account_from_supabase(account_id, user.id, token)

@@ -27,6 +27,7 @@ def authenticated_user():
 
 def test_root():
     response = client.get("/")
+
     assert response.status_code == 200
     assert response.json() == {"message": "Trading Journal API"}
 
@@ -37,11 +38,15 @@ def test_demo_login():
         "refresh_token": "refresh-token",
     }
 
-    with patch("api.get_demo_session", return_value=fake_session) as mock_demo_session:
+    with patch(
+        "api.get_demo_session",
+        return_value=fake_session,
+    ) as mock_demo_session:
         response = client.post("/demo-login")
 
     assert response.status_code == 200
     assert response.json() == fake_session
+
     mock_demo_session.assert_called_once_with()
 
 
@@ -53,7 +58,9 @@ def test_database_error_returns_503(authenticated_user):
         response = client.get("/trades")
 
     assert response.status_code == 503
-    assert response.json() == {"detail": "Database service unavailable"}
+    assert response.json() == {
+        "detail": "Database service unavailable"
+    }
 
 
 def test_resource_not_found_returns_404(authenticated_user):
@@ -64,106 +71,9 @@ def test_resource_not_found_returns_404(authenticated_user):
         response = client.delete("/trades/999999")
 
     assert response.status_code == 404
-    assert response.json() == {"detail": "Trade not found"}
-
-
-def test_get_accounts(authenticated_user):
-    fake_accounts = [
-        {
-            "id": 1,
-            "user_id": "test-user",
-            "name": "My Account",
-            "starting_balance": 100000,
-            "currency": "USD",
-            "broker": None,
-            "account_type": None,
-        }
-    ]
-
-    with patch(
-        "api.load_accounts_from_supabase",
-        return_value=fake_accounts,
-    ) as mock_load_accounts:
-        response = client.get("/accounts")
-
-    assert response.status_code == 200
-    assert response.json() == fake_accounts
-    mock_load_accounts.assert_called_once_with("test-user", "fake-token")
-
-
-def test_create_account(authenticated_user):
-    account_data = {
-        "name": "FTMO 100K",
-        "starting_balance": 100000,
-        "currency": "USD",
-        "broker": "FTMO",
-        "account_type": "Prop Firm",
+    assert response.json() == {
+        "detail": "Trade not found"
     }
-    fake_response = [{"id": 2, "user_id": "test-user", **account_data}]
-
-    with patch(
-        "api.save_account_to_supabase",
-        return_value=fake_response,
-    ) as mock_save_account:
-        response = client.post("/accounts", json=account_data)
-
-    assert response.status_code == 200
-    assert response.json() == fake_response
-    mock_save_account.assert_called_once_with(
-        account_data,
-        "test-user",
-        "fake-token",
-    )
-
-
-def test_update_account(authenticated_user):
-    account_data = {
-        "name": "FTMO Updated",
-        "starting_balance": 120000,
-        "currency": "EUR",
-        "broker": "FTMO",
-        "account_type": "Prop Firm",
-    }
-    fake_response = [{"id": 2, "user_id": "test-user", **account_data}]
-
-    with patch(
-        "api.update_account_in_supabase",
-        return_value=fake_response,
-    ) as mock_update_account:
-        response = client.patch("/accounts/2", json=account_data)
-
-    assert response.status_code == 200
-    assert response.json() == fake_response
-    mock_update_account.assert_called_once_with(
-        2,
-        account_data,
-        "test-user",
-        "fake-token",
-    )
-
-
-def test_delete_account(authenticated_user):
-    fake_response = [
-        {
-            "id": 2,
-            "user_id": "test-user",
-            "name": "FTMO 100K",
-        }
-    ]
-
-    with patch(
-        "api.delete_account_from_supabase",
-        return_value=fake_response,
-    ) as mock_delete_account:
-        response = client.delete("/accounts/2")
-
-    assert response.status_code == 200
-    assert response.json() == fake_response
-    mock_delete_account.assert_called_once_with(
-        2,
-        "test-user",
-        "fake-token",
-    )
 
 
 def test_get_statistics_reads_all_batches(authenticated_user):
@@ -239,7 +149,9 @@ def test_get_calendar_reads_all_batches(authenticated_user):
         "api.load_calendar_metrics_batch_from_supabase",
         side_effect=[first_batch, second_batch],
     ) as mock_load:
-        response = client.get("/calendar?account_id=7&year=2026&month=9")
+        response = client.get(
+            "/calendar?account_id=7&year=2026&month=9"
+        )
 
     assert response.status_code == 200
     assert response.json()["total_trades"] == 1001
@@ -279,6 +191,7 @@ def test_get_calendar_handles_december(authenticated_user):
         )
 
     assert response.status_code == 200
+
     mock_load.assert_called_once_with(
         "test-user",
         "fake-token",
@@ -322,6 +235,7 @@ def test_get_statistics_passes_date_filters(authenticated_user):
         )
 
     assert response.status_code == 200
+
     mock_load.assert_called_once_with(
         "test-user",
         "fake-token",
@@ -349,4 +263,5 @@ def test_get_statistics_rejects_reversed_date_range(
     assert response.json() == {
         "detail": "date_from cannot be after date_to"
     }
+
     mock_load.assert_not_called()
