@@ -1,37 +1,10 @@
-import os
 from datetime import date, timedelta
 
-from dotenv import load_dotenv
-from supabase import create_client
-
-
-load_dotenv()
-
-supabase_url = os.getenv("SUPABASE_URL")
-supabase_key = os.getenv("SUPABASE_KEY")
-
-supabase = create_client(supabase_url, supabase_key)
-
-
-def get_authenticated_client(token: str):
-    client = create_client(supabase_url, supabase_key)
-    client.postgrest.auth(token)
-    return client
-
-
-class DatabaseError(Exception):
-    pass
-
-
-class ResourceNotFoundError(Exception):
-    pass
-
-
-def execute_query(query):
-    try:
-        return query.execute()
-    except Exception as error:
-        raise DatabaseError("Database request failed") from error
+from database.client import (
+    ResourceNotFoundError,
+    execute_query,
+    get_authenticated_client,
+)
 
 
 def _format_trade(trade):
@@ -50,6 +23,22 @@ def _format_trade(trade):
     }
 
 
+def _build_trade_data(trade, user_id: str):
+    return {
+        "account_id": trade["account_id"],
+        "symbol": trade["symbol"],
+        "direction": trade["direction"],
+        "entry": trade["entry"],
+        "stop": trade["stop"],
+        "exit": trade["exit"],
+        "result": trade["result"],
+        "pnl": trade["pnl"],
+        "entry_datetime": trade["entry_datetime"].isoformat() if trade["entry_datetime"] else None,
+        "exit_datetime": trade["exit_datetime"].isoformat() if trade["exit_datetime"] else None,
+        "user_id": user_id,
+    }
+
+
 def load_trades_from_supabase(
     user_id: str,
     token: str,
@@ -62,7 +51,8 @@ def load_trades_from_supabase(
     client = get_authenticated_client(token)
 
     query = client.table("trades").select(
-        "*", count="exact").eq("user_id", user_id)
+        "*", count="exact"
+    ).eq("user_id", user_id)
 
     if account_id is not None:
         query = query.eq("account_id", account_id)
@@ -122,22 +112,6 @@ def load_trade_metrics_batch_from_supabase(
     response = execute_query(query)
 
     return response.data
-
-
-def _build_trade_data(trade, user_id: str):
-    return {
-        "account_id": trade["account_id"],
-        "symbol": trade["symbol"],
-        "direction": trade["direction"],
-        "entry": trade["entry"],
-        "stop": trade["stop"],
-        "exit": trade["exit"],
-        "result": trade["result"],
-        "pnl": trade["pnl"],
-        "entry_datetime": trade["entry_datetime"].isoformat() if trade["entry_datetime"] else None,
-        "exit_datetime": trade["exit_datetime"].isoformat() if trade["exit_datetime"] else None,
-        "user_id": user_id,
-    }
 
 
 def load_calendar_metrics_batch_from_supabase(
@@ -248,103 +222,3 @@ def update_trade_in_supabase(
         raise ResourceNotFoundError("Trade not found")
 
     return _format_trade(response.data[0])
-
-
-def load_accounts_from_supabase(user_id: str, token: str):
-    client = get_authenticated_client(token)
-
-    response = execute_query(
-        client
-        .table("accounts")
-        .select("*")
-        .eq("user_id", user_id)
-        .order("created_at")
-    )
-
-    return response.data
-
-
-def account_belongs_to_user(account_id: int, user_id: str, token: str):
-    client = get_authenticated_client(token)
-
-    response = execute_query(
-        client
-        .table("accounts")
-        .select("id")
-        .eq("id", account_id)
-        .eq("user_id", user_id)
-    )
-
-    return bool(response.data)
-
-
-def save_account_to_supabase(account, user_id: str, token: str):
-    client = get_authenticated_client(token)
-
-    data = {
-        "user_id": user_id,
-        "name": account["name"],
-        "starting_balance": account["starting_balance"],
-        "currency": account["currency"],
-        "broker": account.get("broker"),
-        "account_type": account.get("account_type"),
-    }
-
-    response = execute_query(
-        client
-        .table("accounts")
-        .insert(data)
-    )
-
-    return response.data
-
-
-def update_account_in_supabase(
-    account_id: int,
-    account,
-    user_id: str,
-    token: str,
-):
-    client = get_authenticated_client(token)
-
-    data = {
-        "name": account["name"],
-        "starting_balance": account["starting_balance"],
-        "currency": account["currency"],
-        "broker": account.get("broker"),
-        "account_type": account.get("account_type"),
-    }
-
-    response = execute_query(
-        client
-        .table("accounts")
-        .update(data)
-        .eq("id", account_id)
-        .eq("user_id", user_id)
-    )
-
-    if not response.data:
-        raise ResourceNotFoundError("Account not found")
-
-    return response.data
-
-
-def delete_account_from_supabase(
-    account_id: int,
-    user_id: str,
-    token: str,
-):
-    client = get_authenticated_client(token)
-
-    response = execute_query(
-        client
-        .table("accounts")
-        .delete()
-        .eq("id", account_id)
-        .eq("user_id", user_id)
-    )
-
-    if not response.data:
-        raise ResourceNotFoundError("Account not found")
-
-    return response.data

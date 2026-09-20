@@ -145,8 +145,15 @@ The current application is the result of several iterations, gradually introduci
 ┌──────────────────────────────┐
 │        FastAPI backend       │
 │                              │
-│ Auth · Validation · API      │
-│ R calculation · DB layer     │
+│ Routers · Auth · Pydantic    │
+│ Analytics · CSV processing   │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│      Data-access layer       │
+│                              │
+│ Accounts · Trades · Queries  │
 └──────────────┬───────────────┘
                │
                ▼
@@ -158,6 +165,8 @@ The current application is the result of several iterations, gradually introduci
 ```
 
 The frontend communicates with the FastAPI backend for application data.
+
+The backend is organised into dedicated FastAPI routers, Pydantic schemas and database modules. Route handlers manage HTTP concerns, schemas validate request and response data, and the database package isolates Supabase persistence and query logic.
 
 Authenticated requests contain the user's Supabase access token. The backend verifies the token and scopes database operations to the authenticated user.
 
@@ -465,25 +474,58 @@ A separate scheduled workflow runs the demo reset script periodically and restor
 trading-journal/
 │
 ├── api.py
-│   FastAPI application and API endpoints
+│   FastAPI application setup, middleware, exception handlers and router registration
 │
 ├── auth.py
 │   Authentication and demo activity helpers
 │
 ├── calculations.py
-│   Trading calculations
+│   R-multiple, dashboard and calendar calculations
 │
-├── database.py
-│   Supabase database access layer
+├── routes/
+│   FastAPI route modules
+│   │
+│   ├── accounts.py
+│   │   Account CRUD endpoints
+│   │
+│   ├── analytics.py
+│   │   Statistics and calendar endpoints
+│   │
+│   ├── csv_imports.py
+│   │   CSV preview, validation and import endpoints
+│   │
+│   └── trades.py
+│       Trade CRUD and paginated trade-history endpoints
 │
-├── demo.py
-│   Demo dataset generation and reset logic
+├── schemas/
+│   Pydantic request and response models
+│   │
+│   ├── accounts.py
+│   │   Account schemas
+│   │
+│   └── trades.py
+│       Trade schemas and validation
+│
+├── database/
+│   Supabase data-access layer
+│   │
+│   ├── client.py
+│   │   Supabase configuration, authenticated clients and database error handling
+│   │
+│   ├── accounts.py
+│   │   Account queries and persistence
+│   │
+│   └── trades.py
+│       Trade persistence and metric queries
 │
 ├── imports/
 │   CSV reading, mapping, normalisation and validation
 │
+├── demo.py
+│   Demo dataset generation and reset logic
+│
 ├── tests/
-│   Backend unit tests
+│   Backend unit tests organised by application module
 │   │
 │   └── integration/
 │       Supabase and RLS integration tests
@@ -649,6 +691,8 @@ python -m pytest tests \
   --cov=calculations \
   --cov=demo \
   --cov=imports \
+  --cov=routes \
+  --cov=schemas \
   --cov-branch \
   --cov-report=term-missing
 ```
@@ -812,6 +856,8 @@ The backend became responsible for:
 - controlled error handling
 - HTTP responses
 
+As the backend grew, its HTTP endpoints, validation models and persistence logic were further separated into dedicated routers, schemas and database modules.
+
 ---
 
 ## 4. Building the web frontend
@@ -950,7 +996,7 @@ The project demonstrated how code that works well in a small script can become d
 The application gradually separated responsibilities into:
 
 - user interface
-- API
+- API routing
 - authentication
 - validation
 - business logic
@@ -970,6 +1016,7 @@ The FastAPI backend provided practical experience with:
 - server-side validation
 - exception handling
 - database access
+- modular route organisation
 - environment-based configuration
 
 ## Frontend development
@@ -1027,7 +1074,7 @@ React state
     ↓
 HTTP request
     ↓
-FastAPI endpoint
+FastAPI router
     ↓
 Authentication + validation
     ↓
