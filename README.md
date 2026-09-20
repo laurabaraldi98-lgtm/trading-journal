@@ -54,6 +54,9 @@ The current application is the result of several iterations, gradually introduci
 
 - User authentication with Supabase Auth
 - Protected FastAPI endpoints
+- API rate limiting with SlowAPI
+- Per-user rate limits for authenticated endpoints
+- IP-based rate limiting for public demo login
 - Multiple trading accounts
 - Account CRUD operations
 - Trade CRUD operations
@@ -103,6 +106,7 @@ The current application is the result of several iterations, gradually introduci
 - Python 3.11+
 - FastAPI
 - Pydantic
+- SlowAPI
 - Supabase Python client
 - PostgreSQL
 - python-dotenv
@@ -198,6 +202,8 @@ Supabase Auth
 Demo session
 ```
 
+The public `/demo-login` endpoint is rate-limited by client IP. Once the demo session has been created, its protected API requests are authenticated normally and use the demo user's ID for per-user rate limiting.
+
 The demo account starts with a pre-populated trading account and sample trades covering:
 
 - XAUUSD
@@ -287,6 +293,8 @@ The frontend sends the current user's bearer token with protected API requests.
 
 The backend verifies that token and obtains the authenticated user's identity before accessing account or trade data.
 
+Authenticated API endpoints are rate-limited per user ID, while public endpoints such as `/demo-login` fall back to client IP-based limits. This keeps request limits isolated between authenticated users while still protecting unauthenticated entry points.
+
 Database operations are scoped by user ID.
 
 When creating a trade, the backend also verifies that the selected account belongs to the authenticated user before allowing the trade to be stored.
@@ -347,7 +355,7 @@ After a trade is created, edited or deleted, the dashboard automatically refresh
 
 # API Error Handling
 
-The backend converts authentication, resource and database failures into controlled HTTP responses.
+The backend converts authentication, resource, rate-limit and database failures into controlled HTTP responses.
 
 ```text
 Invalid or expired token
@@ -358,10 +366,16 @@ Missing or inaccessible resource
       ↓
 404 Not Found
 
+Rate limit exceeded
+      ↓
+429 Too Many Requests
+
 Database or authentication service failure
       ↓
 503 Service Unavailable
 ```
+
+Rate-limit violations are handled centrally through SlowAPI and returned as `429 Too Many Requests` responses.
 
 Database queries pass through a centralised execution helper. Database failures are converted into `DatabaseError` and handled by FastAPI as `503 Service Unavailable` responses.
 
@@ -382,6 +396,9 @@ Backend tests cover:
 - demo authentication
 - demo activity tracking
 - API endpoints
+- API rate limiting
+- per-user rate-limit isolation
+- IP fallback for unauthenticated rate limiting
 - account CRUD
 - trade CRUD
 - account ownership validation
@@ -450,7 +467,7 @@ The backend workflow:
 
 - installs Python dependencies
 - runs the backend test suite
-- collects coverage
+- collects coverage, including the rate-limiting module
 - runs Supabase integration and RLS tests when the required secrets are configured
 
 ## Frontend workflow
@@ -478,6 +495,9 @@ trading-journal/
 │
 ├── auth.py
 │   Authentication and demo activity helpers
+│
+├── rate_limit.py
+│   SlowAPI configuration and per-user/IP rate-limit key selection
 │
 ├── calculations.py
 │   R-multiple, dashboard and calendar calculations
@@ -693,6 +713,7 @@ python -m pytest tests \
   --cov=imports \
   --cov=routes \
   --cov=schemas \
+  --cov=rate_limit \
   --cov-branch \
   --cov-report=term-missing
 ```
@@ -793,6 +814,8 @@ Automatic CSV import
 Server-side pagination and date filters
     ↓
 Monthly trading calendar
+    ↓
+API rate limiting
 ```
 
 ## 1. Python CLI
@@ -973,6 +996,20 @@ Calendar aggregation is performed by the backend across the complete requested m
 
 ---
 
+## 14. API rate limiting
+
+Rate limiting was added to protect the backend from excessive request traffic.
+
+The public demo-login endpoint is limited using the client IP address because no authenticated user identity is available before the demo session is created.
+
+Protected endpoints use the authenticated Supabase user ID as their rate-limit key, giving each authenticated user an independent request bucket.
+
+SlowAPI handles limit enforcement and converts exceeded limits into `429 Too Many Requests` responses.
+
+Dedicated tests verify both rate-limit enforcement and isolation between separate authenticated users.
+
+---
+
 # Legacy CLI
 
 The `legacy-cli/` directory contains the original command-line implementation.
@@ -1015,6 +1052,8 @@ The FastAPI backend provided practical experience with:
 - Pydantic models
 - server-side validation
 - exception handling
+- API rate limiting
+- request middleware
 - database access
 - modular route organisation
 - environment-based configuration
@@ -1058,6 +1097,7 @@ The project provided practical experience with:
 - React interaction testing
 - parameterised tests
 - integration testing
+- rate-limit behavioural testing
 - code coverage
 - regression prevention
 
@@ -1107,6 +1147,7 @@ The current version includes the main functionality required for a usable tradin
 - data validation
 - database persistence
 - Row Level Security
+- API rate limiting
 - automated testing
 - controlled API error handling
 - deployed frontend and backend
@@ -1130,4 +1171,5 @@ Potential future iterations include:
 - refactoring larger frontend components into smaller reusable pieces
 - production observability and structured logging
 - additional end-to-end testing
+- shared rate-limit storage for multi-instance deployments
 - performance improvements for larger datasets
