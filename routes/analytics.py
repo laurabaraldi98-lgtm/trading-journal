@@ -1,6 +1,6 @@
 from datetime import date
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from auth import get_current_user
 from calculations import calculate_calendar_statistics, calculate_dashboard_statistics
@@ -8,6 +8,7 @@ from database import (
     load_calendar_metrics_batch_from_supabase,
     load_trade_metrics_batch_from_supabase,
 )
+from rate_limit import limiter
 
 
 router = APIRouter()
@@ -45,7 +46,9 @@ def iter_trade_metrics(
 
 
 @router.get("/statistics")
+@limiter.limit("60/minute")
 def get_statistics(
+    request: Request,
     account_id: int,
     date_from: date | None = None,
     date_to: date | None = None,
@@ -100,7 +103,9 @@ def iter_calendar_metrics(
 
 
 @router.get("/calendar")
+@limiter.limit("60/minute")
 def get_calendar(
+    request: Request,
     account_id: int,
     year: int = Query(ge=1, le=9998),
     month: int = Query(ge=1, le=12),

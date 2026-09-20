@@ -2,8 +2,6 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from rate_limit import limiter
-
 from auth import get_current_user
 from calculations import calculate_r
 from database import (
@@ -14,6 +12,7 @@ from database import (
     save_trade_to_supabase,
     update_trade_in_supabase,
 )
+from rate_limit import limiter
 from schemas.trades import PaginatedTradesResponse, TradeCreate, TradeResponse, TradeUpdate
 
 
@@ -33,7 +32,9 @@ def get_trades(
 ):
     if date_from is not None and date_to is not None and date_from > date_to:
         raise HTTPException(
-            status_code=422, detail="date_from cannot be after date_to")
+            status_code=422,
+            detail="date_from cannot be after date_to",
+        )
 
     user = auth_data["user"]
     token = auth_data["token"]
@@ -58,11 +59,20 @@ def get_trades(
 
 
 @router.post("/trades", response_model=TradeResponse)
-def create_trade(trade: TradeCreate, auth_data=Depends(get_current_user)):
+@limiter.limit("60/minute")
+def create_trade(
+    request: Request,
+    trade: TradeCreate,
+    auth_data=Depends(get_current_user),
+):
     user = auth_data["user"]
     token = auth_data["token"]
 
-    if not account_belongs_to_user(trade.account_id, user.id, token):
+    if not account_belongs_to_user(
+        trade.account_id,
+        user.id,
+        token,
+    ):
         raise ResourceNotFoundError("Account not found")
 
     result = None
@@ -91,19 +101,34 @@ def create_trade(trade: TradeCreate, auth_data=Depends(get_current_user)):
         "exit_datetime": trade.exit_datetime,
     }
 
-    return save_trade_to_supabase(trade_data, user.id, token)
+    return save_trade_to_supabase(
+        trade_data,
+        user.id,
+        token,
+    )
 
 
 @router.delete("/trades/{trade_id}")
-def delete_trade(trade_id: int, auth_data=Depends(get_current_user)):
+@limiter.limit("60/minute")
+def delete_trade(
+    request: Request,
+    trade_id: int,
+    auth_data=Depends(get_current_user),
+):
     user = auth_data["user"]
     token = auth_data["token"]
 
-    return delete_trade_from_supabase(trade_id, user.id, token)
+    return delete_trade_from_supabase(
+        trade_id,
+        user.id,
+        token,
+    )
 
 
 @router.patch("/trades/{trade_id}", response_model=TradeResponse)
+@limiter.limit("60/minute")
 def update_trade(
+    request: Request,
     trade_id: int,
     trade: TradeUpdate,
     auth_data=Depends(get_current_user),
