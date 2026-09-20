@@ -1,85 +1,29 @@
 import os
-from datetime import date, datetime
-from typing import Literal
+from datetime import date
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field
 
 from auth import get_current_user, get_demo_session
-from calculations import calculate_calendar_statistics, calculate_dashboard_statistics, calculate_r
+from calculations import calculate_calendar_statistics, calculate_dashboard_statistics
 from database import (
     DatabaseError,
     ResourceNotFoundError,
-    account_belongs_to_user,
     delete_account_from_supabase,
-    delete_trade_from_supabase,
     load_accounts_from_supabase,
     load_calendar_metrics_batch_from_supabase,
     load_trade_metrics_batch_from_supabase,
-    load_trades_from_supabase,
     save_account_to_supabase,
-    save_trade_to_supabase,
     update_account_in_supabase,
-    update_trade_in_supabase,
 )
 from routes.csv_imports import router as csv_imports_router
+from routes.trades import router as trades_router
 
 
 STATISTICS_BATCH_SIZE = 1000
 CALENDAR_BATCH_SIZE = 1000
-
-
-class TradeBase(BaseModel):
-    symbol: str = Field(min_length=1)
-    direction: Literal["long", "short"]
-    entry: float
-    stop: float | None = None
-    exit: float
-    pnl: float
-    entry_datetime: datetime
-    exit_datetime: datetime
-
-    @model_validator(mode="after")
-    def validate_trade(self):
-        if self.exit_datetime < self.entry_datetime:
-            raise ValueError("Exit datetime cannot be before entry datetime")
-
-        if self.stop is not None and self.entry == self.stop:
-            raise ValueError("Entry and stop cannot be the same")
-
-        return self
-
-
-class TradeCreate(TradeBase):
-    account_id: int
-
-
-class TradeUpdate(TradeBase):
-    pass
-
-
-class TradeResponse(BaseModel):
-    id: int
-    account_id: int
-    symbol: str
-    direction: Literal["long", "short"]
-    entry: float
-    stop: float | None = None
-    exit: float
-    result: float | None = None
-    pnl: float
-    entry_datetime: datetime
-    exit_datetime: datetime
-
-
-class PaginatedTradesResponse(BaseModel):
-    items: list[TradeResponse]
-    page: int
-    page_size: int
-    total: int
-    total_pages: int
 
 
 class AccountBase(BaseModel):
@@ -122,6 +66,7 @@ app.add_middleware(
 )
 
 app.include_router(csv_imports_router)
+app.include_router(trades_router)
 
 
 @app.get("/")
@@ -132,41 +77,6 @@ def root():
 @app.post("/demo-login")
 def demo_login():
     return get_demo_session()
-
-
-@app.get("/trades", response_model=PaginatedTradesResponse)
-def get_trades(
-    account_id: int | None = None,
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
-    date_from: date | None = None,
-    date_to: date | None = None,
-    auth_data=Depends(get_current_user),
-):
-    if date_from is not None and date_to is not None and date_from > date_to:
-        raise HTTPException(
-            status_code=422, detail="date_from cannot be after date_to")
-
-    user = auth_data["user"]
-    token = auth_data["token"]
-
-    trades, total = load_trades_from_supabase(
-        user.id,
-        token,
-        account_id,
-        page,
-        page_size,
-        date_from,
-        date_to,
-    )
-
-    return {
-        "items": trades,
-        "page": page,
-        "page_size": page_size,
-        "total": total,
-        "total_pages": (total + page_size - 1) // page_size,
-    }
 
 
 def iter_trade_metrics(
@@ -276,93 +186,6 @@ def get_calendar(
     )
 
     return calculate_calendar_statistics(metrics)
-
-
-@app.post("/trades", response_model=TradeResponse)
-def create_trade(trade: TradeCreate, auth_data=Depends(get_current_user)):
-    user = auth_data["user"]
-    token = auth_data["token"]
-
-    if not account_belongs_to_user(trade.account_id, user.id, token):
-        raise ResourceNotFoundError("Account not found")
-
-    result = None
-
-    if trade.stop is not None:
-        result = round(
-            calculate_r(
-                trade.direction,
-                trade.entry,
-                trade.stop,
-                trade.exit,
-            ),
-            2,
-        )
-
-    trade_data = {
-        "account_id": trade.account_id,
-        "symbol": trade.symbol,
-        "direction": trade.direction,
-        "entry": trade.entry,
-        "stop": trade.stop,
-        "exit": trade.exit,
-        "result": result,
-        "pnl": trade.pnl,
-        "entry_datetime": trade.entry_datetime,
-        "exit_datetime": trade.exit_datetime,
-    }
-
-    return save_trade_to_supabase(trade_data, user.id, token)
-
-
-@app.delete("/trades/{trade_id}")
-def delete_trade(trade_id: int, auth_data=Depends(get_current_user)):
-    user = auth_data["user"]
-    token = auth_data["token"]
-
-    return delete_trade_from_supabase(trade_id, user.id, token)
-
-
-@app.patch("/trades/{trade_id}", response_model=TradeResponse)
-def update_trade(
-    trade_id: int,
-    trade: TradeUpdate,
-    auth_data=Depends(get_current_user),
-):
-    user = auth_data["user"]
-    token = auth_data["token"]
-
-    result = None
-
-    if trade.stop is not None:
-        result = round(
-            calculate_r(
-                trade.direction,
-                trade.entry,
-                trade.stop,
-                trade.exit,
-            ),
-            2,
-        )
-
-    updated_trade = {
-        "symbol": trade.symbol,
-        "direction": trade.direction,
-        "entry": trade.entry,
-        "stop": trade.stop,
-        "exit": trade.exit,
-        "result": result,
-        "pnl": trade.pnl,
-        "entry_datetime": trade.entry_datetime,
-        "exit_datetime": trade.exit_datetime,
-    }
-
-    return update_trade_in_supabase(
-        trade_id,
-        updated_trade,
-        user.id,
-        token,
-    )
 
 
 @app.get("/accounts")
