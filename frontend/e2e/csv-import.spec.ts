@@ -5,11 +5,9 @@ test('demo user can import trades from a CSV file', async ({ page }) => {
     const accountName = `E2E CSV Account ${Date.now()}`;
     let accountCreated = false;
 
-    // Log in with the demo user.
-    await page.goto('/login');
-
-    await page.getByRole('button', { name: 'Try demo' }).click();
-    await expect(page).toHaveURL('/');
+    // The shared Playwright setup has already authenticated the demo user.
+    await page.goto('/accounts');
+    await expect(page).toHaveURL('/accounts');
 
     try {
         // Create a dedicated account for this test.

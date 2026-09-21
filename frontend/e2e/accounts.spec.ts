@@ -3,11 +3,9 @@ import { test, expect } from '@playwright/test';
 test('demo user can create an account', async ({ page }) => {
     const accountName = `E2E Test Account ${Date.now()}`;
 
-    // Log in with the demo user and open the Accounts page.
-    await page.goto('/login');
-
-    await page.getByRole('button', { name: 'Try demo' }).click();
-    await expect(page).toHaveURL('/');
+    // The shared Playwright setup has already authenticated the demo user.
+    await page.goto('/accounts');
+    await expect(page).toHaveURL('/accounts');
 
     await page.getByRole('link', { name: 'Accounts' }).click();
     await expect(page).toHaveURL('/accounts');

@@ -4,10 +4,8 @@ test('demo user can create, edit and delete a trade', async ({ page }) => {
     const accountName = `E2E Trade Account ${Date.now()}`;
     const tradeSymbol = `E2E${Date.now()}`;
 
-    // Log in with the demo user.
-    await page.goto('/login');
-
-    await page.getByRole('button', { name: 'Try demo' }).click();
+    // The shared Playwright setup has already authenticated the demo user.
+    await page.goto('/');
     await expect(page).toHaveURL('/');
 
     // Create a dedicated account for this test.
