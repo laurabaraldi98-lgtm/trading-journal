@@ -35,12 +35,16 @@ export default function AccountForm({
 
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-6">
                 <div className="lg:col-span-3">
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label
+                        htmlFor="account-name"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                    >
                         Account name
                         <span className="ml-1 text-red-600">*</span>
                     </label>
 
                     <input
+                        id="account-name"
                         type="text"
                         value={name}
                         onChange={(event) =>
@@ -52,11 +56,16 @@ export default function AccountForm({
                 </div>
 
                 <div className="lg:col-span-2">
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label
+                        htmlFor="starting-balance"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                    >
                         Starting balance
                         <span className="ml-1 text-red-600">*</span>
                     </label>
+
                     <input
+                        id="starting-balance"
                         type="number"
                         value={startingBalance}
                         onChange={(event) =>
@@ -68,12 +77,16 @@ export default function AccountForm({
                 </div>
 
                 <div className="lg:col-span-1">
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label
+                        htmlFor="currency"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                    >
                         Currency
                         <span className="ml-1 text-red-600">*</span>
                     </label>
 
                     <select
+                        id="currency"
                         value={currency}
                         onChange={(event) =>
                             setCurrency(event.target.value)
@@ -87,11 +100,15 @@ export default function AccountForm({
                 </div>
 
                 <div className="lg:col-span-3">
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label
+                        htmlFor="broker"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                    >
                         Broker
                     </label>
 
                     <input
+                        id="broker"
                         type="text"
                         value={broker}
                         onChange={(event) =>
@@ -103,11 +120,15 @@ export default function AccountForm({
                 </div>
 
                 <div className="lg:col-span-3">
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label
+                        htmlFor="account-type"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                    >
                         Account type
                     </label>
 
                     <input
+                        id="account-type"
                         type="text"
                         value={accountType}
                         onChange={(event) =>
