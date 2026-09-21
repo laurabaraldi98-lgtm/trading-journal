@@ -47,12 +47,16 @@ export default function TradeForm({
 
             <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label
+                        htmlFor="trade-symbol"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                    >
                         Symbol
                         <span className="ml-1 text-red-600">*</span>
                     </label>
 
                     <input
+                        id="trade-symbol"
                         type="text"
                         value={symbol}
                         onChange={(event) =>
@@ -64,12 +68,16 @@ export default function TradeForm({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label
+                        htmlFor="trade-direction"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                    >
                         Direction
                         <span className="ml-1 text-red-600">*</span>
                     </label>
 
                     <select
+                        id="trade-direction"
                         value={direction}
                         onChange={(event) =>
                             setDirection(event.target.value)
@@ -83,12 +91,16 @@ export default function TradeForm({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label
+                        htmlFor="trade-entry"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                    >
                         Entry
                         <span className="ml-1 text-red-600">*</span>
                     </label>
 
                     <input
+                        id="trade-entry"
                         type="number"
                         value={entry}
                         onChange={(event) =>
@@ -100,11 +112,15 @@ export default function TradeForm({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label
+                        htmlFor="trade-stop"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                    >
                         Stop
                     </label>
 
                     <input
+                        id="trade-stop"
                         type="number"
                         value={stop}
                         onChange={(event) =>
@@ -116,12 +132,16 @@ export default function TradeForm({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label
+                        htmlFor="trade-exit"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                    >
                         Exit price
                         <span className="ml-1 text-red-600">*</span>
                     </label>
 
                     <input
+                        id="trade-exit"
                         type="number"
                         value={exit}
                         onChange={(event) =>
@@ -133,12 +153,16 @@ export default function TradeForm({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label
+                        htmlFor="trade-pnl"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                    >
                         P/L
                         <span className="ml-1 text-red-600">*</span>
                     </label>
 
                     <input
+                        id="trade-pnl"
                         type="number"
                         value={pnl}
                         onChange={(event) =>
@@ -150,19 +174,21 @@ export default function TradeForm({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label
+                        htmlFor="trade-entry-datetime"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                    >
                         Entry date
                         <span className="ml-1 text-red-600">*</span>
                     </label>
 
                     <input
+                        id="trade-entry-datetime"
                         type="datetime-local"
                         aria-label="Entry datetime"
                         value={entryDatetime}
                         onChange={(event) =>
-                            setEntryDatetime(
-                                event.target.value
-                            )
+                            setEntryDatetime(event.target.value)
                         }
                         required
                         className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-slate-900"
@@ -170,19 +196,21 @@ export default function TradeForm({
                 </div>
 
                 <div>
-                    <label className="mb-1 block text-sm font-medium text-slate-700">
+                    <label
+                        htmlFor="trade-exit-datetime"
+                        className="mb-1 block text-sm font-medium text-slate-700"
+                    >
                         Exit date
                         <span className="ml-1 text-red-600">*</span>
                     </label>
 
                     <input
+                        id="trade-exit-datetime"
                         type="datetime-local"
                         aria-label="Exit datetime"
                         value={exitDatetime}
                         onChange={(event) =>
-                            setExitDatetime(
-                                event.target.value
-                            )
+                            setExitDatetime(event.target.value)
                         }
                         required
                         className="w-full rounded-lg border border-zinc-300 bg-white p-3 text-slate-900"
