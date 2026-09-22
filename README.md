@@ -84,7 +84,9 @@ The current application is the result of several iterations, gradually introduci
 - Public demo mode
 - Automatic demo-data restoration
 - Automated frontend and backend testing
-- Integration tests against Supabase
+- Supabase integration and RLS tests
+- Playwright end-to-end testing of core user flows
+- Shared authenticated browser state for E2E tests
 - GitHub Actions CI workflows
 
 ---
@@ -120,6 +122,7 @@ The current application is the result of several iterations, gradually introduci
 - React Testing Library
 - jsdom
 - V8 coverage
+- Playwright
 
 ## Infrastructure and Development
 
@@ -451,9 +454,48 @@ Frontend tests cover:
 - calendar rendering, month navigation and responsive behaviour
 - calendar refresh after trade changes
 
+## End-to-end tests
+
+Playwright end-to-end tests exercise the application through the browser while the real frontend and backend are running.
+
+The E2E suite covers:
+
+- public demo login
+- account creation and deletion
+- trade creation, editing and deletion
+- valid CSV trade import
+- invalid CSV rejection
+- manual trade-form validation
+- dashboard statistics using deterministic trade data
+
+The dashboard statistics test creates an isolated account and known trades, then verifies exact values including:
+
+- total trade count
+- win rate
+- P/L
+- account balance
+- total R
+- average R
+
+This checks the complete path from browser interaction through the API and database and back to the rendered dashboard.
+
+Authenticated E2E tests use a shared Playwright `storageState` session. A dedicated setup project performs demo authentication once and stores the browser authentication state locally so each individual E2E test does not repeatedly call the rate-limited public demo-login endpoint.
+
+The demo-login flow is tested separately without the saved authenticated state. This ensures the login process itself is still exercised from an unauthenticated browser session.
+
+E2E tests create temporary accounts with unique names and clean them up after execution so assertions do not depend on existing demo data.
+
+The generated authenticated browser state is stored under:
+
+```text
+frontend/playwright/.auth/
+```
+
+This directory is ignored by Git because browser authentication state can contain active session data and should not be committed.
+
 During development, the frontend and backend unit-test suites reached **100% code coverage**.
 
-Coverage is used as a development signal rather than as a replacement for meaningful behavioural and integration tests.
+Coverage is used as a development signal rather than as a replacement for meaningful behavioural, integration and end-to-end tests.
 
 ---
 
@@ -478,6 +520,25 @@ The frontend workflow:
 - runs ESLint
 - runs the Vitest test suite with coverage
 - creates a production Next.js build
+
+## End-to-end workflow
+
+A dedicated Playwright workflow runs the browser E2E suite on GitHub Actions.
+
+The workflow:
+
+- runs on Ubuntu
+- installs Python dependencies
+- installs frontend dependencies
+- installs Playwright browsers and required system dependencies
+- starts the FastAPI backend
+- starts the Next.js frontend
+- authenticates the shared demo session through the Playwright setup project
+- runs the Chromium E2E suite
+
+Supabase and demo credentials are provided through GitHub Actions secrets rather than being committed to the repository.
+
+The workflow runs on pushes and pull requests.
 
 ## Demo reset workflow
 
@@ -562,12 +623,19 @@ trading-journal/
 │   ├── lib/
 │   │   API and Supabase configuration
 │   │
+│   ├── e2e/
+│   │   Playwright end-to-end tests and CSV fixtures
+│   │
+│   ├── playwright.config.ts
+│   │   Playwright projects, authentication setup and browser configuration
+│   │
 │   └── ...
 │
 ├── .github/
 │   └── workflows/
 │       ├── backend-tests.yml
 │       ├── frontend-tests.yml
+│       ├── e2e-tests.yml
 │       └── demo-reset.yml
 │
 ├── legacy-cli/
@@ -636,7 +704,7 @@ DEMO_EMAIL=
 DEMO_PASSWORD=
 ```
 
-`DEMO_EMAIL` and `DEMO_PASSWORD` are only required when running the public demo functionality.
+`DEMO_EMAIL` and `DEMO_PASSWORD` are only required when running the public demo functionality and authenticated E2E tests.
 
 Demo credentials must remain server-side and must never be exposed through frontend environment variables.
 
@@ -730,7 +798,7 @@ tests/integration/
 
 ---
 
-## Frontend
+## Frontend tests
 
 From `frontend/`:
 
@@ -754,6 +822,65 @@ Run the production build:
 
 ```bash
 npm run build
+```
+
+---
+
+## End-to-end tests
+
+Playwright E2E tests require both the FastAPI backend and Next.js frontend to be running locally.
+
+From the project root, start the backend:
+
+```bash
+python -m uvicorn api:app --reload
+```
+
+In another terminal:
+
+```bash
+cd frontend
+npm run dev
+```
+
+Then, from `frontend/`, run the authenticated Chromium E2E suite:
+
+```bash
+npx playwright test --project=chromium
+```
+
+On Windows PowerShell:
+
+```powershell
+npx.cmd playwright test --project=chromium
+```
+
+The Chromium project automatically runs the authentication setup first and reuses the generated browser session for authenticated E2E tests.
+
+To test the public demo-login flow separately from an unauthenticated browser state:
+
+```bash
+npx playwright test --project=demo-login
+```
+
+On Windows PowerShell:
+
+```powershell
+npx.cmd playwright test --project=demo-login
+```
+
+Playwright saves the generated authenticated browser state under:
+
+```text
+frontend/playwright/.auth/
+```
+
+This directory is ignored by Git and must not be committed.
+
+To open the latest Playwright HTML report:
+
+```bash
+npx playwright show-report
 ```
 
 ---
@@ -816,6 +943,8 @@ Server-side pagination and date filters
 Monthly trading calendar
     ↓
 API rate limiting
+    ↓
+Playwright end-to-end testing
 ```
 
 ## 1. Python CLI
@@ -1010,6 +1139,36 @@ Dedicated tests verify both rate-limit enforcement and isolation between separat
 
 ---
 
+## 15. Playwright end-to-end testing
+
+Playwright was added to verify complete user journeys through the running application.
+
+Unlike isolated frontend or backend tests, these tests exercise multiple application layers together:
+
+```text
+Playwright browser
+       ↓
+Next.js frontend
+       ↓
+FastAPI backend
+       ↓
+Supabase
+       ↓
+Rendered result
+```
+
+The E2E suite covers core successful flows as well as validation failures.
+
+Authenticated tests share a saved browser authentication state generated by a dedicated setup project. This avoids repeatedly calling the rate-limited public demo-login endpoint while preserving realistic browser-level testing.
+
+The demo-login flow remains isolated in its own unauthenticated Playwright project so the login process itself is independently tested.
+
+Temporary accounts and trade data are created for individual tests and cleaned up afterwards, keeping results deterministic and reducing dependence on pre-existing demo data.
+
+A dedicated GitHub Actions workflow runs the Chromium E2E suite automatically on pushes and pull requests.
+
+---
+
 # Legacy CLI
 
 The `legacy-cli/` directory contains the original command-line implementation.
@@ -1098,6 +1257,11 @@ The project provided practical experience with:
 - parameterised tests
 - integration testing
 - rate-limit behavioural testing
+- browser end-to-end testing
+- shared browser authentication state
+- test-data isolation and cleanup
+- deterministic E2E assertions
+- CI execution of browser tests
 - code coverage
 - regression prevention
 
@@ -1125,6 +1289,8 @@ API response
 Frontend update
 ```
 
+End-to-end testing extended that understanding by verifying the entire path from a real browser interaction through the application stack and back to the rendered UI.
+
 ---
 
 # Current Status
@@ -1148,7 +1314,10 @@ The current version includes the main functionality required for a usable tradin
 - database persistence
 - Row Level Security
 - API rate limiting
-- automated testing
+- automated unit and component testing
+- Supabase integration and RLS testing
+- Playwright end-to-end testing
+- automated E2E execution in GitHub Actions
 - controlled API error handling
 - deployed frontend and backend
 - public demo access
@@ -1170,6 +1339,6 @@ Potential future iterations include:
 - CSV export
 - refactoring larger frontend components into smaller reusable pieces
 - production observability and structured logging
-- additional end-to-end testing
+- broader cross-browser E2E coverage
 - shared rate-limit storage for multi-instance deployments
 - performance improvements for larger datasets
